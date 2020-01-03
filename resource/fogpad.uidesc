@@ -1,0 +1,226 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<vstgui-ui-description version="1">
+    <fonts>
+    </fonts>
+    <colors>
+        <color name="Focus" rgba="#279bffff"/>
+    </colors>
+    <template
+        maxSize="930, 530" minSize="930, 530" size="930, 530" name="view" opacity="1" origin="0, 0"
+        background-color="~ BlackCColor" background-color-draw-style="filled and stroked" bitmap="background"
+        class="CViewContainer" mouse-enabled="true" transparent="false">
+
+        <!-- MIST -->
+        <!-- size slider -->
+        <view control-tag="Unit1::ReverbSize" class="CKnob" angle-range="270" angle-start="135" autosize="right top"
+              background-offset="0, 0" circle-drawing="true" corona-color="~ WhiteCColor" corona-dash-dot="false"
+              corona-drawing="true" corona-from-center="false" corona-inset="5" corona-inverted="false"
+              corona-line-cap-butt="false" corona-outline="true" corona-outline-width-add="2" default-value="0.5"
+              handle-color="~ WhiteCColor" handle-line-width="5" handle-shadow-color="~ GreyCColor" max-value="1"
+              min-value="0" mouse-enabled="true" opacity="1" origin="20, 105" size="60, 60"
+              skip-handle-drawing="false" transparent="false" value-inset="5" wants-focus="true"
+              wheel-inc-value="0.1" zoom-factor="1.5"
+        />
+
+        <!-- width slider -->
+        <view control-tag="Unit1::ReverbWidth" class="CKnob" angle-range="270" angle-start="135" autosize="right top"
+              background-offset="0, 0" circle-drawing="true" corona-color="~ WhiteCColor" corona-dash-dot="false"
+              corona-drawing="true" corona-from-center="false" corona-inset="5" corona-inverted="false"
+              corona-line-cap-butt="false" corona-outline="true" corona-outline-width-add="2" default-value="0.5"
+              handle-color="~ WhiteCColor" handle-line-width="5" handle-shadow-color="~ GreyCColor" max-value="1"
+              min-value="0" mouse-enabled="true" opacity="1" origin="110, 105" size="60, 60"
+              skip-handle-drawing="false" transparent="false" value-inset="5" wants-focus="true"
+              wheel-inc-value="0.1" zoom-factor="1.5"
+        />
+
+        <!-- freeze toggle -->
+        <view control-tag="Unit1::ReverbFreeze" class="CCheckBox" origin="224, 124" size="25, 40" autosize-to-fit="false"
+              background-offset="0, 0" boxfill-color="#85bad7"  autosize="bottom"
+              boxframe-color="~ BlackCColor" checkmark-color="~ BlackCColor"
+              default-value="0" draw-crossbox="true" font="~ NormalFontSmall" font-color="Light Grey" frame-width="1"
+              max-value="1" min-value="0" mouse-enabled="true" opacity="1" round-rect-radius="0"
+              title="" transparent="false" wants-focus="true" wheel-inc-value="0.1"
+        />
+
+        <!-- HUE -->
+        <!-- filter cutoff slider -->
+        <view control-tag="Unit1::FilterCutoff" class="CKnob" angle-range="270" angle-start="135" autosize="right top"
+              background-offset="0, 0" circle-drawing="true" corona-color="~ WhiteCColor" corona-dash-dot="false"
+              corona-drawing="true" corona-from-center="false" corona-inset="5" corona-inverted="false"
+              corona-line-cap-butt="false" corona-outline="true" corona-outline-width-add="2" default-value="0.5"
+              handle-color="~ WhiteCColor" handle-line-width="5" handle-shadow-color="~ GreyCColor" max-value="1"
+              min-value="0" mouse-enabled="true" opacity="1" origin="303, 105" size="60, 60"
+              skip-handle-drawing="false" transparent="false" value-inset="5" wants-focus="true"
+              wheel-inc-value="0.1" zoom-factor="1.5"
+        />
+
+        <!-- filter resonance slider -->
+        <!--<view control-tag="Unit1::FilterResonance" class="CKnob" angle-range="270" angle-start="135" autosize="right top"-->
+              <!--background-offset="0, 0" circle-drawing="true" corona-color="~ WhiteCColor" corona-dash-dot="false"-->
+              <!--corona-drawing="true" corona-from-center="false" corona-inset="5" corona-inverted="false"-->
+              <!--corona-line-cap-butt="false" corona-outline="true" corona-outline-width-add="2" default-value="0.5"-->
+              <!--handle-color="~ WhiteCColor" handle-line-width="5" handle-shadow-color="~ GreyCColor" max-value="1"-->
+              <!--min-value="0" mouse-enabled="true" opacity="1" origin="393, 105" size="60, 60"-->
+              <!--skip-handle-drawing="false" transparent="false" value-inset="5" wants-focus="true"-->
+              <!--wheel-inc-value="0.1" zoom-factor="1.5"-->
+        <!--/>-->
+
+        <!-- filter LFO speed slider -->
+        <view control-tag="Unit1::LFOFilter" class="CKnob" angle-range="270" angle-start="135" autosize="right top"
+              background-offset="0, 0" circle-drawing="true" corona-color="~ WhiteCColor" corona-dash-dot="false"
+              corona-drawing="true" corona-from-center="false" corona-inset="5" corona-inverted="false"
+              corona-line-cap-butt="false" corona-outline="true" corona-outline-width-add="2" default-value="0.5"
+              handle-color="~ WhiteCColor" handle-line-width="5" handle-shadow-color="~ GreyCColor" max-value="1"
+              min-value="0" mouse-enabled="true" opacity="1" origin="393, 105" size="60, 60"
+              skip-handle-drawing="false" transparent="false" value-inset="5" wants-focus="true"
+              wheel-inc-value="0.1" zoom-factor="1.5"
+        />
+
+        <!-- filter LFO depth slider -->
+        <view control-tag="Unit1::LFOFilterDepth" class="CKnob" angle-range="270" angle-start="135" autosize="right top"
+              background-offset="0, 0" circle-drawing="true" corona-color="~ WhiteCColor" corona-dash-dot="false"
+              corona-drawing="true" corona-from-center="false" corona-inset="5" corona-inverted="false"
+              corona-line-cap-butt="false" corona-outline="true" corona-outline-width-add="2" default-value="0.5"
+              handle-color="~ WhiteCColor" handle-line-width="5" handle-shadow-color="~ GreyCColor" max-value="1"
+              min-value="0" mouse-enabled="true" opacity="1" origin="483, 105" size="60, 60"
+              skip-handle-drawing="false" transparent="false" value-inset="5" wants-focus="true"
+              wheel-inc-value="0.1" zoom-factor="1.5"
+        />
+
+        <!-- MURK  -->
+        <!-- playback rate slider -->
+        <view control-tag="Unit1::ReverbPlaybackRate" class="CKnob" angle-range="270" angle-start="135" autosize="right top"
+              background-offset="0, 0" circle-drawing="true" corona-color="~ WhiteCColor" corona-dash-dot="false"
+              corona-drawing="true" corona-from-center="false" corona-inset="5" corona-inverted="false"
+              corona-line-cap-butt="false" corona-outline="true" corona-outline-width-add="2" default-value="0.5"
+              handle-color="~ WhiteCColor" handle-line-width="5" handle-shadow-color="~ GreyCColor" max-value="1"
+              min-value="0" mouse-enabled="true" opacity="1" origin="630, 105" size="60, 60"
+              skip-handle-drawing="false" transparent="false" value-inset="5" wants-focus="true"
+              wheel-inc-value="0.1" zoom-factor="1.5"
+        />
+
+        <!-- decimator slider -->
+        <view control-tag="Unit1::Decimator" class="CKnob" angle-range="270" angle-start="135" autosize="right top"
+              background-offset="0, 0" circle-drawing="true" corona-color="~ WhiteCColor" corona-dash-dot="false"
+              corona-drawing="true" corona-from-center="false" corona-inset="5" corona-inverted="false"
+              corona-line-cap-butt="false" corona-outline="true" corona-outline-width-add="2" default-value="0.5"
+              handle-color="~ WhiteCColor" handle-line-width="5" handle-shadow-color="~ GreyCColor" max-value="1"
+              min-value="0" mouse-enabled="true" opacity="1" origin="720, 105" size="60, 60"
+              skip-handle-drawing="false" transparent="false" value-inset="5" wants-focus="true"
+              wheel-inc-value="0.1" zoom-factor="1.5"
+        />
+
+        <!-- BOTHER -->
+        <!-- bit resolution slider -->
+        <view control-tag="Unit1::BitResolution" class="CKnob" angle-range="270" angle-start="135" autosize="right top"
+              background-offset="0, 0" circle-drawing="true" corona-color="~ WhiteCColor" corona-dash-dot="false"
+              corona-drawing="true" corona-from-center="false" corona-inset="5" corona-inverted="false"
+              corona-line-cap-butt="false" corona-outline="true" corona-outline-width-add="2" default-value="0.5"
+              handle-color="~ WhiteCColor" handle-line-width="5" handle-shadow-color="~ GreyCColor" max-value="1"
+              min-value="0" mouse-enabled="true" opacity="1" origin="20, 360" size="60, 60"
+              skip-handle-drawing="false" transparent="false" value-inset="5" wants-focus="true"
+              wheel-inc-value="0.1" zoom-factor="1.5"
+        />
+
+        <!-- LFO rate slider -->
+        <view control-tag="Unit1::LFOBitResolution" class="CKnob" angle-range="270" angle-start="135" autosize="right top"
+              background-offset="0, 0" circle-drawing="true" corona-color="~ WhiteCColor" corona-dash-dot="false"
+              corona-drawing="true" corona-from-center="false" corona-inset="5" corona-inverted="false"
+              corona-line-cap-butt="false" corona-outline="true" corona-outline-width-add="2" default-value="0.5"
+              handle-color="~ WhiteCColor" handle-line-width="5" handle-shadow-color="~ GreyCColor" max-value="1"
+              min-value="0" mouse-enabled="true" opacity="1" origin="110, 360" size="60, 60"
+              skip-handle-drawing="false" transparent="false" value-inset="5" wants-focus="true"
+              wheel-inc-value="0.1" zoom-factor="1.5"
+        />
+
+        <!-- LFO depth slider -->
+        <view control-tag="Unit1::LFOBitResolutionDepth" class="CKnob" angle-range="270" angle-start="135" autosize="right top"
+              background-offset="0, 0" circle-drawing="true" corona-color="~ WhiteCColor" corona-dash-dot="false"
+              corona-drawing="true" corona-from-center="false" corona-inset="5" corona-inverted="false"
+              corona-line-cap-butt="false" corona-outline="true" corona-outline-width-add="2" default-value="0.5"
+              handle-color="~ WhiteCColor" handle-line-width="5" handle-shadow-color="~ GreyCColor" max-value="1"
+              min-value="0" mouse-enabled="true" opacity="1" origin="200, 360" size="60, 60"
+              skip-handle-drawing="false" transparent="false" value-inset="5" wants-focus="true"
+              wheel-inc-value="0.1" zoom-factor="1.5"
+        />
+
+        <!-- Pre/post reverb mix -->
+        <view control-tag="Unit1::BitCrusherChain" class="CCheckBox" origin="380, 286" size="25, 40" autosize-to-fit="false"
+              background-offset="0, 0" boxfill-color="#85bad7"  autosize="bottom"
+              boxframe-color="~ BlackCColor" checkmark-color="~ BlackCColor"
+              default-value="0" draw-crossbox="true" font="~ NormalFontSmall" font-color="Light Grey" frame-width="1"
+              max-value="1" min-value="0" mouse-enabled="true" opacity="1" round-rect-radius="0"
+              title="" transparent="false" wants-focus="true" wheel-inc-value="0.1"
+        />
+
+        <!-- COMMINGLE -->
+        <!-- dry mix slider -->
+        <view control-tag="Unit1::ReverbDryMix" class="CKnob" angle-range="270" angle-start="135" autosize="right top"
+              background-offset="0, 0" circle-drawing="true" corona-color="~ WhiteCColor" corona-dash-dot="false"
+              corona-drawing="true" corona-from-center="false" corona-inset="5" corona-inverted="false"
+              corona-line-cap-butt="false" corona-outline="true" corona-outline-width-add="2" default-value="0.5"
+              handle-color="~ WhiteCColor" handle-line-width="5" handle-shadow-color="~ GreyCColor" max-value="1"
+              min-value="0" mouse-enabled="true" opacity="1" origin="455, 360" size="60, 60"
+              skip-handle-drawing="false" transparent="false" value-inset="5" wants-focus="true"
+              wheel-inc-value="0.1" zoom-factor="1.5"
+        />
+
+        <!-- wet mix slider -->
+        <view control-tag="Unit1::ReverbWetMix" class="CKnob" angle-range="270" angle-start="135" autosize="right top"
+              background-offset="0, 0" circle-drawing="true" corona-color="~ WhiteCColor" corona-dash-dot="false"
+              corona-drawing="true" corona-from-center="false" corona-inset="5" corona-inverted="false"
+              corona-line-cap-butt="false" corona-outline="true" corona-outline-width-add="2" default-value="0.5"
+              handle-color="~ WhiteCColor" handle-line-width="5" handle-shadow-color="~ GreyCColor" max-value="1"
+              min-value="0" mouse-enabled="true" opacity="1" origin="545, 360" size="60, 60"
+              skip-handle-drawing="false" transparent="false" value-inset="5" wants-focus="true"
+              wheel-inc-value="0.1" zoom-factor="1.5"
+        />
+
+    </template>
+    <variables/>
+    <custom>
+        <attributes color="Focus" enabled="false" name="FocusDrawing" width="1"/>
+        <attributes Size="5, 5" name="UIGridController"/>
+        <attributes SelectedTemplate="view" name="UITemplateController"/>
+        <attributes EditViewScale="1" EditorSize="0, 0, 882, 716"
+                    SplitViewSize_0_0="0.6402877697841726778449356061173602938652"
+                    SplitViewSize_0_1="0.3309352517985611474848894886235939338803"
+                    SplitViewSize_1_0="0.506474820143884896239683257590513676405"
+                    SplitViewSize_1_1="0.486330935251798546214985208280268125236"
+                    SplitViewSize_2_0="0.636054421768707523021646466077072545886"
+                    SplitViewSize_2_1="0.3582766439909297329080573035753332078457"
+                    TabSwitchValue="0" Version="1" name="UIEditController" />
+        <attributes name="UIAttributesController"/>
+        <attributes SelectedRow="23" name="UIViewCreatorDataSource"/>
+        <attributes SelectedRow="4" name="UIBitmapsDataSource"/>
+        <attributes Path="resources/graphics/fogpad.uidesc" name="VST3Editor"/>
+        <attributes SelectedRow="2" name="UITagsDataSource"/>
+        <attributes SelectedRow="0" name="UIColorsDataSource"/>
+        <attributes SelectedRow="-1" name="UIGradientsDataSource"/>
+        <attributes SelectedRow="-1" name="UIFontsDataSource"/>
+    </custom>
+    <bitmaps>
+        <bitmap name="background" path="background.png"/>
+    </bitmaps>
+
+    <!-- map the controllers listed above to their paramids by tag index -->
+
+    <control-tags>
+        <control-tag name="UI::SendMessage"              tag="1000" />
+        <control-tag name="Unit1::ReverbSize"            tag="1" />
+        <control-tag name="Unit1::ReverbWidth"           tag="2" />
+        <control-tag name="Unit1::FilterCutoff"          tag="3"/>
+        <!--<control-tag name="Unit1::FilterResonance"       tag="4"/>-->
+        <control-tag name="Unit1::LFOFilter"             tag="5"/>
+        <control-tag name="Unit1::LFOFilterDepth"        tag="6"/>
+        <control-tag name="Unit1::ReverbPlaybackRate"    tag="7" />
+        <control-tag name="Unit1::Decimator"             tag="8"/>
+        <control-tag name="Unit1::BitResolution"         tag="9" />
+        <control-tag name="Unit1::LFOBitResolution"      tag="10" />
+        <control-tag name="Unit1::LFOBitResolutionDepth" tag="11" />
+        <control-tag name="Unit1::BitCrusherChain"       tag="12" />
+        <control-tag name="Unit1::ReverbFreeze"          tag="13" />
+        <control-tag name="Unit1::ReverbDryMix"          tag="14" />
+        <control-tag name="Unit1::ReverbWetMix"          tag="15" />
+    </control-tags>
+</vstgui-ui-description>

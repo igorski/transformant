@@ -84,7 +84,7 @@ set(VSTSDK_PLUGIN_SOURCE
 )
 
 #if (SMTG_CREATE_VST2_VERSION)
-    set(fogpad_vst2_sources
+    set(formantplaceholder_vst2_sources
         ${VST3_SDK_ROOT}/public.sdk/source/common/memorystream.cpp
         ${VST3_SDK_ROOT}/public.sdk/source/vst/hosting/eventlist.cpp
         ${VST3_SDK_ROOT}/public.sdk/source/vst/hosting/hostclasses.cpp
@@ -102,7 +102,7 @@ set(VSTSDK_PLUGIN_SOURCE
 # Project sources #
 ###################
 
-set(fogpad_sources
+set(formantplaceholder_sources
     src/global.h
     src/audiobuffer.h
     src/audiobuffer.cpp
@@ -113,8 +113,8 @@ set(fogpad_sources
     src/lfo.h
     src/lfo.cpp
     src/paramids.h
-    src/process.h
-    src/process.cpp
+    src/pluginprocess.h
+    src/pluginprocess.cpp
     src/vst.h
     src/vst.cpp
     src/vstentry.cpp
@@ -127,10 +127,10 @@ set(fogpad_sources
 
 # VST2 is only defined for macOS and Windows
 if(MAC OR WIN)
-    set(fogpad_sources ${fogpad_sources} ${fogpad_vst2_sources})
+    set(formantplaceholder_sources ${formantplaceholder_sources} ${formantplaceholder_vst2_sources})
 endif()
 
-set(target fogpad)
+set(target formantplaceholder)
 
 ##############
 # Audio Unit #
@@ -150,7 +150,7 @@ if (JAMBA_ENABLE_AUDIO_UNIT)
     configure_file(${CPP_SOURCES}/version.h ${CMAKE_BINARY_DIR}/generated/version.h)
     include_directories(${CMAKE_BINARY_DIR}/generated/)
 
-    jamba_add_vst3plugin(${target} "${fogpad_sources}")
+    jamba_add_vst3plugin(${target} "${formantplaceholder_sources}")
     target_include_directories(${target} PUBLIC ${VST3_SDK_ROOT}/vstgui4)
     target_link_libraries(${target} PRIVATE base sdk vstgui_support jamba)
 
@@ -158,7 +158,7 @@ if (JAMBA_ENABLE_AUDIO_UNIT)
     # Resources - add your resources here...
     ###################################################
 
-    jamba_add_vst3_resource(${target} DATA "fogpad.uidesc")
+    jamba_add_vst3_resource(${target} DATA "formantplaceholder.uidesc")
     jamba_add_vst3_resource(${target} PNG "background.png")
 
     # this must be called after you are done calling jamba_add_vst3_resource for all resources
@@ -172,7 +172,7 @@ else()
 # VST #
 #######
 
-smtg_add_vst3plugin(${target} ${VST3_SDK_ROOT} ${fogpad_sources})
+smtg_add_vst3plugin(${target} ${VST3_SDK_ROOT} ${formantplaceholder_sources})
 
 include_directories(${VSTSDK_INCLUDE_DIR})
 target_link_libraries(${target} ${VSTSDK_LIBRARIES})
@@ -207,13 +207,13 @@ IF (APPLE)
         find_library(EXPAT Expat)
         target_link_libraries(${target} PRIVATE ${COREFOUNDATION_FRAMEWORK} ${COCOA_FRAMEWORK} ${OPENGL_FRAMEWORK} ${ACCELERATE_FRAMEWORK} ${QUARTZCORE_FRAMEWORK} ${CARBON_FRAMEWORK} ${EXPAT})
     endif()
-    set_target_properties(fogpad PROPERTIES
+    set_target_properties(formantplaceholder PROPERTIES
         BUNDLE true
         BUNDLE_EXTENSION "vst3"
         XCODE_ATTRIBUTE_WRAPPER_EXTENSION "vst3"
         MACOSX_BUNDLE_INFO_PLIST "${CMAKE_CURRENT_SOURCE_DIR}/mac/Info.plist"
         MACOSX_BUNDLE_BUNDLE_NAME "FogPad"
-        MACOSX_BUNDLE_GUI_IDENTIFIER "nl.igorski.fogpad"
+        MACOSX_BUNDLE_GUI_IDENTIFIER "nl.igorski.formantplaceholder"
         MACOSX_BUNDLE_ICON_FILE ""
         MACOSX_BUNDLE_SHORT_VERSION_STRING "1.0.0"
         MACOSX_BUNDLE_COPYRIGHT "igorski.nl © 2019"
@@ -222,13 +222,13 @@ ENDIF (APPLE)
 
 # Resources
 
-smtg_add_vst3_resource(${target} "resource/fogpad.uidesc")
+smtg_add_vst3_resource(${target} "resource/formantplaceholder.uidesc")
 smtg_add_vst3_resource(${target} "resource/background.png")
 
 if(MAC)
     smtg_set_bundle(${target} INFOPLIST "${CMAKE_CURRENT_SOURCE_DIR}/mac/Info.plist" PREPROCESS)
 elseif(WIN)
-    target_sources(${target} PRIVATE resource/fogpad.rc)
+    target_sources(${target} PRIVATE resource/formantplaceholder.rc)
 endif()
 
 if (SMTG_CREATE_VST2_VERSION)
@@ -249,19 +249,19 @@ endif()
 ######################
 
 if(APPLE)
-  install(TARGETS fogpad
+  install(TARGETS formantplaceholder
     DESTINATION "$ENV{HOME}/Library/Audio/Plug-Ins/VST"
   )
 elseif(WIN32)
-  install(TARGETS fogpad
+  install(TARGETS formantplaceholder
     DESTINATION "C:/Program Files (x86)/Common Files/VST3/"
   )
 elseif(WIN)
-  install(TARGETS fogpad
+  install(TARGETS formantplaceholder
     DESTINATION "C:/Program Files/Common Files/VST3/"
   )
 elseif(UNIX AND NOT APPLE) #Linux
-  install(TARGETS fogpad
+  install(TARGETS formantplaceholder
     DESTINATION "/usr/lib/lxvst"
   )
 endif()

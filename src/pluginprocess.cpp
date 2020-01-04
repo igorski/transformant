@@ -20,23 +20,23 @@
  * IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM, OUT OF OR IN
  * CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
  */
-#include "process.h"
+#include "pluginprocess.h"
 #include "calc.h"
 #include <math.h>
 
 namespace Igorski {
 
-Process::Process( int amountOfChannels ) {
+PluginProcess::PluginProcess( int amountOfChannels ) {
     _amountOfChannels = amountOfChannels;
 
     bitCrusher    = new BitCrusher( 8, .5f, .5f );
-    formantfilter = new FormantFilter( 0.f );
+    formantFilter = new FormantFilter( 0.f );
 
     // will be lazily created in the process function
     _mixBuffer = nullptr;
 }
 
-Process::~Process() {
+PluginProcess::~PluginProcess() {
     delete _mixBuffer;
     delete bitCrusher;
     delete formantFilter;

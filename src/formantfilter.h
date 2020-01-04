@@ -25,6 +25,8 @@
 #ifndef __FORMANTFILTER_H_INCLUDED__
 #define __FORMANTFILTER_H_INCLUDED__
 
+#include "lfo.h"
+
 namespace Igorski {
 class FormantFilter
 {

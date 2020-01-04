@@ -23,8 +23,8 @@
 namespace Igorski
 {
 template <typename SampleType>
-void Process::process( SampleType** inBuffer, SampleType** outBuffer, int numInChannels, int numOutChannels,
-                       int bufferSize, uint32 sampleFramesSize ) {
+void PluginProcess::process( SampleType** inBuffer, SampleType** outBuffer, int numInChannels, int numOutChannels,
+                             int bufferSize, uint32 sampleFramesSize ) {
 
     // prepare the mix buffers and clone the incoming buffer contents into the pre-mix buffer
 
@@ -34,6 +34,7 @@ void Process::process( SampleType** inBuffer, SampleType** outBuffer, int numInC
     {
         SampleType* channelInBuffer  = inBuffer[ c ];
         SampleType* channelOutBuffer = outBuffer[ c ];
+        float* channelMixBuffer = _mixBuffer->getBufferForChannel( c );
 
         // when processing the first channel, store the current effects properties
         // so each subsequent channel is processed using the same processor variables
@@ -49,7 +50,7 @@ void Process::process( SampleType** inBuffer, SampleType** outBuffer, int numInC
 
         // formant filter
 
-        filter->process( channelMixBuffer, bufferSize, c );
+        formantFilter->process( channelMixBuffer, bufferSize );
 
         // post formant filter bit crusher processing
 
@@ -58,7 +59,7 @@ void Process::process( SampleType** inBuffer, SampleType** outBuffer, int numInC
 
         // write the effected mix buffers into the output buffer
 
-        for ( i = 0; i < bufferSize; ++i ) {
+        for ( size_t i = 0; i < bufferSize; ++i ) {
 
             // before writing to the out buffer we take a snapshot of the current in sample
             // value as VST2 in Ableton Live supplies the same buffer for in and out!
@@ -78,7 +79,7 @@ void Process::process( SampleType** inBuffer, SampleType** outBuffer, int numInC
 }
 
 template <typename SampleType>
-void Process::prepareMixBuffers( SampleType** inBuffer, int numInChannels, int bufferSize )
+void PluginProcess::prepareMixBuffers( SampleType** inBuffer, int numInChannels, int bufferSize )
 {
     // if the pre mix buffer wasn't created yet or the buffer size has changed
     // delete existing buffer and create new one to match properties
@@ -90,7 +91,7 @@ void Process::prepareMixBuffers( SampleType** inBuffer, int numInChannels, int b
 
     // clone the in buffer contents
     // note the clone is always cast to float as it is
-    // used for internal processing (see Process::process)
+    // used for internal processing (see PluginProcess::process)
 
     for ( int c = 0; c < numInChannels; ++c ) {
 

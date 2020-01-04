@@ -84,7 +84,7 @@ void FormantFilter::store()
 
 void FormantFilter::restore()
 {
-    memcpy( _memory, _storeMemory, 10 * sizeof( float ));
+    memcpy( _memory, _storedMemory, 10 * sizeof( float ));
 }
 
 void FormantFilter::setLFO( float LFORatePercentage, float LFODepth )
@@ -117,21 +117,21 @@ void FormantFilter::setLFO( float LFORatePercentage, float LFODepth )
 
 void FormantFilter::process( float* inBuffer, int bufferSize )
 {
-    int bufferSize = sampleBuffer->bufferSize;
-
     for ( int i = 0; i < bufferSize; ++i )
     {
-        float res = undenormalise( _currentCoeffs[ 0 ]  * inBuffer[ i ] +
-                                   _currentCoeffs[ 1 ]  * _memory[ 0 ] +
-                                   _currentCoeffs[ 2 ]  * _memory[ 1 ] +
-                                   _currentCoeffs[ 3 ]  * _memory[ 2 ] +
-                                   _currentCoeffs[ 4 ]  * _memory[ 3 ] +
-                                   _currentCoeffs[ 5 ]  * _memory[ 4 ] +
-                                   _currentCoeffs[ 6 ]  * _memory[ 5 ] +
-                                   _currentCoeffs[ 7 ]  * _memory[ 6 ] +
-                                   _currentCoeffs[ 8 ]  * _memory[ 7 ] +
-                                   _currentCoeffs[ 9 ]  * _memory[ 8 ] +
-                                   _currentCoeffs[ 10 ] * _memory[ 9 ] );
+        float res = ( _currentCoeffs[ 0 ]  * inBuffer[ i ] +
+                      _currentCoeffs[ 1 ]  * _memory[ 0 ] +
+                      _currentCoeffs[ 2 ]  * _memory[ 1 ] +
+                      _currentCoeffs[ 3 ]  * _memory[ 2 ] +
+                      _currentCoeffs[ 4 ]  * _memory[ 3 ] +
+                      _currentCoeffs[ 5 ]  * _memory[ 4 ] +
+                      _currentCoeffs[ 6 ]  * _memory[ 5 ] +
+                      _currentCoeffs[ 7 ]  * _memory[ 6 ] +
+                      _currentCoeffs[ 8 ]  * _memory[ 7 ] +
+                      _currentCoeffs[ 9 ]  * _memory[ 8 ] +
+                      _currentCoeffs[ 10 ] * _memory[ 9 ] );
+
+        res = undenormalise( res );
 
         _memory[ 9 ] = _memory[ 8 ];
         _memory[ 8 ] = _memory[ 7 ];

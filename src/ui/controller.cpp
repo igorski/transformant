@@ -154,11 +154,11 @@ tresult PLUGIN_API Controller::setComponentState( IBStream* state )
     SWAP32( savedBitResolutionChain )
 #endif
 
-        setParamNormalized( kVowelId,            savedVowel );
-        setParamNormalized( kLFOVowelId,         savedLFOVowel );
-        setParamNormalized( kLFOVowelDepthId,    savedLFOVowelDepth );
-        setParamNormalized( kBitResolution,      savedBitResolution );
-        setParamNormalized( kBitResolutionChain, savedBitResolutionChain );
+        setParamNormalized( kVowelId,              savedVowel );
+        setParamNormalized( kLFOVowelId,           savedLFOVowel );
+        setParamNormalized( kLFOVowelDepthId,      savedLFOVowelDepth );
+        setParamNormalized( kBitResolutionId,      savedBitResolution );
+        setParamNormalized( kBitResolutionChainId, savedBitResolutionChain );
 
         state->seek( sizeof ( float ), IBStream::kIBSeekCur );
     }
@@ -261,14 +261,13 @@ tresult PLUGIN_API Controller::getParamStringByValue( ParamID tag, ParamValue va
         // simply read the normalized value which is in the same range
 
         case kVowelId:
-        case kLFOVowelId:
         case kLFOVowelDepthId:
         case kBitResolutionId:
         case kBitResolutionChainId:
         {
             char text[32];
 
-            else if ( tag == kBitResolutionChainId ) {
+            if ( tag == kBitResolutionChainId ) {
                 sprintf( text, "%s", ( valueNormalized == 0 ) ? "Pre-formant mix" : "Post-formant mix" );
             }
             else {

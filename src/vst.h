@@ -24,7 +24,7 @@
 #define __VST_HEADER__
 
 #include "public.sdk/source/vst/vstaudioeffect.h"
-#include "reverbprocess.h"
+#include "pluginprocess.h"
 #include "global.h"
 
 using namespace Steinberg::Vst;
@@ -96,7 +96,7 @@ class FormantPlaceholder : public AudioEffect
 
         int32 currentProcessMode;
 
-        Igorski::Process* process;
+        Igorski::PluginProcess* pluginProcess;
 
         // synchronize the processors model with UI led changes
 

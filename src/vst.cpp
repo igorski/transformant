@@ -45,8 +45,8 @@ FormantPlaceholder::FormantPlaceholder()
 , fLFOVowel( 0.f )
 , fLFOVowelDepth( 0.5f )
 , fBitResolution( 0.f )
-, fBitResolutionChain( 0.f ),
-, process( nullptr )
+, fBitResolutionChain( 0.f )
+, pluginProcess( nullptr )
 , outputGainOld( 0.f )
 , currentProcessMode( -1 ) // -1 means not initialized
 {
@@ -54,14 +54,14 @@ FormantPlaceholder::FormantPlaceholder()
     setControllerClass( VST::ControllerUID );
 
     // should be created on setupProcessing, this however doesn't fire for Audio Unit using auval?
-    process = new Process( 2 );
+    pluginProcess = new PluginProcess( 2 );
 }
 
 //------------------------------------------------------------------------
 FormantPlaceholder::~FormantPlaceholder()
 {
     // free all allocated resources
-    delete process;
+    delete pluginProcess;
 }
 
 //------------------------------------------------------------------------
@@ -135,17 +135,17 @@ tresult PLUGIN_API FormantPlaceholder::process( ProcessData& data )
 
                     case kVowelId:
                         if ( paramQueue->getPoint( numPoints - 1, sampleOffset, value ) == kResultTrue )
-                            fVowelId = ( float ) value;
+                            fVowel = ( float ) value;
                         break;
 
                     case kLFOVowelId:
                         if ( paramQueue->getPoint( numPoints - 1, sampleOffset, value ) == kResultTrue )
-                            fLFOVowelId = ( float ) value;
+                            fLFOVowel = ( float ) value;
                         break;
 
                     case kLFOVowelDepthId:
                         if ( paramQueue->getPoint( numPoints - 1, sampleOffset, value ) == kResultTrue )
-                            fLFOVowelDepthId = ( float ) value;
+                            fLFOVowelDepth = ( float ) value;
                         break;
 
                     case kBitResolutionId:
@@ -190,23 +190,23 @@ tresult PLUGIN_API FormantPlaceholder::process( ProcessData& data )
 
     if ( isDoublePrecision ) {
         // 64-bit samples, e.g. Reaper64
-        process->process<double>(
+        pluginProcess->process<double>(
             ( double** ) in, ( double** ) out, numInChannels, numOutChannels,
             data.numSamples, sampleFramesSize
         );
     }
     else {
         // 32-bit samples, e.g. Ableton Live, Bitwig Studio... (oddly enough also when 64-bit?)
-        process->process<float>(
+        pluginProcess->process<float>(
             ( float** ) in, ( float** ) out, numInChannels, numOutChannels,
             data.numSamples, sampleFramesSize
         );
     }
 
     // output flags
-
+  /*
     data.outputs[ 0 ].silenceFlags = false; // there should always be output
-    float outputGain = process->limiter->getLinearGR();
+    float outputGain = pluginProcess->limiter->getLinearGR();
 
     //---4) Write output parameter changes-----------
     IParameterChanges* outParamChanges = data.outputParameterChanges;
@@ -219,6 +219,7 @@ tresult PLUGIN_API FormantPlaceholder::process( ProcessData& data )
             paramQueue->addPoint( 0, outputGain, index );
     }
     outputGainOld = outputGain;
+    */
     return kResultOk;
 }
 
@@ -347,12 +348,12 @@ tresult PLUGIN_API FormantPlaceholder::setupProcessing( ProcessSetup& newSetup )
 
     // spotted to fire multiple times...
 
-    if ( process != nullptr )
-        delete process;
+    if ( pluginProcess != nullptr )
+        delete pluginProcess;
 
     // TODO: creating a bunch of extra channels for no apparent reason?
     // get the correct channel amount and don't allocate more than necessary...
-    process = new process( 6 );
+    pluginProcess = new PluginProcess( 6 );
 
     syncModel();
 
@@ -453,10 +454,10 @@ tresult PLUGIN_API FormantPlaceholder::notify( IMessage* message )
 
 void FormantPlaceholder::syncModel()
 {
-    process->bitCrusherPostMix = Calc::toBool( fBitResolutionChain );
-    process->formantFilter->setVowel( fVowel );
-    process->formantFilter->setLFO( fLFOVowel, fLFOVowelDepth );
-    process->bitCrusher->setAmount( fBitResolution );
+    pluginProcess->bitCrusherPostMix = Calc::toBool( fBitResolutionChain );
+    pluginProcess->formantFilter->setVowel( fVowel );
+    pluginProcess->formantFilter->setLFO( fLFOVowel, fLFOVowelDepth );
+    pluginProcess->bitCrusher->setAmount( fBitResolution );
 }
 
 }

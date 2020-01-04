@@ -20,23 +20,23 @@
  * IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM, OUT OF OR IN
  * CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
  */
-#ifndef __PROCESS__H_INCLUDED__
-#define __PROCESS__H_INCLUDED__
+#ifndef __PLUGIN_PROCESS__H_INCLUDED__
+#define __PLUGIN_PROCESS__H_INCLUDED__
 
 #include "global.h"
 #include "audiobuffer.h"
-#include "bitcrusher.h
+#include "bitcrusher.h"
 #include "formantfilter.h"
 #include <vector>
 
 using namespace Steinberg;
 
 namespace Igorski {
-class Process {
+class PluginProcess {
 
     public:
-        Process( int amountOfChannels );
-        ~Process();
+        PluginProcess( int amountOfChannels );
+        ~PluginProcess();
 
         // apply effect to incoming sampleBuffer contents
 
@@ -68,6 +68,6 @@ class Process {
 };
 }
 
-#include "Process.tcc"
+#include "pluginprocess.tcc"
 
 #endif

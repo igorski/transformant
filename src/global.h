@@ -39,8 +39,8 @@ namespace VST {
     static const FUID ControllerUID( 0x73A7B7C0, 0x1AD743C1, 0xBFBFD9F4, 0x5F5A04E1 );
 
     // set upon initialization, see vst.cpp
-    float SAMPLE_RATE = 44100.f;
-    int BUFFER_SIZE   = 8192;
+    static float SAMPLE_RATE = 44100.f;
+    static int BUFFER_SIZE   = 8192;
 
     static const float PI     = 3.141592653589793f;
     static const float TWO_PI = PI * 2.f;

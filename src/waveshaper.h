@@ -1,7 +1,7 @@
 /**
  * The MIT License (MIT)
  *
- * Copyright (c) 2020 Igor Zinken - https://www.igorski.nl
+ * Copyright (c) 2013-2020 Igor Zinken - https://www.igorski.nl
  *
  * Permission is hereby granted, free of charge, to any person obtaining a copy of
  * this software and associated documentation files (the "Software"), to deal in
@@ -20,24 +20,27 @@
  * IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM, OUT OF OR IN
  * CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
  */
-#ifndef __PARAMIDS_HEADER__
-#define __PARAMIDS_HEADER__
+#ifndef __MWENGINE__WAVESHAPER_H_INCLUDED__
+#define __MWENGINE__WAVESHAPER_H_INCLUDED__
 
-enum
+#include "baseprocessor.h"
+
+namespace MWEngine {
+class WaveShaper : public BaseProcessor
 {
-    // ids for all visual controls
+    public:
+        WaveShaper( float amount, float level );
 
-    kVowelLId = 1,         // formant vowel L
-    kVowelRId,             // formant vowel R
-    KVowelSyncId,          // formant vowel sync
-    kLFOVowelLId,          // formant vowel L LFO rate
-    kLFOVowelLDepthId,     // formant vowel L LFO depth
-    kLFOVowelRId,          // formant vowel R LFO rate
-    kLFOVowelRDepthId,     // formant vowel R LFO depth
-    kDistortionTypeId,     // distortion type
-    kDriveId,              // distortion drive amount
-    kDistortionChainId,    // distortion pre/pos formant mix
-    kVuPPMId               // for the Vu value return to host
+        float getAmount();
+        void setAmount( float value ); // range between -1 and +1
+        float getLevel();
+        void setLevel( float value );
+        void process( float* inBuffer, int bufferSize );
+
+    private:
+        float _amount;
+        float _level;
 };
+} // E.O namespace MWEngine
 
 #endif

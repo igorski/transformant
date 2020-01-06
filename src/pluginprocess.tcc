@@ -1,7 +1,7 @@
 /**
  * The MIT License (MIT)
  *
- * Copyright (c) 2019-2020 Igor Zinken - https://www.igorski.nl
+ * Copyright (c) 2020 Igor Zinken - https://www.igorski.nl
  *
  * Permission is hereby granted, free of charge, to any person obtaining a copy of
  * this software and associated documentation files (the "Software"), to deal in
@@ -38,8 +38,12 @@ void PluginProcess::process( SampleType** inBuffer, SampleType** outBuffer, int 
 
         // pre formant filter bit crusher processing
 
-        if ( !bitCrusherPostMix ) {
-            bitCrusher->process( channelMixBuffer, bufferSize );
+        if ( !distortionPostMix ) {
+            if ( distortionTypeCrusher ) {
+                bitCrusher->process( channelMixBuffer, bufferSize );
+            } else {
+                waveShaper->process( channelMixBuffer, bufferSize );
+            }
         }
 
         // formant filter
@@ -52,8 +56,12 @@ void PluginProcess::process( SampleType** inBuffer, SampleType** outBuffer, int 
 
         // post formant filter bit crusher processing
 
-        if ( bitCrusherPostMix ) {
-            bitCrusher->process( channelMixBuffer, bufferSize );
+        if ( distortionPostMix ) {
+            if ( distortionTypeCrusher ) {
+                bitCrusher->process( channelMixBuffer, bufferSize );
+            } else {
+                waveShaper->process( channelMixBuffer, bufferSize );
+            }
         }
 
         // write the effected mix buffers into the output buffer
@@ -70,7 +78,7 @@ void PluginProcess::process( SampleType** inBuffer, SampleType** outBuffer, int 
         }
     }
     // limit the output signal as it can get quite hot
-   // limiter->process<SampleType>( outBuffer, bufferSize, numOutChannels );
+    limiter->process<SampleType>( outBuffer, bufferSize, numOutChannels );
 }
 
 template <typename SampleType>

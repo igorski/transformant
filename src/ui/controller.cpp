@@ -89,6 +89,12 @@ tresult PLUGIN_API Controller::initialize( FUnknown* context )
     ));
 
     parameters.addParameter( new RangeParameter(
+        USTRING( "Vowel Sync" ), 0, 1, 0, ParameterInfo::kCanAutomate, kVowelSyncId, unitId
+    ));
+
+    // LFO controls
+
+    parameters.addParameter( new RangeParameter(
         USTRING( "Vowel L LFO rate" ), kLFOVowelLId, USTRING( "Hz" ),
         Igorski::VST::MIN_LFO_RATE(), Igorski::VST::MAX_LFO_RATE(), Igorski::VST::MIN_LFO_RATE(),
         0, ParameterInfo::kCanAutomate, unitId
@@ -112,16 +118,20 @@ tresult PLUGIN_API Controller::initialize( FUnknown* context )
         0, ParameterInfo::kCanAutomate, unitId
     ));
 
-    // BitCrusher controls
+    // distortion controls
 
     parameters.addParameter( new RangeParameter(
-        USTRING( "Bits" ), kBitResolutionId, USTRING( "0 - 1" ),
+        USTRING( "Distortion Type" ), 0, 1, 0, ParameterInfo::kCanAutomate, kDistortionType, unitId
+    ));
+
+    parameters.addParameter( new RangeParameter(
+        USTRING( "Drive" ), kDriveId, USTRING( "0 - 1" ),
         0.f, 1.f, 0.f,
         0, ParameterInfo::kCanAutomate, unitId
     ));
 
     parameters.addParameter(
-        USTRING( "Crusher pre/post" ), 0, 1, 0, ParameterInfo::kCanAutomate, kBitResolutionChainId, unitId
+        USTRING( "Distortion pre/post" ), 0, 1, 0, ParameterInfo::kCanAutomate, kDistortionChainId, unitId
     );
 
     // initialization
@@ -152,6 +162,10 @@ tresult PLUGIN_API Controller::setComponentState( IBStream* state )
         if ( state->read( &savedVowelR, sizeof( float )) != kResultOk )
             return kResultFalse;
 
+        float savedVowelSync = 1.f;
+        if ( state->read( &savedVowelSync, sizeof( float )) != kResultOk )
+            return kResultFalse;
+
         float savedLFOVowelL = Igorski::VST::MIN_LFO_RATE();
         if ( state->read( &savedLFOVowelL, sizeof( float )) != kResultOk )
             return kResultFalse;
@@ -168,33 +182,41 @@ tresult PLUGIN_API Controller::setComponentState( IBStream* state )
         if ( state->read( &savedLFOVowelRDepth, sizeof( float )) != kResultOk )
             return kResultFalse;
 
-        float savedBitResolution = 1.f;
-        if ( state->read( &savedBitResolution, sizeof( float )) != kResultOk )
+        float savedDistortionType = 1.f;
+        if ( state->read( &savedDistortionType, sizeof( float )) != kResultOk )
             return kResultFalse;
 
-        float savedBitResolutionChain = 0.f;
-        if ( state->read( &savedBitResolutionChain, sizeof( float )) != kResultOk )
+        float savedDrive = 1.f;
+        if ( state->read( &savedDrive, sizeof( float )) != kResultOk )
+            return kResultFalse;
+
+        float savedDistortionChain = 0.f;
+        if ( state->read( &savedDistortionChain, sizeof( float )) != kResultOk )
             return kResultFalse;
 
 #if BYTEORDER == kBigEndian
     SWAP32( savedVowelL )
     SWAP32( savedVowelR )
+    SWAP32( savedVowelSync )
     SWAP32( savedLFOVowelL )
     SWAP32( savedLFOVowelR )
     SWAP32( savedLFOVowelLDepth )
     SWAP32( savedLFOVowelRDepth )
-    SWAP32( savedBitResolution )
-    SWAP32( savedBitResolutionChain )
+    SWAP32( savedDistortionType )
+    SWAP32( savedDrive )
+    SWAP32( savedDistortionChain )
 #endif
 
-        setParamNormalized( kVowelLId,             savedVowelL );
-        setParamNormalized( kVowelRId,             savedVowelR );
-        setParamNormalized( kLFOVowelLId,          savedLFOVowelL );
-        setParamNormalized( kLFOVowelRId,          savedLFOVowelR );
-        setParamNormalized( kLFOVowelLDepthId,     savedLFOVowelLDepth );
-        setParamNormalized( kLFOVowelRDepthId,     savedLFOVowelRDepth );
-        setParamNormalized( kBitResolutionId,      savedBitResolution );
-        setParamNormalized( kBitResolutionChainId, savedBitResolutionChain );
+        setParamNormalized( kVowelLId,          savedVowelL );
+        setParamNormalized( kVowelRId,          savedVowelR );
+        setParamNormalized( kVowelSyncId,       savedVowelSync );
+        setParamNormalized( kLFOVowelLId,       savedLFOVowelL );
+        setParamNormalized( kLFOVowelRId,       savedLFOVowelR );
+        setParamNormalized( kLFOVowelLDepthId,  savedLFOVowelLDepth );
+        setParamNormalized( kLFOVowelRDepthId,  savedLFOVowelRDepth );
+        setParamNormalized( kDistortionType,    savedDistortionType );
+        setParamNormalized( kDriveId,           savedDrive );
+        setParamNormalized( kDistortionChainId, savedDistortionChain );
 
         state->seek( sizeof ( float ), IBStream::kIBSeekCur );
     }
@@ -298,18 +320,31 @@ tresult PLUGIN_API Controller::getParamStringByValue( ParamID tag, ParamValue va
 
         case kVowelLId:
         case kVowelRId:
+        case kVowelSyncId:
         case kLFOVowelLDepthId:
         case kLFOVowelRDepthId:
-        case kBitResolutionId:
-        case kBitResolutionChainId:
+        case kDistortionTypeId:
+        case kDriveId:
+        case kDistortionChainId:
         {
             char text[32];
 
-            if ( tag == kBitResolutionChainId ) {
-                sprintf( text, "%s", ( valueNormalized == 0 ) ? "Pre-formant mix" : "Post-formant mix" );
-            }
-            else {
-                sprintf( text, "%.2f", ( float ) valueNormalized );
+            switch ( tag ) {
+                default:
+                    sprintf( text, "%.2f", ( float ) valueNormalized );
+                    break;
+
+                case kVowelSync:
+                    sprintf( text, "%s", ( valueNormalized == 0 ) ? "Off": "On" );
+                    break;
+
+                case kDistortionTypeId:
+                    sprintf( text, "%s", ( valueNormalized == 0 ) ? "Waveshaper": "Bitcrusher" );
+                    break;
+
+                case kDistortionChainId:
+                    sprintf( text, "%s", ( valueNormalized == 0 ) ? "Pre-formant mix" : "Post-formant mix" );
+                    break;
             }
             Steinberg::UString( string, 128 ).fromAscii( text );
 

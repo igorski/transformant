@@ -121,6 +121,8 @@ set(formantplaceholder_sources
     src/vst.cpp
     src/vstentry.cpp
     src/version.h
+    src/waveshaper.h
+    src/waveshaper.cpp
     src/ui/controller.h
     src/ui/controller.cpp
     src/ui/uimessagecontroller.h

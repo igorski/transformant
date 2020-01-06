@@ -88,12 +88,14 @@ class FormantPlaceholder : public AudioEffect
 
         float fVowelL;
         float fVowelR;
+        float fVowelSync;
         float fLFOVowelL;
         float fLFOVowelR;
         float fLFOVowelLDepth;
         float fLFOVowelRDepth;
-        float fBitResolution;
-        float fBitResolutionChain;
+        float fDistortionType;
+        float fDrive;
+        float fDistortionChain;
 
         float outputGainOld; // for visualizing output gain in DAW
 

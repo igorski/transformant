@@ -1,7 +1,7 @@
 /**
  * The MIT License (MIT)
  *
- * Copyright (c) 2019-2020 Igor Zinken - https://www.igorski.nl
+ * Copyright (c) 2020 Igor Zinken - https://www.igorski.nl
  *
  * Permission is hereby granted, free of charge, to any person obtaining a copy of
  * this software and associated documentation files (the "Software"), to deal in
@@ -30,6 +30,7 @@ PluginProcess::PluginProcess( int amountOfChannels ) {
     _amountOfChannels = amountOfChannels;
 
     bitCrusher     = new BitCrusher( 8, 1.f, .5f );
+    waveShaper     = new WaveShaper( 0.f, 1.f );
     limiter        = new Limiter( 10.f, 500.f, .95f );
     formantFilterL = new FormantFilter( 0.f );
     formantFilterR = new FormantFilter( 0.f );
@@ -41,6 +42,7 @@ PluginProcess::PluginProcess( int amountOfChannels ) {
 PluginProcess::~PluginProcess() {
     delete _mixBuffer;
     delete bitCrusher;
+    delete waveShaper;
     delete limiter;
     delete formantFilterL;
     delete formantFilterR;

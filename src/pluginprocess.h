@@ -1,7 +1,7 @@
 /**
  * The MIT License (MIT)
  *
- * Copyright (c) 2019-2020 Igor Zinken - https://www.igorski.nl
+ * Copyright (c) 2020 Igor Zinken - https://www.igorski.nl
  *
  * Permission is hereby granted, free of charge, to any person obtaining a copy of
  * this software and associated documentation files (the "Software"), to deal in
@@ -26,6 +26,7 @@
 #include "global.h"
 #include "audiobuffer.h"
 #include "bitcrusher.h"
+#include "waveshaper.h"
 #include "formantfilter.h"
 #include "limiter.h"
 #include <vector>
@@ -47,6 +48,7 @@ class PluginProcess {
         );
 
         BitCrusher* bitCrusher;
+        WaveShaper* waveShaper;
         Limiter* limiter;
         FormantFilter* formantFilterL;
         FormantFilter* formantFilterR;
@@ -54,7 +56,8 @@ class PluginProcess {
         // whether effects are applied onto the input delay signal or onto
         // the delayed signal itself (false = on input, true = on delay)
 
-        bool bitCrusherPostMix;
+        bool distortionPostMix     = false;
+        bool distortionTypeCrusher = false;
 
     private:
         AudioBuffer* _mixBuffer;  // buffer used for the sample process mixing

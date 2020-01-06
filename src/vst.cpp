@@ -43,12 +43,14 @@ namespace Igorski {
 FormantPlaceholder::FormantPlaceholder()
 : fVowelL( 0.f )
 , fVowelR( 0.f )
+, fVowelSync( 1.f )
 , fLFOVowelL( 0.f )
 , fLFOVowelR( 0.f )
 , fLFOVowelLDepth( 0.5f )
 , fLFOVowelRDepth( 0.5f )
-, fBitResolution( 0.f )
-, fBitResolutionChain( 0.f )
+, fDistortionType( 0.f )
+, fDrive( 0.f )
+, fDistortionChain( 0.f )
 , pluginProcess( nullptr )
 , outputGainOld( 0.f )
 , currentProcessMode( -1 ) // -1 means not initialized
@@ -146,6 +148,11 @@ tresult PLUGIN_API FormantPlaceholder::process( ProcessData& data )
                             fVowelR = ( float ) value;
                         break;
 
+                    case kVowelSyncId:
+                        if ( paramQueue->getPoint( numPoints - 1, sampleOffset, value ) == kResultTrue )
+                            fVowelSync = ( float ) value;
+                        break;
+
                     case kLFOVowelLId:
                         if ( paramQueue->getPoint( numPoints - 1, sampleOffset, value ) == kResultTrue )
                             fLFOVowelL = ( float ) value;
@@ -166,14 +173,19 @@ tresult PLUGIN_API FormantPlaceholder::process( ProcessData& data )
                             fLFOVowelRDepth = ( float ) value;
                         break;
 
-                    case kBitResolutionId:
+                    case kDistortionTypeId:
                         if ( paramQueue->getPoint( numPoints - 1, sampleOffset, value ) == kResultTrue )
-                            fBitResolution = ( float ) value;
+                            fDistortionType = ( float ) value;
                         break;
 
-                    case kBitResolutionChainId:
+                    case kDriveId:
                         if ( paramQueue->getPoint( numPoints - 1, sampleOffset, value ) == kResultTrue )
-                            fBitResolutionChain = ( float ) value;
+                            fDrive = ( float ) value;
+                        break;
+
+                    case kDistortionChainId:
+                        if ( paramQueue->getPoint( numPoints - 1, sampleOffset, value ) == kResultTrue )
+                            fDistortionChain = ( float ) value;
                         break;
                 }
                 syncModel();
@@ -222,7 +234,7 @@ tresult PLUGIN_API FormantPlaceholder::process( ProcessData& data )
     }
 
     // output flags
-  /*
+
     data.outputs[ 0 ].silenceFlags = false; // there should always be output
     float outputGain = pluginProcess->limiter->getLinearGR();
 
@@ -237,7 +249,7 @@ tresult PLUGIN_API FormantPlaceholder::process( ProcessData& data )
             paramQueue->addPoint( 0, outputGain, index );
     }
     outputGainOld = outputGain;
-    */
+
     return kResultOk;
 }
 
@@ -265,6 +277,10 @@ tresult PLUGIN_API FormantPlaceholder::setState( IBStream* state )
     if ( state->read( &savedVowelR, sizeof ( float )) != kResultOk )
         return kResultFalse;
 
+    float savedVowelSync = 0.f;
+    if ( state->read( &savedVowelSync, sizeof ( float )) != kResultOk )
+        return kResultFalse;
+
     float savedLFOVowelL = 0.f;
     if ( state->read( &savedLFOVowelL, sizeof ( float )) != kResultOk )
         return kResultFalse;
@@ -281,33 +297,41 @@ tresult PLUGIN_API FormantPlaceholder::setState( IBStream* state )
     if ( state->read( &savedLFOVowelRDepth, sizeof ( float )) != kResultOk )
         return kResultFalse;
 
-    float savedBitResolution = 0.f;
-    if ( state->read( &savedBitResolution, sizeof ( float )) != kResultOk )
+    float savedDistortionType = 0.f;
+    if ( state->read( &savedDistortionType, sizeof ( float )) != kResultOk )
         return kResultFalse;
 
-    float savedBitResolutionChain = 0.f;
-    if ( state->read( &savedBitResolutionChain, sizeof ( float )) != kResultOk )
+    float savedDrive = 0.f;
+    if ( state->read( &savedDrive, sizeof ( float )) != kResultOk )
+        return kResultFalse;
+
+    float savedDistortionChain = 0.f;
+    if ( state->read( &savedDistortionChain, sizeof ( float )) != kResultOk )
         return kResultFalse;
 
 #if BYTEORDER == kBigEndian
     SWAP32( savedVowelL )
     SWAP32( savedVowelR )
+    SWAP32( savedVowelSync )
     SWAP32( savedLFOVowelL )
     SWAP32( savedLFOVowelR )
     SWAP32( savedLFOVowelLDepth )
     SWAP32( savedLFOVowelRDepth )
-    SWAP32( savedBitResolution )
-    SWAP32( savedBitResolutionChain )
+    SWAP32( savedDistortionType )
+    SWAP32( savedDrive )
+    SWAP32( savedDistortionChain )
 #endif
 
-    fVowelL             = savedVowelL;
-    fVowelR             = savedVowelR;
-    fLFOVowelL          = savedLFOVowelL;
-    fLFOVowelR          = savedLFOVowelR;
-    fLFOVowelLDepth     = savedLFOVowelLDepth;
-    fLFOVowelRDepth     = savedLFOVowelRDepth;
-    fBitResolution      = savedBitResolution;
-    fBitResolutionChain = savedBitResolutionChain;
+    fVowelL          = savedVowelL;
+    fVowelR          = savedVowelR;
+    fVowelSync       = savedVowelSync;
+    fLFOVowelL       = savedLFOVowelL;
+    fLFOVowelR       = savedLFOVowelR;
+    fLFOVowelLDepth  = savedLFOVowelLDepth;
+    fLFOVowelRDepth  = savedLFOVowelRDepth;
+    fDistortionType  = savedDistortionType;
+    fDrive           = savedDrive;
+    fDistortionChain = savedDistortionChain;
 
     syncModel();
 
@@ -349,34 +373,40 @@ tresult PLUGIN_API FormantPlaceholder::getState( IBStream* state )
 {
     // here we need to save the model
 
-    float toSaveVowelL             = fVowelL;
-    float toSaveVowelR             = fVowelR;
-    float toSaveLFOVowelL          = fLFOVowelL;
-    float toSaveLFOVowelR          = fLFOVowelR;
-    float toSaveLFOVowelLDepth     = fLFOVowelLDepth;
-    float toSaveLFOVowelRDepth     = fLFOVowelRDepth;
-    float toSaveBitResolution      = fBitResolution;
-    float toSaveBitResolutionChain = fBitResolutionChain;
+    float toSaveVowelL          = fVowelL;
+    float toSaveVowelR          = fVowelR;
+    float toSaveVowelSync       = fVowelSync;
+    float toSaveLFOVowelL       = fLFOVowelL;
+    float toSaveLFOVowelR       = fLFOVowelR;
+    float toSaveLFOVowelLDepth  = fLFOVowelLDepth;
+    float toSaveLFOVowelRDepth  = fLFOVowelRDepth;
+    float toSaveDistortionType  = fDistortionType;
+    float toSaveDrive           = fDrive;
+    float toSaveDistortionChain = fDistortionChain;
 
 #if BYTEORDER == kBigEndian
     SWAP32( toSaveVowelL );
     SWAP32( toSaveVowelR );
+    SWAP32( toSaveVowelSync );
     SWAP32( toSaveLFOVowelL );
     SWAP32( toSaveLFOVowelR );
     SWAP32( toSaveLFOVowelLDepth );
     SWAP32( toSaveLFOVowelRDepth );
-    SWAP32( toSaveLFOBitResolution );
-    SWAP32( toSaveLFOBitResolutionDepth );
+    SWAP32( toSaveDistortionType );
+    SWAP32( toSaveDrive );
+    SWAP32( toSaveDriveDepth );
 #endif
 
-    state->write( &toSaveVowelL            , sizeof( float ));
-    state->write( &toSaveVowelR            , sizeof( float ));
-    state->write( &toSaveLFOVowelL         , sizeof( float ));
-    state->write( &toSaveLFOVowelR         , sizeof( float ));
-    state->write( &toSaveLFOVowelLDepth    , sizeof( float ));
-    state->write( &toSaveLFOVowelRDepth    , sizeof( float ));
-    state->write( &toSaveBitResolution     , sizeof( float ));
-    state->write( &toSaveBitResolutionChain, sizeof( float ));
+    state->write( &toSaveVowelL         , sizeof( float ));
+    state->write( &toSaveVowelR         , sizeof( float ));
+    state->write( &toSaveVowelSync      , sizeof( float ));
+    state->write( &toSaveLFOVowelL      , sizeof( float ));
+    state->write( &toSaveLFOVowelR      , sizeof( float ));
+    state->write( &toSaveLFOVowelLDepth , sizeof( float ));
+    state->write( &toSaveLFOVowelRDepth , sizeof( float ));
+    state->write( &toSaveDistortionType , sizeof( float ));
+    state->write( &toSaveDrive          , sizeof( float ));
+    state->write( &toSaveDistortionChain, sizeof( float ));
 
     return kResultOk;
 }
@@ -499,10 +529,18 @@ tresult PLUGIN_API FormantPlaceholder::notify( IMessage* message )
 
 void FormantPlaceholder::syncModel()
 {
-    pluginProcess->bitCrusherPostMix = Calc::toBool( fBitResolutionChain );
-    pluginProcess->bitCrusher->setAmount( fBitResolution );
+    pluginProcess->distortionPostMix     = Calc::toBool( fDistortionChain );
+    pluginProcess->distortionTypeCrusher = Calc::toBool( fDistortionType );
+    pluginProcess->bitCrusher->setAmount( fDrive );
+    pluginProcess->waveShaper->setAmount( fDrive );
+
     pluginProcess->formantFilterL->setVowel( fVowelL );
-    pluginProcess->formantFilterR->setVowel( fVowelR );
+
+    if ( Calc::toBool( fVowelSync )) {
+        pluginProcess->formantFilterR->setVowel( fVowelL );
+    } else {
+        pluginProcess->formantFilterR->setVowel( fVowelR );
+    }
     pluginProcess->formantFilterL->setLFO( fLFOVowelL, fLFOVowelLDepth );
     pluginProcess->formantFilterR->setLFO( fLFOVowelR, fLFOVowelRDepth );
 }

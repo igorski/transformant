@@ -1,7 +1,7 @@
 /**
  * The MIT License (MIT)
  *
- * Copyright (c) 2020 Igor Zinken - https://www.igorski.nl
+ * Copyright (c) 2013-2020 Igor Zinken - https://www.igorski.nl
  *
  * Permission is hereby granted, free of charge, to any person obtaining a copy of
  * this software and associated documentation files (the "Software"), to deal in
@@ -20,24 +20,51 @@
  * IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM, OUT OF OR IN
  * CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
  */
-#ifndef __PARAMIDS_HEADER__
-#define __PARAMIDS_HEADER__
+#include "waveshaper.h"
+#include <cmath>
 
-enum
+namespace MWEngine {
+
+// constructor
+
+WaveShaper::WaveShaper( float amount, float level )
 {
-    // ids for all visual controls
+    setAmount( amount );
+    setLevel ( level );
+}
 
-    kVowelLId = 1,         // formant vowel L
-    kVowelRId,             // formant vowel R
-    KVowelSyncId,          // formant vowel sync
-    kLFOVowelLId,          // formant vowel L LFO rate
-    kLFOVowelLDepthId,     // formant vowel L LFO depth
-    kLFOVowelRId,          // formant vowel R LFO rate
-    kLFOVowelRDepthId,     // formant vowel R LFO depth
-    kDistortionTypeId,     // distortion type
-    kDriveId,              // distortion drive amount
-    kDistortionChainId,    // distortion pre/pos formant mix
-    kVuPPMId               // for the Vu value return to host
-};
+/* public methods */
 
-#endif
+void WaveShaper::process( float* inBuffer, int bufferSize )
+{
+    for ( int j = 0; j < bufferSize; ++j )
+    {
+        float input = inBuffer[ j ];
+
+        inBuffer[ j ] = input * ( std::abs( input ) + _amount ) / ( input^2 + ( _amount - 1.f ) * std::abs( _input ) + 1.f );
+    }
+}
+
+/* getters / setters */
+
+float WaveShaper::getAmount()
+{
+    return _amount;
+}
+
+void WaveShaper::setAmount( float value )
+{
+    _amount = value;
+}
+
+float WaveShaper::getLevel()
+{
+    return _level;
+}
+
+void WaveShaper::setLevel( float value )
+{
+    _level = value;
+}
+
+} // E.O namespace MWEngine

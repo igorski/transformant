@@ -130,7 +130,6 @@ void FormantFilter::process( float* inBuffer, int bufferSize )
 
         inBuffer[ i ] = ( float ) _memory[ 0 ];
 
-
         // if LFO is active, keep it moving
 
         if ( hasLFO ) {

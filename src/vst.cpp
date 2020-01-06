@@ -41,9 +41,12 @@ namespace Igorski {
 // FormantPlaceholder Implementation
 //------------------------------------------------------------------------
 FormantPlaceholder::FormantPlaceholder()
-: fVowel( 0.f )
-, fLFOVowel( 0.f )
-, fLFOVowelDepth( 0.5f )
+: fVowelL( 0.f )
+, fVowelR( 0.f )
+, fLFOVowelL( 0.f )
+, fLFOVowelR( 0.f )
+, fLFOVowelLDepth( 0.5f )
+, fLFOVowelRDepth( 0.5f )
 , fBitResolution( 0.f )
 , fBitResolutionChain( 0.f )
 , pluginProcess( nullptr )
@@ -133,19 +136,34 @@ tresult PLUGIN_API FormantPlaceholder::process( ProcessData& data )
                     // in some wanted case for specific kind of parameter it makes sense to retrieve all points
                     // and process the whole audio block in small blocks.
 
-                    case kVowelId:
+                    case kVowelLId:
                         if ( paramQueue->getPoint( numPoints - 1, sampleOffset, value ) == kResultTrue )
-                            fVowel = ( float ) value;
+                            fVowelL = ( float ) value;
                         break;
 
-                    case kLFOVowelId:
+                    case kVowelRId:
                         if ( paramQueue->getPoint( numPoints - 1, sampleOffset, value ) == kResultTrue )
-                            fLFOVowel = ( float ) value;
+                            fVowelR = ( float ) value;
                         break;
 
-                    case kLFOVowelDepthId:
+                    case kLFOVowelLId:
                         if ( paramQueue->getPoint( numPoints - 1, sampleOffset, value ) == kResultTrue )
-                            fLFOVowelDepth = ( float ) value;
+                            fLFOVowelL = ( float ) value;
+                        break;
+
+                    case kLFOVowelRId:
+                        if ( paramQueue->getPoint( numPoints - 1, sampleOffset, value ) == kResultTrue )
+                            fLFOVowelR = ( float ) value;
+                        break;
+
+                    case kLFOVowelLDepthId:
+                        if ( paramQueue->getPoint( numPoints - 1, sampleOffset, value ) == kResultTrue )
+                            fLFOVowelLDepth = ( float ) value;
+                        break;
+
+                    case kLFOVowelRDepthId:
+                        if ( paramQueue->getPoint( numPoints - 1, sampleOffset, value ) == kResultTrue )
+                            fLFOVowelRDepth = ( float ) value;
                         break;
 
                     case kBitResolutionId:
@@ -239,16 +257,28 @@ tresult PLUGIN_API FormantPlaceholder::setState( IBStream* state )
 {
     // called when we load a preset, the model has to be reloaded
 
-    float savedVowel = 0.f;
-    if ( state->read( &savedVowel, sizeof ( float )) != kResultOk )
+    float savedVowelL = 0.f;
+    if ( state->read( &savedVowelL, sizeof ( float )) != kResultOk )
         return kResultFalse;
 
-    float savedLFOVowel = 0.f;
-    if ( state->read( &savedLFOVowel, sizeof ( float )) != kResultOk )
+    float savedVowelR = 0.f;
+    if ( state->read( &savedVowelR, sizeof ( float )) != kResultOk )
         return kResultFalse;
 
-    float savedLFOVowelDepth = 0.f;
-    if ( state->read( &savedLFOVowelDepth, sizeof ( float )) != kResultOk )
+    float savedLFOVowelL = 0.f;
+    if ( state->read( &savedLFOVowelL, sizeof ( float )) != kResultOk )
+        return kResultFalse;
+
+    float savedLFOVowelR = 0.f;
+    if ( state->read( &savedLFOVowelR, sizeof ( float )) != kResultOk )
+        return kResultFalse;
+
+    float savedLFOVowelLDepth = 0.f;
+    if ( state->read( &savedLFOVowelLDepth, sizeof ( float )) != kResultOk )
+        return kResultFalse;
+
+    float savedLFOVowelRDepth = 0.f;
+    if ( state->read( &savedLFOVowelRDepth, sizeof ( float )) != kResultOk )
         return kResultFalse;
 
     float savedBitResolution = 0.f;
@@ -260,16 +290,22 @@ tresult PLUGIN_API FormantPlaceholder::setState( IBStream* state )
         return kResultFalse;
 
 #if BYTEORDER == kBigEndian
-    SWAP32( savedVowel )
-    SWAP32( savedLFOVowel )
-    SWAP32( savedLFOVowelDepth )
+    SWAP32( savedVowelL )
+    SWAP32( savedVowelR )
+    SWAP32( savedLFOVowelL )
+    SWAP32( savedLFOVowelR )
+    SWAP32( savedLFOVowelLDepth )
+    SWAP32( savedLFOVowelRDepth )
     SWAP32( savedBitResolution )
     SWAP32( savedBitResolutionChain )
 #endif
 
-    fVowel              = savedVowel;
-    fLFOVowel           = savedLFOVowel;
-    fLFOVowelDepth      = savedLFOVowelDepth;
+    fVowelL             = savedVowelL;
+    fVowelR             = savedVowelR;
+    fLFOVowelL          = savedLFOVowelL;
+    fLFOVowelR          = savedLFOVowelR;
+    fLFOVowelLDepth     = savedLFOVowelLDepth;
+    fLFOVowelRDepth     = savedLFOVowelRDepth;
     fBitResolution      = savedBitResolution;
     fBitResolutionChain = savedBitResolutionChain;
 
@@ -313,23 +349,32 @@ tresult PLUGIN_API FormantPlaceholder::getState( IBStream* state )
 {
     // here we need to save the model
 
-    float toSaveVowel              = fVowel;
-    float toSaveLFOVowel           = fLFOVowel;
-    float toSaveLFOVowelDepth      = fLFOVowelDepth;
+    float toSaveVowelL             = fVowelL;
+    float toSaveVowelR             = fVowelR;
+    float toSaveLFOVowelL          = fLFOVowelL;
+    float toSaveLFOVowelR          = fLFOVowelR;
+    float toSaveLFOVowelLDepth     = fLFOVowelLDepth;
+    float toSaveLFOVowelRDepth     = fLFOVowelRDepth;
     float toSaveBitResolution      = fBitResolution;
     float toSaveBitResolutionChain = fBitResolutionChain;
 
 #if BYTEORDER == kBigEndian
-    SWAP32( toSaveVowel );
-    SWAP32( toSaveLFOVowel );
-    SWAP32( toSaveLFOVowelDepth );
+    SWAP32( toSaveVowelL );
+    SWAP32( toSaveVowelR );
+    SWAP32( toSaveLFOVowelL );
+    SWAP32( toSaveLFOVowelR );
+    SWAP32( toSaveLFOVowelLDepth );
+    SWAP32( toSaveLFOVowelRDepth );
     SWAP32( toSaveLFOBitResolution );
     SWAP32( toSaveLFOBitResolutionDepth );
 #endif
 
-    state->write( &toSaveVowel             , sizeof( float ));
-    state->write( &toSaveLFOVowel          , sizeof( float ));
-    state->write( &toSaveLFOVowelDepth     , sizeof( float ));
+    state->write( &toSaveVowelL            , sizeof( float ));
+    state->write( &toSaveVowelR            , sizeof( float ));
+    state->write( &toSaveLFOVowelL         , sizeof( float ));
+    state->write( &toSaveLFOVowelR         , sizeof( float ));
+    state->write( &toSaveLFOVowelLDepth    , sizeof( float ));
+    state->write( &toSaveLFOVowelRDepth    , sizeof( float ));
     state->write( &toSaveBitResolution     , sizeof( float ));
     state->write( &toSaveBitResolutionChain, sizeof( float ));
 
@@ -455,9 +500,11 @@ tresult PLUGIN_API FormantPlaceholder::notify( IMessage* message )
 void FormantPlaceholder::syncModel()
 {
     pluginProcess->bitCrusherPostMix = Calc::toBool( fBitResolutionChain );
-    pluginProcess->formantFilter->setVowel( fVowel );
-    pluginProcess->formantFilter->setLFO( fLFOVowel, fLFOVowelDepth );
     pluginProcess->bitCrusher->setAmount( fBitResolution );
+    pluginProcess->formantFilterL->setVowel( fVowelL );
+    pluginProcess->formantFilterR->setVowel( fVowelR );
+    pluginProcess->formantFilterL->setLFO( fLFOVowelL, fLFOVowelLDepth );
+    pluginProcess->formantFilterR->setLFO( fLFOVowelR, fLFOVowelRDepth );
 }
 
 }

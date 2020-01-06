@@ -27,9 +27,12 @@ enum
 {
     // ids for all visual controls
 
-    kVowelId = 1,          // formant vowel
-    kLFOVowelId,           // formant vowel LFO rate
-    kLFOVowelDepthId,      // formant vowel LFO depth
+    kVowelLId = 1,         // formant vowel L
+    kVowelRId,             // formant vowel R
+    kLFOVowelLId,          // formant vowel L LFO rate
+    kLFOVowelLDepthId,     // formant vowel L LFO depth
+    kLFOVowelRId,          // formant vowel R LFO rate
+    kLFOVowelRDepthId,     // formant vowel R LFO depth
     kBitResolutionId,      // bit resolution
     kBitResolutionChainId, // bit resolution pre/pos formant mix
 

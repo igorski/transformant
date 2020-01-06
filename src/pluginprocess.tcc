@@ -34,28 +34,27 @@ void PluginProcess::process( SampleType** inBuffer, SampleType** outBuffer, int 
     {
         SampleType* channelInBuffer  = inBuffer[ c ];
         SampleType* channelOutBuffer = outBuffer[ c ];
-        float* channelMixBuffer = _mixBuffer->getBufferForChannel( c );
-
-        // when processing the first channel, store the current effects properties
-        // so each subsequent channel is processed using the same processor variables
-
-        if ( c == 0 ) {
-            formantFilter->store();
-        }
+        float* channelMixBuffer      = _mixBuffer->getBufferForChannel( c );
 
         // pre formant filter bit crusher processing
 
-        if ( !bitCrusherPostMix )
+        if ( !bitCrusherPostMix ) {
             bitCrusher->process( channelMixBuffer, bufferSize );
+        }
 
         // formant filter
 
-        formantFilter->process( channelMixBuffer, bufferSize );
+        if ( c % 2 == 0 ) {
+            formantFilterL->process( channelMixBuffer, bufferSize );
+        } else {
+           formantFilterR->process( channelMixBuffer, bufferSize );
+        }
 
         // post formant filter bit crusher processing
 
-        if ( bitCrusherPostMix )
+        if ( bitCrusherPostMix ) {
             bitCrusher->process( channelMixBuffer, bufferSize );
+        }
 
         // write the effected mix buffers into the output buffer
 
@@ -69,13 +68,9 @@ void PluginProcess::process( SampleType** inBuffer, SampleType** outBuffer, int 
             // wet mix (e.g. the effected signal)
             channelOutBuffer[ i ] = ( SampleType ) channelMixBuffer[ i ];
         }
-
-        // prepare effects for the next channel
-
-        if ( c < ( numInChannels - 1 )) {
-            formantFilter->restore();
-        }
     }
+    // limit the output signal as it can get quite hot
+   // limiter->process<SampleType>( outBuffer, bufferSize, numOutChannels );
 }
 
 template <typename SampleType>

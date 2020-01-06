@@ -27,6 +27,7 @@
 #include "audiobuffer.h"
 #include "bitcrusher.h"
 #include "formantfilter.h"
+#include "limiter.h"
 #include <vector>
 
 using namespace Steinberg;
@@ -46,7 +47,9 @@ class PluginProcess {
         );
 
         BitCrusher* bitCrusher;
-        FormantFilter* formantFilter;
+        Limiter* limiter;
+        FormantFilter* formantFilterL;
+        FormantFilter* formantFilterR;
 
         // whether effects are applied onto the input delay signal or onto
         // the delayed signal itself (false = on input, true = on delay)

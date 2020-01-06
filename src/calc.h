@@ -27,9 +27,8 @@
 #include <algorithm>
 #include "global.h"
 
-// internally we handle all audio as 32-bit floats (hence 0x7f800000)
-
-#define undenormalise(sample) ((((*(uint32 *)&(sample))&0x7f800000)==0)&&((sample)!=0.f))
+#define undenormaliseFloat(sample) ((((*(uint32 *)&(sample))&0x7f800000)==0)&&((sample)!=0.f))
+#define undenormaliseDouble(sample) ((((((uint32 *)&(sample))[1])&0x7fe00000)==0)&&((sample)!=0.))
 
 /**
  * convenience utilities to process values

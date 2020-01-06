@@ -36,21 +36,13 @@ namespace Igorski {
  */
 FormantFilter::FormantFilter( float aVowel )
 {
-    int i = 0;
-    for ( ; i < 11; i++ ) {
-        _currentCoeffs[ i ] = 0.0;
-    }
+    memset( _currentCoeffs, 0.0, COEFF_AMOUNT );
+    memset( _memory,        0.0, MEMORY_SIZE );
 
-    for ( i = 0; i < 10; i++ ) {
-        _memory[ i ] = 0.0;
-    }
-    calculateCoeffs();
     setVowel( aVowel );
 
     lfo = new LFO();
     hasLFO = false;
-
-    store();
 }
 
 FormantFilter::~FormantFilter()
@@ -62,29 +54,24 @@ FormantFilter::~FormantFilter()
 
 float FormantFilter::getVowel()
 {
-    return _vowel;
+    return ( float ) _vowel;
 }
 
 void FormantFilter::setVowel( float aVowel )
 {
-    _vowel = aVowel;
-    float tempRatio = _tempVowel / std::max( 0.000000001f, aVowel );
+    _vowel = ( double ) aVowel;
+
+    double tempRatio = _tempVowel / std::max( 0.000000001, _vowel );
 
     // in case FormantFilter is attached to oscillator, keep relative offset
     // of currently moving vowel in place
     _tempVowel = ( hasLFO ) ? _vowel * tempRatio : _vowel;
 
     cacheVowel();
-}
 
-void FormantFilter::store()
-{
-    memcpy( _storedMemory, _memory, 10 * sizeof( float ));
-}
-
-void FormantFilter::restore()
-{
-    memcpy( _memory, _storedMemory, 10 * sizeof( float ));
+    if ( hasLFO ) {
+        cacheLFO();
+    }
 }
 
 void FormantFilter::setLFO( float LFORatePercentage, float LFODepth )
@@ -117,38 +104,37 @@ void FormantFilter::setLFO( float LFORatePercentage, float LFODepth )
 
 void FormantFilter::process( float* inBuffer, int bufferSize )
 {
-    for ( int i = 0; i < bufferSize; ++i )
+    size_t j, k;
+    double res;
+    float out;
+
+    for ( size_t i = 0; i < bufferSize; ++i )
     {
-        float res = ( _currentCoeffs[ 0 ]  * inBuffer[ i ] +
-                      _currentCoeffs[ 1 ]  * _memory[ 0 ] +
-                      _currentCoeffs[ 2 ]  * _memory[ 1 ] +
-                      _currentCoeffs[ 3 ]  * _memory[ 2 ] +
-                      _currentCoeffs[ 4 ]  * _memory[ 3 ] +
-                      _currentCoeffs[ 5 ]  * _memory[ 4 ] +
-                      _currentCoeffs[ 6 ]  * _memory[ 5 ] +
-                      _currentCoeffs[ 7 ]  * _memory[ 6 ] +
-                      _currentCoeffs[ 8 ]  * _memory[ 7 ] +
-                      _currentCoeffs[ 9 ]  * _memory[ 8 ] +
-                      _currentCoeffs[ 10 ] * _memory[ 9 ] );
+        res = _currentCoeffs[ 0 ] * inBuffer[ i ];
 
-        res = undenormalise( res );
+        for ( j = 1, k = 0; j < COEFF_AMOUNT; ++j, ++k ) {
+            res += _currentCoeffs[ j ] * _memory[ k ];
+        }
 
-        _memory[ 9 ] = _memory[ 8 ];
-        _memory[ 8 ] = _memory[ 7 ];
-        _memory[ 7 ] = _memory[ 6 ];
-        _memory[ 6 ] = _memory[ 5 ];
-        _memory[ 5 ] = _memory[ 4 ];
-        _memory[ 4 ] = _memory[ 3 ];
-        _memory[ 3 ] = _memory[ 2 ];
-        _memory[ 2 ] = _memory[ 1 ];
-        _memory[ 1 ] = _memory[ 0 ];
+        j = MEMORY_SIZE;
+        while ( j-- > 1 ) {
+            _memory[ j ] = _memory[ j - 1 ];
+        }
+
+        //res = ((fabs(res) > 1.0e-10 && res < 1.0) || res < -1.0e-10 && res > -1.0) && !isinf(res) ? res : 0.0f;
+        undenormaliseDouble( res );
+
         _memory[ 0 ] = res;
 
-        inBuffer[ i ] = res;
-        
+        // write output
+
+        inBuffer[ i ] = ( float ) _memory[ 0 ];
+
+
+        // if LFO is active, keep it moving
+
         if ( hasLFO ) {
-            // multiply by .5 and add .5 to make the LFO's bipolar waveform unipolar
-            float lfoValue = lfo->peek() * .5f  + .5f;
+            float lfoValue = lfo->peek() * .5f  + .5f; // make waveform unipolar
             _tempVowel = std::min( _lfoMax, _lfoMin + _lfoRange * lfoValue );
             cacheVowel();
         }
@@ -157,101 +143,32 @@ void FormantFilter::process( float* inBuffer, int bufferSize )
 
 /* private methods */
 
-// store the vowel coefficients
-
-void FormantFilter::calculateCoeffs()
-{
-    // vowel "A"
-
-    _coeffs[ VOWEL_A ][ 0 ]  = 8.11044e-06;
-    _coeffs[ VOWEL_A ][ 1 ]  = 8.943665402;
-    _coeffs[ VOWEL_A ][ 2 ]  = -36.83889529;
-    _coeffs[ VOWEL_A ][ 3 ]  = 92.01697887;
-    _coeffs[ VOWEL_A ][ 4 ]  = -154.337906;
-    _coeffs[ VOWEL_A ][ 5 ]  = 181.6233289;
-    _coeffs[ VOWEL_A ][ 6 ]  = -151.8651235;
-    _coeffs[ VOWEL_A ][ 7 ]  = 89.09614114;
-    _coeffs[ VOWEL_A ][ 8 ]  = -35.10298511;
-    _coeffs[ VOWEL_A ][ 9 ]  = 8.388101016;
-    _coeffs[ VOWEL_A ][ 10 ] = -0.923313471;
-
-    // vowel "E"
-
-    _coeffs[ VOWEL_E ][ 0 ]  = 4.36215e-06;
-    _coeffs[ VOWEL_E ][ 1 ]  = 8.90438318;
-    _coeffs[ VOWEL_E ][ 2 ]  = -36.55179099;
-    _coeffs[ VOWEL_E ][ 3 ]  = 91.05750846;
-    _coeffs[ VOWEL_E ][ 4 ]  = -152.422234;
-    _coeffs[ VOWEL_E ][ 5 ]  = 179.1170248;
-    _coeffs[ VOWEL_E ][ 6 ]  = -149.6496211;
-    _coeffs[ VOWEL_E ][ 7 ]  = 87.78352223;
-    _coeffs[ VOWEL_E ][ 8 ]  = -34.60687431;
-    _coeffs[ VOWEL_E ][ 9 ]  = 8.282228154;
-    _coeffs[ VOWEL_E ][ 10 ] = -0.914150747;
-
-    // vowel "I"
-
-    _coeffs[ VOWEL_I ][ 0 ]  = 3.33819e-06;
-    _coeffs[ VOWEL_I ][ 1 ]  = 8.893102966;
-    _coeffs[ VOWEL_I ][ 2 ]  = -36.49532826;
-    _coeffs[ VOWEL_I ][ 3 ]  = 90.96543286;
-    _coeffs[ VOWEL_I ][ 4 ]  = -152.4545478;
-    _coeffs[ VOWEL_I ][ 5 ]  = 179.4835618;
-    _coeffs[ VOWEL_I ][ 6 ]  = -150.315433;
-    _coeffs[ VOWEL_I ][ 7 ]  = 88.43409371;
-    _coeffs[ VOWEL_I ][ 8 ]  = -34.98612086;
-    _coeffs[ VOWEL_I ][ 9 ]  = 8.407803364;
-    _coeffs[ VOWEL_I ][ 10 ] = -0.932568035;
-
-    // vowel "O"
-
-    _coeffs[ VOWEL_O ][ 0 ]  = 1.13572e-06;
-    _coeffs[ VOWEL_O ][ 1 ]  = 8.994734087;
-    _coeffs[ VOWEL_O ][ 2 ]  = -37.2084849;
-    _coeffs[ VOWEL_O ][ 3 ]  = 93.22900521;
-    _coeffs[ VOWEL_O ][ 4 ]  = -156.6929844;
-    _coeffs[ VOWEL_O ][ 5 ]  = 184.596544;
-    _coeffs[ VOWEL_O ][ 6 ]  = -154.3755513;
-    _coeffs[ VOWEL_O ][ 7 ]  = 90.49663749;
-    _coeffs[ VOWEL_O ][ 8 ]  = -35.58964535;
-    _coeffs[ VOWEL_O ][ 9 ]  = 8.478996281;
-    _coeffs[ VOWEL_O ][ 10 ] = -0.929252233;
-
-    // vowel "U"
-
-    _coeffs[ VOWEL_U ][ 0 ]  = 4.09431e-07;
-    _coeffs[ VOWEL_U ][ 1 ]  = 8.997322763;
-    _coeffs[ VOWEL_U ][ 2 ]  = -37.20218544;
-    _coeffs[ VOWEL_U ][ 3 ]  = 93.11385476;
-    _coeffs[ VOWEL_U ][ 4 ]  = -156.2530937;
-    _coeffs[ VOWEL_U ][ 5 ]  = 183.7080141;
-    _coeffs[ VOWEL_U ][ 6 ]  = -153.2631681;
-    _coeffs[ VOWEL_U ][ 7 ]  = 89.59539726;
-    _coeffs[ VOWEL_U ][ 8 ]  = -35.12454591;
-    _coeffs[ VOWEL_U ][ 9 ]  = 8.338655623;
-    _coeffs[ VOWEL_U ][ 10 ] = -0.910251753;
-}
-
 void FormantFilter::cacheVowel()
 {
-    // vowel is in 0 - 4 range
-    float scaledValue = Calc::scale( _tempVowel, 1.f, 4.f );
+    _tempVowel;
 
-    int roundVowel = ( int )( _vowel * 4.0 );
-    float fracpart = _vowel - roundVowel;
+    // vowels are defined in 0 - 4 range (see COEFFICIENTS)
 
-    for ( int i = 0; i < 11; i++ )
+    double scaledValue = Calc::scale( _tempVowel, 1.f, 4.f );
+
+    // interpolate the value between vowels
+
+    int roundVowel = ( int )( scaledValue );
+    double fracpart = INTERPOLATE ? roundVowel - scaledValue : 1.0;
+
+    for ( int i = 0; i < COEFF_AMOUNT; i++ )
     {
-        _currentCoeffs[ i ] = _coeffs[ roundVowel ][ i ] * ( 1.0 - fracpart ) +
-                            ( _coeffs[ roundVowel + ( roundVowel < 4 )][ i ] * fracpart );
+        _currentCoeffs[ i ] = fracpart * COEFFICIENTS[ roundVowel ][ i ] +
+                              // add next vowel (note the overflow check when roundVowel is 4)
+                              ( 1.0 - fracpart ) * COEFFICIENTS[ roundVowel + ( roundVowel < 4 )][ i ];
     }
 }
 
 void FormantFilter::cacheLFO()
 {
-    _lfoRange = ( float ) _vowel * _lfoDepth;
-    _lfoMax   = std::min( 1.f, ( float ) _vowel + _lfoRange / 2.f );
-    _lfoMin   = std::max( 0.f, ( float ) _vowel - _lfoRange / 2.f );
+    _lfoRange = _vowel * _lfoDepth;
+    _lfoMax   = std::min( 1., _vowel + _lfoRange / 2. );
+    _lfoMin   = std::max( 0., _vowel - _lfoRange / 2. );
 }
 
 }

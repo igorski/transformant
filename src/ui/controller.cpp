@@ -77,19 +77,37 @@ tresult PLUGIN_API Controller::initialize( FUnknown* context )
     // Formant filter controls
 
     parameters.addParameter( new RangeParameter(
-        USTRING( "Vowel" ), kVowelId, USTRING( "0 - 1" ),
+        USTRING( "Vowel L" ), kVowelLId, USTRING( "0 - 1" ),
         0.f, 1.f, 0.f,
         0, ParameterInfo::kCanAutomate, unitId
     ));
 
     parameters.addParameter( new RangeParameter(
-        USTRING( "Vowel LFO rate" ), kLFOVowelId, USTRING( "Hz" ),
+        USTRING( "Vowel R" ), kVowelRId, USTRING( "0 - 1" ),
+        0.f, 1.f, 0.f,
+        0, ParameterInfo::kCanAutomate, unitId
+    ));
+
+    parameters.addParameter( new RangeParameter(
+        USTRING( "Vowel L LFO rate" ), kLFOVowelLId, USTRING( "Hz" ),
         Igorski::VST::MIN_LFO_RATE(), Igorski::VST::MAX_LFO_RATE(), Igorski::VST::MIN_LFO_RATE(),
         0, ParameterInfo::kCanAutomate, unitId
     ));
 
     parameters.addParameter( new RangeParameter(
-        USTRING( "Vowel LFO depth" ), kLFOVowelDepthId, USTRING( "%" ),
+        USTRING( "Vowel R LFO rate" ), kLFOVowelRId, USTRING( "Hz" ),
+        Igorski::VST::MIN_LFO_RATE(), Igorski::VST::MAX_LFO_RATE(), Igorski::VST::MIN_LFO_RATE(),
+        0, ParameterInfo::kCanAutomate, unitId
+    ));
+
+    parameters.addParameter( new RangeParameter(
+        USTRING( "Vowel L LFO depth" ), kLFOVowelLDepthId, USTRING( "%" ),
+        0.f, 1.f, 0.f,
+        0, ParameterInfo::kCanAutomate, unitId
+    ));
+
+    parameters.addParameter( new RangeParameter(
+        USTRING( "Vowel R LFO depth" ), kLFOVowelRDepthId, USTRING( "%" ),
         0.f, 1.f, 0.f,
         0, ParameterInfo::kCanAutomate, unitId
     ));
@@ -126,16 +144,28 @@ tresult PLUGIN_API Controller::setComponentState( IBStream* state )
     // we receive the current state of the component (processor part)
     if ( state )
     {
-        float savedVowel = 1.f;
-        if ( state->read( &savedVowel, sizeof( float )) != kResultOk )
+        float savedVowelL = 1.f;
+        if ( state->read( &savedVowelL, sizeof( float )) != kResultOk )
             return kResultFalse;
 
-        float savedLFOVowel = Igorski::VST::MIN_LFO_RATE();
-        if ( state->read( &savedLFOVowel, sizeof( float )) != kResultOk )
+        float savedVowelR = 1.f;
+        if ( state->read( &savedVowelR, sizeof( float )) != kResultOk )
             return kResultFalse;
 
-        float savedLFOVowelDepth = 1.f;
-        if ( state->read( &savedLFOVowelDepth, sizeof( float )) != kResultOk )
+        float savedLFOVowelL = Igorski::VST::MIN_LFO_RATE();
+        if ( state->read( &savedLFOVowelL, sizeof( float )) != kResultOk )
+            return kResultFalse;
+
+        float savedLFOVowelR = Igorski::VST::MIN_LFO_RATE();
+        if ( state->read( &savedLFOVowelR, sizeof( float )) != kResultOk )
+            return kResultFalse;
+
+        float savedLFOVowelLDepth = 1.f;
+        if ( state->read( &savedLFOVowelLDepth, sizeof( float )) != kResultOk )
+            return kResultFalse;
+
+        float savedLFOVowelRDepth = 1.f;
+        if ( state->read( &savedLFOVowelRDepth, sizeof( float )) != kResultOk )
             return kResultFalse;
 
         float savedBitResolution = 1.f;
@@ -147,16 +177,22 @@ tresult PLUGIN_API Controller::setComponentState( IBStream* state )
             return kResultFalse;
 
 #if BYTEORDER == kBigEndian
-    SWAP32( savedVowel )
-    SWAP32( savedLFOVowel )
-    SWAP32( savedLFOVowelDepth )
+    SWAP32( savedVowelL )
+    SWAP32( savedVowelR )
+    SWAP32( savedLFOVowelL )
+    SWAP32( savedLFOVowelR )
+    SWAP32( savedLFOVowelLDepth )
+    SWAP32( savedLFOVowelRDepth )
     SWAP32( savedBitResolution )
     SWAP32( savedBitResolutionChain )
 #endif
 
-        setParamNormalized( kVowelId,              savedVowel );
-        setParamNormalized( kLFOVowelId,           savedLFOVowel );
-        setParamNormalized( kLFOVowelDepthId,      savedLFOVowelDepth );
+        setParamNormalized( kVowelLId,             savedVowelL );
+        setParamNormalized( kVowelRId,             savedVowelR );
+        setParamNormalized( kLFOVowelLId,          savedLFOVowelL );
+        setParamNormalized( kLFOVowelRId,          savedLFOVowelR );
+        setParamNormalized( kLFOVowelLDepthId,     savedLFOVowelLDepth );
+        setParamNormalized( kLFOVowelRDepthId,     savedLFOVowelRDepth );
         setParamNormalized( kBitResolutionId,      savedBitResolution );
         setParamNormalized( kBitResolutionChainId, savedBitResolutionChain );
 
@@ -260,8 +296,10 @@ tresult PLUGIN_API Controller::getParamStringByValue( ParamID tag, ParamValue va
         // these controls are floating point values in 0 - 1 range, we can
         // simply read the normalized value which is in the same range
 
-        case kVowelId:
-        case kLFOVowelDepthId:
+        case kVowelLId:
+        case kVowelRId:
+        case kLFOVowelLDepthId:
+        case kLFOVowelRDepthId:
         case kBitResolutionId:
         case kBitResolutionChainId:
         {
@@ -281,7 +319,8 @@ tresult PLUGIN_API Controller::getParamStringByValue( ParamID tag, ParamValue va
         // vowel LFO setting is also floating point but in a custom range
         // request the plain value from the normalized value
 
-        case kLFOVowelId:
+        case kLFOVowelLId:
+        case kLFOVowelRId:
         {
             char text[32];
             if (valueNormalized == 0 )

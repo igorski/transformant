@@ -1,7 +1,10 @@
 /**
- * The MIT License (MIT)
+ * Ported from mdaLimiterProcessor.h
+ * Created by Arne Scheffler on 6/14/08.
  *
- * Copyright (c) 2019-2020 Igor Zinken - https://www.igorski.nl
+ * mda VST Plug-ins
+ *
+ * Copyright (c) 2008 Paul Kellett
  *
  * Permission is hereby granted, free of charge, to any person obtaining a copy of
  * this software and associated documentation files (the "Software"), to deal in
@@ -20,30 +23,41 @@
  * IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM, OUT OF OR IN
  * CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
  */
-#include "pluginprocess.h"
-#include "calc.h"
+#ifndef __LIMITER_H_INCLUDED__
+#define __LIMITER_H_INCLUDED__
+
+#include "audiobuffer.h"
 #include <math.h>
 
-namespace Igorski {
+class Limiter
+{
+    public:
+        Limiter();
+        Limiter( float attackMs, float releaseMs, float thresholdDb );
+        ~Limiter();
 
-PluginProcess::PluginProcess( int amountOfChannels ) {
-    _amountOfChannels = amountOfChannels;
+        template <typename SampleType>
+        void process( SampleType** outputBuffer, int bufferSize, int numOutChannels );
 
-    bitCrusher     = new BitCrusher( 8, 1.f, .5f );
-    limiter        = new Limiter( 10.f, 500.f, .95f );
-    formantFilterL = new FormantFilter( 0.f );
-    formantFilterR = new FormantFilter( 0.f );
+        void setAttack( float attackMs );
+        void setRelease( float releaseMs );
+        void setThreshold( float thresholdDb );
 
-    // will be lazily created in the process function
-    _mixBuffer = nullptr;
-}
+        float getLinearGR();
 
-PluginProcess::~PluginProcess() {
-    delete _mixBuffer;
-    delete bitCrusher;
-    delete limiter;
-    delete formantFilterL;
-    delete formantFilterR;
-}
+    protected:
+        void init( float attackMs, float releaseMs, float thresholdDb );
+        void recalculate();
 
-}
+        float pTresh;   // in dB, -20 - 20
+        float pTrim;
+        float pAttack;  // in microseconds
+        float pRelease; // in ms
+        float pKnee;
+
+        float thresh, gain, att, rel, trim;
+};
+
+#include "limiter.tcc"
+
+#endif

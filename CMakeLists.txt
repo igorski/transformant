@@ -112,6 +112,8 @@ set(formantplaceholder_sources
     src/formantfilter.cpp
     src/lfo.h
     src/lfo.cpp
+    src/limiter.h
+    src/limiter.cpp
     src/paramids.h
     src/pluginprocess.h
     src/pluginprocess.cpp

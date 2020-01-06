@@ -86,9 +86,12 @@ class FormantPlaceholder : public AudioEffect
         // our model values, these are all 0 - 1 range
         // (normalized) RangeParameter values
 
-        float fVowel;
-        float fLFOVowel;
-        float fLFOVowelDepth;
+        float fVowelL;
+        float fVowelR;
+        float fLFOVowelL;
+        float fLFOVowelR;
+        float fLFOVowelLDepth;
+        float fLFOVowelRDepth;
         float fBitResolution;
         float fBitResolutionChain;
 

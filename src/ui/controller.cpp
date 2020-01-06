@@ -88,20 +88,14 @@ tresult PLUGIN_API Controller::initialize( FUnknown* context )
         0, ParameterInfo::kCanAutomate, unitId
     ));
 
-    parameters.addParameter( new RangeParameter(
+    parameters.addParameter(
         USTRING( "Vowel Sync" ), 0, 1, 0, ParameterInfo::kCanAutomate, kVowelSyncId, unitId
-    ));
+    );
 
     // LFO controls
 
     parameters.addParameter( new RangeParameter(
         USTRING( "Vowel L LFO rate" ), kLFOVowelLId, USTRING( "Hz" ),
-        Igorski::VST::MIN_LFO_RATE(), Igorski::VST::MAX_LFO_RATE(), Igorski::VST::MIN_LFO_RATE(),
-        0, ParameterInfo::kCanAutomate, unitId
-    ));
-
-    parameters.addParameter( new RangeParameter(
-        USTRING( "Vowel R LFO rate" ), kLFOVowelRId, USTRING( "Hz" ),
         Igorski::VST::MIN_LFO_RATE(), Igorski::VST::MAX_LFO_RATE(), Igorski::VST::MIN_LFO_RATE(),
         0, ParameterInfo::kCanAutomate, unitId
     ));
@@ -113,6 +107,12 @@ tresult PLUGIN_API Controller::initialize( FUnknown* context )
     ));
 
     parameters.addParameter( new RangeParameter(
+        USTRING( "Vowel R LFO rate" ), kLFOVowelRId, USTRING( "Hz" ),
+        Igorski::VST::MIN_LFO_RATE(), Igorski::VST::MAX_LFO_RATE(), Igorski::VST::MIN_LFO_RATE(),
+        0, ParameterInfo::kCanAutomate, unitId
+    ));
+
+    parameters.addParameter( new RangeParameter(
         USTRING( "Vowel R LFO depth" ), kLFOVowelRDepthId, USTRING( "%" ),
         0.f, 1.f, 0.f,
         0, ParameterInfo::kCanAutomate, unitId
@@ -120,9 +120,9 @@ tresult PLUGIN_API Controller::initialize( FUnknown* context )
 
     // distortion controls
 
-    parameters.addParameter( new RangeParameter(
-        USTRING( "Distortion Type" ), 0, 1, 0, ParameterInfo::kCanAutomate, kDistortionType, unitId
-    ));
+    parameters.addParameter(
+        USTRING( "Distortion Type" ), 0, 1, 0, ParameterInfo::kCanAutomate, kDistortionTypeId, unitId
+    );
 
     parameters.addParameter( new RangeParameter(
         USTRING( "Drive" ), kDriveId, USTRING( "0 - 1" ),
@@ -214,7 +214,7 @@ tresult PLUGIN_API Controller::setComponentState( IBStream* state )
         setParamNormalized( kLFOVowelRId,       savedLFOVowelR );
         setParamNormalized( kLFOVowelLDepthId,  savedLFOVowelLDepth );
         setParamNormalized( kLFOVowelRDepthId,  savedLFOVowelRDepth );
-        setParamNormalized( kDistortionType,    savedDistortionType );
+        setParamNormalized( kDistortionTypeId,  savedDistortionType );
         setParamNormalized( kDriveId,           savedDrive );
         setParamNormalized( kDistortionChainId, savedDistortionChain );
 
@@ -334,7 +334,7 @@ tresult PLUGIN_API Controller::getParamStringByValue( ParamID tag, ParamValue va
                     sprintf( text, "%.2f", ( float ) valueNormalized );
                     break;
 
-                case kVowelSync:
+                case kVowelSyncId:
                     sprintf( text, "%s", ( valueNormalized == 0 ) ? "Off": "On" );
                     break;
 

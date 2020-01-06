@@ -23,7 +23,7 @@
 #include "waveshaper.h"
 #include <cmath>
 
-namespace MWEngine {
+namespace Igorski {
 
 // constructor
 
@@ -40,8 +40,7 @@ void WaveShaper::process( float* inBuffer, int bufferSize )
     for ( int j = 0; j < bufferSize; ++j )
     {
         float input = inBuffer[ j ];
-
-        inBuffer[ j ] = input * ( std::abs( input ) + _amount ) / ( input^2 + ( _amount - 1.f ) * std::abs( _input ) + 1.f );
+        inBuffer[ j ] =  (( 1.0 + _multiplier ) * input / ( 1.0 + _multiplier * std::abs( input ))) * _level;
     }
 }
 
@@ -54,7 +53,8 @@ float WaveShaper::getAmount()
 
 void WaveShaper::setAmount( float value )
 {
-    _amount = value;
+    _amount     = value;
+    _multiplier = 2.0f * _amount / ( 1.0f - fmin(0.99999f, _amount));
 }
 
 float WaveShaper::getLevel()
@@ -67,4 +67,4 @@ void WaveShaper::setLevel( float value )
     _level = value;
 }
 
-} // E.O namespace MWEngine
+} // E.O namespace Igorski

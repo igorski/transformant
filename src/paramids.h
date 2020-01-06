@@ -29,7 +29,7 @@ enum
 
     kVowelLId = 1,         // formant vowel L
     kVowelRId,             // formant vowel R
-    KVowelSyncId,          // formant vowel sync
+    kVowelSyncId,          // formant vowel sync
     kLFOVowelLId,          // formant vowel L LFO rate
     kLFOVowelLDepthId,     // formant vowel L LFO depth
     kLFOVowelRId,          // formant vowel R LFO rate

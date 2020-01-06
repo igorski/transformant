@@ -34,7 +34,7 @@ class FormantFilter
     static const int MEMORY_SIZE  = 10;
     static const int COEFF_AMOUNT = 11;
 
-    static const bool INTERPOLATE = false;
+    static const bool INTERPOLATE = false; // whether to interpolate formants between vowels
 
     public:
         FormantFilter( float aVowel );
@@ -62,7 +62,6 @@ class FormantFilter
 
         void cacheVowel();
         void cacheLFO();
-
 
         double COEFFICIENTS[ 5 ][ COEFF_AMOUNT ] = {
 

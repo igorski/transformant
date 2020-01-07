@@ -1,6 +1,6 @@
-﻿###################################
-# CMake Project for FORMANTPLACEHOLDER Plugin #
-###################################
+﻿#########################################
+# CMake Project for TRANSFORMANT Plugin #
+#########################################
 
 # uncomment to build as VST2.4 instead of VST3.0 (provides wider DAW compatibility)
 #set(SMTG_CREATE_VST2_VERSION "Use VST2" ON)
@@ -12,7 +12,7 @@
 # DO NOT CHANGE BELOW #
 #######################
 
-project(FOGPAD)
+project(TRANSFORMANT)
 cmake_minimum_required(VERSION 3.12)
 set(CMAKE_COLOR_MAKEFILE ON)
 set(CMAKE_CXX_STANDARD 14)
@@ -84,7 +84,7 @@ set(VSTSDK_PLUGIN_SOURCE
 )
 
 #if (SMTG_CREATE_VST2_VERSION)
-    set(formantplaceholder_vst2_sources
+    set(transformant_vst2_sources
         ${VST3_SDK_ROOT}/public.sdk/source/common/memorystream.cpp
         ${VST3_SDK_ROOT}/public.sdk/source/vst/hosting/eventlist.cpp
         ${VST3_SDK_ROOT}/public.sdk/source/vst/hosting/hostclasses.cpp
@@ -102,7 +102,7 @@ set(VSTSDK_PLUGIN_SOURCE
 # Project sources #
 ###################
 
-set(formantplaceholder_sources
+set(transformant_sources
     src/global.h
     src/audiobuffer.h
     src/audiobuffer.cpp
@@ -131,10 +131,10 @@ set(formantplaceholder_sources
 
 # VST2 is only defined for macOS and Windows
 if(MAC OR WIN)
-    set(formantplaceholder_sources ${formantplaceholder_sources} ${formantplaceholder_vst2_sources})
+    set(transformant_sources ${transformant_sources} ${transformant_vst2_sources})
 endif()
 
-set(target formantplaceholder)
+set(target transformant)
 
 ##############
 # Audio Unit #
@@ -154,7 +154,7 @@ if (JAMBA_ENABLE_AUDIO_UNIT)
     configure_file(${CPP_SOURCES}/version.h ${CMAKE_BINARY_DIR}/generated/version.h)
     include_directories(${CMAKE_BINARY_DIR}/generated/)
 
-    jamba_add_vst3plugin(${target} "${formantplaceholder_sources}")
+    jamba_add_vst3plugin(${target} "${transformant_sources}")
     target_include_directories(${target} PUBLIC ${VST3_SDK_ROOT}/vstgui4)
     target_link_libraries(${target} PRIVATE base sdk vstgui_support jamba)
 
@@ -162,11 +162,11 @@ if (JAMBA_ENABLE_AUDIO_UNIT)
     # Resources - add your resources here...
     ###################################################
 
-    jamba_add_vst3_resource(${target} DATA "formantplaceholder.uidesc")
+    jamba_add_vst3_resource(${target} DATA "transformant.uidesc")
     jamba_add_vst3_resource(${target} PNG "background.png")
 
     # this must be called after you are done calling jamba_add_vst3_resource for all resources
-    jamba_gen_vst3_resources(${target} "FogPad")
+    jamba_gen_vst3_resources(${target} "Transformant")
 
     jamba_dev_scripts(${target})
 
@@ -176,7 +176,7 @@ else()
 # VST #
 #######
 
-smtg_add_vst3plugin(${target} ${VST3_SDK_ROOT} ${formantplaceholder_sources})
+smtg_add_vst3plugin(${target} ${VST3_SDK_ROOT} ${transformant_sources})
 
 include_directories(${VSTSDK_INCLUDE_DIR})
 target_link_libraries(${target} ${VSTSDK_LIBRARIES})
@@ -211,28 +211,28 @@ IF (APPLE)
         find_library(EXPAT Expat)
         target_link_libraries(${target} PRIVATE ${COREFOUNDATION_FRAMEWORK} ${COCOA_FRAMEWORK} ${OPENGL_FRAMEWORK} ${ACCELERATE_FRAMEWORK} ${QUARTZCORE_FRAMEWORK} ${CARBON_FRAMEWORK} ${EXPAT})
     endif()
-    set_target_properties(formantplaceholder PROPERTIES
+    set_target_properties(transformant PROPERTIES
         BUNDLE true
         BUNDLE_EXTENSION "vst3"
         XCODE_ATTRIBUTE_WRAPPER_EXTENSION "vst3"
         MACOSX_BUNDLE_INFO_PLIST "${CMAKE_CURRENT_SOURCE_DIR}/mac/Info.plist"
-        MACOSX_BUNDLE_BUNDLE_NAME "FogPad"
-        MACOSX_BUNDLE_GUI_IDENTIFIER "nl.igorski.formantplaceholder"
+        MACOSX_BUNDLE_BUNDLE_NAME "Transformant"
+        MACOSX_BUNDLE_GUI_IDENTIFIER "nl.igorski.vst.transformant"
         MACOSX_BUNDLE_ICON_FILE ""
         MACOSX_BUNDLE_SHORT_VERSION_STRING "1.0.0"
-        MACOSX_BUNDLE_COPYRIGHT "igorski.nl © 2019"
+        MACOSX_BUNDLE_COPYRIGHT "igorski.nl © 2020"
     )
 ENDIF (APPLE)
 
 # Resources
 
-smtg_add_vst3_resource(${target} "resource/formantplaceholder.uidesc")
+smtg_add_vst3_resource(${target} "resource/transformant.uidesc")
 smtg_add_vst3_resource(${target} "resource/background.png")
 
 if(MAC)
     smtg_set_bundle(${target} INFOPLIST "${CMAKE_CURRENT_SOURCE_DIR}/mac/Info.plist" PREPROCESS)
 elseif(WIN)
-    target_sources(${target} PRIVATE resource/formantplaceholder.rc)
+    target_sources(${target} PRIVATE resource/transformant.rc)
 endif()
 
 if (SMTG_CREATE_VST2_VERSION)
@@ -253,19 +253,19 @@ endif()
 ######################
 
 if(APPLE)
-  install(TARGETS formantplaceholder
+  install(TARGETS transformant
     DESTINATION "$ENV{HOME}/Library/Audio/Plug-Ins/VST"
   )
 elseif(WIN32)
-  install(TARGETS formantplaceholder
+  install(TARGETS transformant
     DESTINATION "C:/Program Files (x86)/Common Files/VST3/"
   )
 elseif(WIN)
-  install(TARGETS formantplaceholder
+  install(TARGETS transformant
     DESTINATION "C:/Program Files/Common Files/VST3/"
   )
 elseif(UNIX AND NOT APPLE) #Linux
-  install(TARGETS formantplaceholder
+  install(TARGETS transformant
     DESTINATION "/usr/lib/lxvst"
   )
 endif()

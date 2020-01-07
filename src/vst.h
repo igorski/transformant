@@ -31,17 +31,17 @@ using namespace Steinberg::Vst;
 
 namespace Igorski {
 
-class FormantPlaceholder : public AudioEffect
+class Transformant : public AudioEffect
 {
     public:
-        FormantPlaceholder ();
-        virtual ~FormantPlaceholder(); // do not forget virtual here
+        Transformant ();
+        virtual ~Transformant(); // do not forget virtual here
 
         //--- ---------------------------------------------------------------------
         // create function required for Plug-in factory,
         // it will be called to create new instances of this Plug-in
         //--- ---------------------------------------------------------------------
-        static FUnknown* createInstance( void* /*context*/ ) { return ( IAudioProcessor* ) new FormantPlaceholder; }
+        static FUnknown* createInstance( void* /*context*/ ) { return ( IAudioProcessor* ) new Transformant; }
 
         //--- ---------------------------------------------------------------------
         // AudioEffect overrides:

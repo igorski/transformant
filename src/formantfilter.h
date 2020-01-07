@@ -50,7 +50,7 @@ class FormantFilter
 
     private:
 
-        double  _vowel;
+        double _vowel;
         double _tempVowel;
         float  _lfoDepth;
         double _lfoRange;

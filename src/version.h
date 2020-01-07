@@ -19,11 +19,11 @@
 // Version without build number (example "1.0.3")
 #define VERSION_STR MAJOR_VERSION_STR "." SUB_VERSION_STR "." RELEASE_NUMBER_STR
 
-#define stringOriginalFilename  "formantplaceholder.vst3"
+#define stringOriginalFilename  "transformant.vst3"
 #if PLATFORM_64
-#define stringFileDescription   "Formant Placeholder plugin (64Bit)"
+#define stringFileDescription   "Transformant plugin (64Bit)"
 #else
-#define stringFileDescription   "Formant Placeholder plugin"
+#define stringFileDescription   "Transformant plugin"
 #endif
 #define stringCompanyName       "igorski.nl\0"
 #define stringLegalCopyright    "� 2020 igorski.nl"

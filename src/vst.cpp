@@ -38,9 +38,9 @@
 namespace Igorski {
 
 //------------------------------------------------------------------------
-// FormantPlaceholder Implementation
+// Transformant Implementation
 //------------------------------------------------------------------------
-FormantPlaceholder::FormantPlaceholder()
+Transformant::Transformant()
 : fVowelL( 0.f )
 , fVowelR( 0.f )
 , fVowelSync( 1.f )
@@ -63,14 +63,14 @@ FormantPlaceholder::FormantPlaceholder()
 }
 
 //------------------------------------------------------------------------
-FormantPlaceholder::~FormantPlaceholder()
+Transformant::~Transformant()
 {
     // free all allocated resources
     delete pluginProcess;
 }
 
 //------------------------------------------------------------------------
-tresult PLUGIN_API FormantPlaceholder::initialize( FUnknown* context )
+tresult PLUGIN_API Transformant::initialize( FUnknown* context )
 {
     //---always initialize the parent-------
     tresult result = AudioEffect::initialize( context );
@@ -89,19 +89,19 @@ tresult PLUGIN_API FormantPlaceholder::initialize( FUnknown* context )
 }
 
 //------------------------------------------------------------------------
-tresult PLUGIN_API FormantPlaceholder::terminate()
+tresult PLUGIN_API Transformant::terminate()
 {
     // nothing to do here yet...except calling our parent terminate
     return AudioEffect::terminate();
 }
 
 //------------------------------------------------------------------------
-tresult PLUGIN_API FormantPlaceholder::setActive (TBool state)
+tresult PLUGIN_API Transformant::setActive (TBool state)
 {
     if (state)
-        sendTextMessage( "FormantPlaceholder::setActive (true)" );
+        sendTextMessage( "Transformant::setActive (true)" );
     else
-        sendTextMessage( "FormantPlaceholder::setActive (false)" );
+        sendTextMessage( "Transformant::setActive (false)" );
 
     // reset output level meter
     outputGainOld = 0.f;
@@ -111,7 +111,7 @@ tresult PLUGIN_API FormantPlaceholder::setActive (TBool state)
 }
 
 //------------------------------------------------------------------------
-tresult PLUGIN_API FormantPlaceholder::process( ProcessData& data )
+tresult PLUGIN_API Transformant::process( ProcessData& data )
 {
     // In this example there are 4 steps:
     // 1) Read inputs parameters coming from host (in order to adapt our model values)
@@ -254,10 +254,10 @@ tresult PLUGIN_API FormantPlaceholder::process( ProcessData& data )
 }
 
 //------------------------------------------------------------------------
-tresult FormantPlaceholder::receiveText( const char* text )
+tresult Transformant::receiveText( const char* text )
 {
     // received from Controller
-    fprintf( stderr, "[FormantPlaceholder] received: " );
+    fprintf( stderr, "[Transformant] received: " );
     fprintf( stderr, "%s", text );
     fprintf( stderr, "\n" );
 
@@ -265,7 +265,7 @@ tresult FormantPlaceholder::receiveText( const char* text )
 }
 
 //------------------------------------------------------------------------
-tresult PLUGIN_API FormantPlaceholder::setState( IBStream* state )
+tresult PLUGIN_API Transformant::setState( IBStream* state )
 {
     // called when we load a preset, the model has to be reloaded
 
@@ -369,7 +369,7 @@ tresult PLUGIN_API FormantPlaceholder::setState( IBStream* state )
 }
 
 //------------------------------------------------------------------------
-tresult PLUGIN_API FormantPlaceholder::getState( IBStream* state )
+tresult PLUGIN_API Transformant::getState( IBStream* state )
 {
     // here we need to save the model
 
@@ -412,7 +412,7 @@ tresult PLUGIN_API FormantPlaceholder::getState( IBStream* state )
 }
 
 //------------------------------------------------------------------------
-tresult PLUGIN_API FormantPlaceholder::setupProcessing( ProcessSetup& newSetup )
+tresult PLUGIN_API Transformant::setupProcessing( ProcessSetup& newSetup )
 {
     // called before the process call, always in a disabled state (not active)
 
@@ -436,7 +436,7 @@ tresult PLUGIN_API FormantPlaceholder::setupProcessing( ProcessSetup& newSetup )
 }
 
 //------------------------------------------------------------------------
-tresult PLUGIN_API FormantPlaceholder::setBusArrangements( SpeakerArrangement* inputs,  int32 numIns,
+tresult PLUGIN_API Transformant::setBusArrangements( SpeakerArrangement* inputs,  int32 numIns,
                                                SpeakerArrangement* outputs, int32 numOuts )
 {
     if ( numIns == 1 && numOuts == 1 )
@@ -490,7 +490,7 @@ tresult PLUGIN_API FormantPlaceholder::setBusArrangements( SpeakerArrangement* i
 }
 
 //------------------------------------------------------------------------
-tresult PLUGIN_API FormantPlaceholder::canProcessSampleSize( int32 symbolicSampleSize )
+tresult PLUGIN_API Transformant::canProcessSampleSize( int32 symbolicSampleSize )
 {
     if ( symbolicSampleSize == kSample32 )
         return kResultTrue;
@@ -503,7 +503,7 @@ tresult PLUGIN_API FormantPlaceholder::canProcessSampleSize( int32 symbolicSampl
 }
 
 //------------------------------------------------------------------------
-tresult PLUGIN_API FormantPlaceholder::notify( IMessage* message )
+tresult PLUGIN_API Transformant::notify( IMessage* message )
 {
     if ( !message )
         return kInvalidArgument;
@@ -518,7 +518,7 @@ tresult PLUGIN_API FormantPlaceholder::notify( IMessage* message )
             // size should be 100
             if ( size == 100 && ((char*)data)[1] == 1 ) // yeah...
             {
-                fprintf( stderr, "[FormantPlaceholder] received the binary message!\n" );
+                fprintf( stderr, "[Transformant] received the binary message!\n" );
             }
             return kResultOk;
         }
@@ -527,7 +527,7 @@ tresult PLUGIN_API FormantPlaceholder::notify( IMessage* message )
     return AudioEffect::notify( message );
 }
 
-void FormantPlaceholder::syncModel()
+void Transformant::syncModel()
 {
     pluginProcess->distortionPostMix     = Calc::toBool( fDistortionChain );
     pluginProcess->distortionTypeCrusher = Calc::toBool( fDistortionType );

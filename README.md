@@ -1,7 +1,7 @@
-# FOGPAD
+# TRANSFORMANT
 
-FogPad is a VST2/3/AU plug-in which provides a formant filter effect, driven
-by an oscillator and obliterated to gravel through bit crushing.
+Transformant is a VST2/3/AU plug-in which provides a stereo formant filter effect, driven
+by oscillators and obliterated to gravel through bit crushing or wave shaping.
 
 ## On compatibility
 
@@ -66,7 +66,7 @@ The result being that in _{VST3_SDK_ROOT}/VST3_SDK/build/lib_ all Steinberg VST 
 
 ### Building the plugin
 
-Run CMake to generate FogPad's Makefile for your environment, after which you can compile the plugin using make. The build output will be stored in _./build/VST3/fogpad.vst_ as well as copied to your systems VST-plugin folder.
+Run CMake to generate Transformants Makefile for your environment, after which you can compile the plugin using make. The build output will be stored in _./build/VST3/transformant.vst_ as well as copied to your systems VST-plugin folder.
 
 You must provide the path to your custom SDK download location by providing _VST3_SDK_ROOT_ to CMake like so:
 
@@ -100,8 +100,8 @@ You can copy the build output into your system VST(3) folder and run it directly
 
 When debugging, you can also choose to run the plugin against Steinbergs validator and editor host utilities:
 
-    {VST3_SDK_ROOT}/build/bin/validator  build/VST3/fogpad.vst3
-    {VST3_SDK_ROOT}/build/bin/editorhost build/VST3/fogpad.vst3
+    {VST3_SDK_ROOT}/build/bin/validator  build/VST3/transformant.vst3
+    {VST3_SDK_ROOT}/build/bin/editorhost build/VST3/transformant.vst3
 
 ### Build as Audio Unit (macOS only)
 
@@ -115,7 +115,7 @@ Is aided by the excellent [Jamba framework](https://github.com/pongasoft/jamba) 
 VST3_SDK_ROOT=/path/to/VST_SDK/VST3_SDK sh build_au.sh
 ```
 
-The subsequent Audio Unit component will be located in _./build/VST3/fogpad.component_ as well as linked
+The subsequent Audio Unit component will be located in _./build/VST3/transformant.component_ as well as linked
 in _~/Library/Audio/Plug-Ins/Components/_
 
-You can validate the Audio Unit using Apple's _auval_ utility, by running _auval -v aufx dely IGOR_ on the command line. Note that there is the curious behaviour that you might need to reboot before the plugin shows up, though you can force a flush of the Audio Unit cache at runtime by running _killall -9 AudioComponentRegistrar_.
+You can validate the Audio Unit using Apple's _auval_ utility, by running _auval -v aufx frmt IGOR_ on the command line. Note that there is the curious behaviour that you might need to reboot before the plugin shows up, though you can force a flush of the Audio Unit cache at runtime by running _killall -9 AudioComponentRegistrar_.

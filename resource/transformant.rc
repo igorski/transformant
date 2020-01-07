@@ -3,7 +3,7 @@
 
 #define APSTUDIO_READONLY_SYMBOLS
 
-fogpad.uidesc           DATA "fogpad.uidesc"
+transformant.uidesc DATA "transformant.uidesc"
 background.png		PNG  "background.png"
 
 /////////////////////////////////////////////////////////////////////////////
@@ -28,7 +28,7 @@ BEGIN
         BEGIN
             VALUE "FileVersion",      FULL_VERSION_STR"\0"
             VALUE "ProductVersion",   FULL_VERSION_STR"\0"
-            VALUE "OriginalFilename", "fogpad.vst3\0"
+            VALUE "OriginalFilename", "transformant.vst3\0"
             VALUE "FileDescription",  stringFileDescription"\0"
             VALUE "InternalName",     stringFileDescription"\0"
             VALUE "ProductName",      stringFileDescription"\0"

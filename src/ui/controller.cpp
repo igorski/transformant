@@ -66,7 +66,7 @@ tresult PLUGIN_API Controller::initialize( FUnknown* context )
     unitInfo.id = 1;
     unitInfo.parentUnitId = kRootUnitId;    // attached to the root unit
 
-    Steinberg::UString( unitInfo.name, USTRINGSIZE( unitInfo.name )).assign( USTRING( "FormantPlaceholder" ));
+    Steinberg::UString( unitInfo.name, USTRINGSIZE( unitInfo.name )).assign( USTRING( "Transformant" ));
 
     unitInfo.programListId = kNoProgramListId;
 
@@ -136,7 +136,7 @@ tresult PLUGIN_API Controller::initialize( FUnknown* context )
 
     // initialization
 
-    String str( "FORMANTPLACEHOLDER" );
+    String str( "TRANSFORMANT" );
     str.copyTo16( defaultMessageText, 0, 127 );
 
     return result;
@@ -229,7 +229,7 @@ IPlugView* PLUGIN_API Controller::createView( const char* name )
     // create the visual editor
     if ( name && strcmp( name, "editor" ) == 0 )
     {
-        VST3Editor* view = new VST3Editor( this, "view", "formantplaceholder.uidesc" );
+        VST3Editor* view = new VST3Editor( this, "view", "transformant.uidesc" );
         return view;
     }
     return 0;

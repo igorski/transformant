@@ -6,7 +6,7 @@
         <color name="Focus" rgba="#279bffff"/>
     </colors>
     <template
-        maxSize="930, 530" minSize="930, 530" size="930, 530" name="view" opacity="1" origin="0, 0"
+        maxSize="400, 600" minSize="400, 600" size="400, 600" name="view" opacity="1" origin="0, 0"
         background-color="~ BlackCColor" background-color-draw-style="filled and stroked" bitmap="background"
         class="CViewContainer" mouse-enabled="true" transparent="false">
 
@@ -193,7 +193,7 @@
         <attributes name="UIAttributesController"/>
         <attributes SelectedRow="23" name="UIViewCreatorDataSource"/>
         <attributes SelectedRow="4" name="UIBitmapsDataSource"/>
-        <attributes Path="resources/graphics/fogpad.uidesc" name="VST3Editor"/>
+        <attributes Path="resources/graphics/transformant.uidesc" name="VST3Editor"/>
         <attributes SelectedRow="2" name="UITagsDataSource"/>
         <attributes SelectedRow="0" name="UIColorsDataSource"/>
         <attributes SelectedRow="-1" name="UIGradientsDataSource"/>

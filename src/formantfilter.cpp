@@ -34,14 +34,15 @@ namespace Igorski {
  * @param aVowel {float} interpolated value within
  *                       the range of the amount specified in the coeffs Array
  */
-FormantFilter::FormantFilter( float aVowel )
+FormantFilter::FormantFilter( float aVowel, float sampleRate )
 {
     memset( _currentCoeffs, 0.0, COEFF_AMOUNT );
     memset( _memory,        0.0, MEMORY_SIZE );
 
+    _sampleRate = sampleRate;
     setVowel( aVowel );
 
-    lfo = new LFO();
+    lfo = new LFO( _sampleRate );
     hasLFO = false;
 }
 
@@ -102,11 +103,10 @@ void FormantFilter::setLFO( float LFORatePercentage, float LFODepth )
     }
 }
 
-void FormantFilter::process( float* inBuffer, int bufferSize )
+void FormantFilter::process( double* inBuffer, int bufferSize )
 {
     size_t j, k;
     double res;
-    float out;
 
     for ( size_t i = 0; i < bufferSize; ++i )
     {
@@ -128,7 +128,7 @@ void FormantFilter::process( float* inBuffer, int bufferSize )
 
         // write output
 
-        inBuffer[ i ] = ( float ) _memory[ 0 ];
+        inBuffer[ i ] = res;
 
         // if LFO is active, keep it moving
 
@@ -148,18 +148,30 @@ void FormantFilter::cacheVowel()
 
     // vowels are defined in 0 - 4 range (see COEFFICIENTS)
 
-    double scaledValue = Calc::scale( _tempVowel, 1.f, 4.f );
+    double vowelValue = Calc::scale( _tempVowel, 1.f, 4.f );
 
     // interpolate the value between vowels
 
-    int roundVowel = ( int )( scaledValue );
-    double fracpart = INTERPOLATE ? roundVowel - scaledValue : 1.0;
+    int roundVowel  = ( int )( vowelValue );
+    double fracpart = ( double ) roundVowel - vowelValue;
+
+    // formants were calculated at 44.1 kHz, scale to match actual sample rate
+
+    double scaleValue = ( double ) _sampleRate / 44100.;
 
     for ( int i = 0; i < COEFF_AMOUNT; i++ )
     {
-        _currentCoeffs[ i ] = fracpart * COEFFICIENTS[ roundVowel ][ i ] +
-                              // add next vowel (note the overflow check when roundVowel is 4)
-                              ( 1.0 - fracpart ) * COEFFICIENTS[ roundVowel + ( roundVowel < 4 )][ i ];
+        double scaledCoeff = COEFFICIENTS[ roundVowel ][ i ] * scaleValue;
+
+        if ( INTERPOLATE ) {
+
+            // add next vowel (note the overflow check when roundVowel is 4)
+            double nextScaledCoeff = COEFFICIENTS[ roundVowel + ( roundVowel < 4 )][ i ] * vowelValue;
+            _currentCoeffs[ i ]    = fracpart * scaledCoeff + ( 1.0 - fracpart ) * nextScaledCoeff;
+
+        } else {
+            _currentCoeffs[ i ] = scaledCoeff;
+        }
     }
 }
 

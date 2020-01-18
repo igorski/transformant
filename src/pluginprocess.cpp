@@ -26,14 +26,15 @@
 
 namespace Igorski {
 
-PluginProcess::PluginProcess( int amountOfChannels ) {
+PluginProcess::PluginProcess( int amountOfChannels, float sampleRate ) {
     _amountOfChannels = amountOfChannels;
+    _sampleRate       = sampleRate;
 
     bitCrusher     = new BitCrusher( 8, 1.f, .5f );
     waveShaper     = new WaveShaper( 0.f, 1.f );
     limiter        = new Limiter( 10.f, 500.f, .95f );
-    formantFilterL = new FormantFilter( 0.f );
-    formantFilterR = new FormantFilter( 0.f );
+    formantFilterL = new FormantFilter( 0.f, _sampleRate );
+    formantFilterR = new FormantFilter( 0.f, _sampleRate );
 
     // will be lazily created in the process function
     _mixBuffer = nullptr;

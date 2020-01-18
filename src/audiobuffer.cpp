@@ -1,7 +1,7 @@
 /**
  * The MIT License (MIT)
  *
- * Copyright (c) 2013-2018 Igor Zinken - https://www.igorski.nl
+ * Copyright (c) 2013-2020 Igor Zinken - https://www.igorski.nl
  *
  * Permission is hereby granted, free of charge, to any person obtaining a copy of
  * this software and associated documentation files (the "Software"), to deal in
@@ -32,13 +32,13 @@ AudioBuffer::AudioBuffer( int aAmountOfChannels, int aBufferSize )
 
     // create silent buffers for each channel
 
-    _buffers = new std::vector<float*>( amountOfChannels );
+    _buffers = new std::vector<double*>( amountOfChannels );
 
     // fill buffers with silence
 
     for ( int i = 0; i < amountOfChannels; ++i ) {
-        _buffers->at( i ) = new float[ aBufferSize ];
-        memset( _buffers->at( i ), 0, aBufferSize * sizeof( float )); // zero bits should equal 0.f
+        _buffers->at( i ) = new double[ aBufferSize ];
+        memset( _buffers->at( i ), 0, aBufferSize * sizeof( double )); // zero bits should equal 0.f
     }
 }
 
@@ -52,7 +52,7 @@ AudioBuffer::~AudioBuffer()
 
 /* public methods */
 
-float* AudioBuffer::getBufferForChannel( int aChannelNum )
+double* AudioBuffer::getBufferForChannel( int aChannelNum )
 {
     return _buffers->at( aChannelNum );
 }
@@ -80,8 +80,8 @@ int AudioBuffer::mergeBuffers( AudioBuffer* aBuffer, int aReadOffset, int aWrite
         if ( c > maxSourceChannel )
             break;
 
-        float* srcBuffer    = aBuffer->getBufferForChannel( c );
-        float* targetBuffer = getBufferForChannel( c );
+        auto srcBuffer    = aBuffer->getBufferForChannel( c );
+        auto targetBuffer = getBufferForChannel( c );
 
         for ( int i = aWriteOffset, r = aReadOffset; i < maxWriteOffset; ++i, ++r )
         {
@@ -108,14 +108,14 @@ void AudioBuffer::silenceBuffers()
 {
     // use mem set to quickly erase existing buffer contents, zero bits should equal 0.f
     for ( int i = 0; i < amountOfChannels; ++i )
-        memset( getBufferForChannel( i ), 0, bufferSize * sizeof( float ));
+        memset( getBufferForChannel( i ), 0, bufferSize * sizeof( double ));
 }
 
 void AudioBuffer::adjustBufferVolumes( float amp )
 {
     for ( int i = 0; i < amountOfChannels; ++i )
     {
-        float* buffer = getBufferForChannel( i );
+        auto buffer = getBufferForChannel( i );
 
         for ( int j = 0; j < bufferSize; ++j )
             buffer[ j ] *= amp;
@@ -126,7 +126,7 @@ bool AudioBuffer::isSilent()
 {
     for ( int i = 0; i < amountOfChannels; ++i )
     {
-        float* buffer = getBufferForChannel( i );
+        auto buffer = getBufferForChannel( i );
         for ( int j = 0; j < bufferSize; ++j )
         {
             if ( buffer[ j ] != 0.f )
@@ -142,10 +142,10 @@ AudioBuffer* AudioBuffer::clone()
 
     for ( int i = 0; i < amountOfChannels; ++i )
     {
-        float* sourceBuffer = getBufferForChannel( i );
-        float* targetBuffer = output->getBufferForChannel( i );
+        auto sourceBuffer = getBufferForChannel( i );
+        auto targetBuffer = output->getBufferForChannel( i );
 
-        memcpy( targetBuffer, sourceBuffer, bufferSize * sizeof( float ));
+        memcpy( targetBuffer, sourceBuffer, bufferSize * sizeof( double ));
     }
     return output;
 }

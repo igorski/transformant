@@ -1,7 +1,7 @@
 /**
  * The MIT License (MIT)
  *
- * Copyright (c) 2013-2018 Igor Zinken - https://www.igorski.nl
+ * Copyright (c) 2013-2020 Igor Zinken - https://www.igorski.nl
  *
  * Permission is hereby granted, free of charge, to any person obtaining a copy of
  * this software and associated documentation files (the "Software"), to deal in
@@ -24,9 +24,10 @@
 
 namespace Igorski {
 
-LFO::LFO() {
+LFO::LFO( float sampleRate ) {
     _rate        = VST::MIN_LFO_RATE();
     _accumulator = 0.f;
+    _sampleRate  = sampleRate;
 }
 
 LFO::~LFO() {

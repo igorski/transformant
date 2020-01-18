@@ -1,7 +1,7 @@
 /**
  * The MIT License (MIT)
  *
- * Copyright (c) 2013-2018 Igor Zinken - https://www.igorski.nl
+ * Copyright (c) 2013-2020 Igor Zinken - https://www.igorski.nl
  *
  * Permission is hereby granted, free of charge, to any person obtaining a copy of
  * this software and associated documentation files (the "Software"), to deal in
@@ -32,7 +32,7 @@ class BitCrusher {
         BitCrusher( float amount, float inputMix, float outputMix );
         ~BitCrusher();
 
-        void process( float* inBuffer, int bufferSize );
+        void process( double* inBuffer, int bufferSize );
 
         void setAmount( float value ); // range between -1 to +1
         void setInputMix( float value );

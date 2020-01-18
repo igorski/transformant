@@ -37,7 +37,7 @@ namespace Igorski {
 class PluginProcess {
 
     public:
-        PluginProcess( int amountOfChannels );
+        PluginProcess( int amountOfChannels, float sampleRate );
         ~PluginProcess();
 
         // apply effect to incoming sampleBuffer contents
@@ -62,7 +62,8 @@ class PluginProcess {
     private:
         AudioBuffer* _mixBuffer;  // buffer used for the sample process mixing
 
-        int  _amountOfChannels;
+        int   _amountOfChannels;
+        float _sampleRate;
 
         // ensures the pre- and post mix buffers match the appropriate amount of channels
         // and buffer size. this also clones the contents of given in buffer into the pre-mix buffer

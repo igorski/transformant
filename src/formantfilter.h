@@ -37,19 +37,20 @@ class FormantFilter
     static const bool INTERPOLATE = false; // whether to interpolate formants between vowels
 
     public:
-        FormantFilter( float aVowel );
+        FormantFilter( float aVowel, float sampleRate );
         ~FormantFilter();
 
         void setVowel( float aVowel );
         float getVowel();
         void setLFO( float LFORatePercentage, float LFODepth );
-        void process( float* inBuffer, int bufferSize );
+        void process( double* inBuffer, int bufferSize );
 
         LFO* lfo;
         bool hasLFO;
 
     private:
 
+        float  _sampleRate;
         double _vowel;
         double _tempVowel;
         float  _lfoDepth;

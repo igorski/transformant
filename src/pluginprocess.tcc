@@ -34,7 +34,7 @@ void PluginProcess::process( SampleType** inBuffer, SampleType** outBuffer, int 
     {
         SampleType* channelInBuffer  = inBuffer[ c ];
         SampleType* channelOutBuffer = outBuffer[ c ];
-        float* channelMixBuffer      = _mixBuffer->getBufferForChannel( c );
+        auto channelMixBuffer        = _mixBuffer->getBufferForChannel( c );
 
         // pre formant filter bit crusher processing
 
@@ -65,6 +65,7 @@ void PluginProcess::process( SampleType** inBuffer, SampleType** outBuffer, int 
         }
 
         // write the effected mix buffers into the output buffer
+        // note here we convert the double values to whatever SampleType is
 
         for ( size_t i = 0; i < bufferSize; ++i ) {
 
@@ -93,17 +94,17 @@ void PluginProcess::prepareMixBuffers( SampleType** inBuffer, int numInChannels,
     }
 
     // clone the in buffer contents
-    // note the clone is always cast to float as it is
+    // note the clone is always cast to double as it is
     // used for internal processing (see PluginProcess::process)
 
     for ( int c = 0; c < numInChannels; ++c ) {
 
         SampleType* inChannelBuffer = ( SampleType* ) inBuffer[ c ];
-        float* channelMixBuffer     = ( float* ) _mixBuffer->getBufferForChannel( c );
+        auto channelMixBuffer       = ( double* ) _mixBuffer->getBufferForChannel( c );
 
         for ( int i = 0; i < bufferSize; ++i ) {
             // clone into the pre mix buffer for pre-processing
-            channelMixBuffer[ i ] = ( float ) inChannelBuffer[ i ];
+            channelMixBuffer[ i ] = ( double ) inChannelBuffer[ i ];
         }
     }
 }

@@ -35,11 +35,11 @@ WaveShaper::WaveShaper( float amount, float level )
 
 /* public methods */
 
-void WaveShaper::process( float* inBuffer, int bufferSize )
+void WaveShaper::process( double* inBuffer, int bufferSize )
 {
     for ( int j = 0; j < bufferSize; ++j )
     {
-        float input = inBuffer[ j ];
+        double input = inBuffer[ j ];
         inBuffer[ j ] =  (( 1.0 + _multiplier ) * input / ( 1.0 + _multiplier * std::abs( input ))) * _level;
     }
 }

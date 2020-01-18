@@ -59,7 +59,7 @@ Transformant::Transformant()
     setControllerClass( VST::ControllerUID );
 
     // should be created on setupProcessing, this however doesn't fire for Audio Unit using auval?
-    pluginProcess = new PluginProcess( 2 );
+    pluginProcess = new PluginProcess( 2, 44100.f );
 }
 
 //------------------------------------------------------------------------
@@ -419,8 +419,6 @@ tresult PLUGIN_API Transformant::setupProcessing( ProcessSetup& newSetup )
     // here we keep a trace of the processing mode (offline,...) for example.
     currentProcessMode = newSetup.processMode;
 
-    VST::SAMPLE_RATE = newSetup.sampleRate;
-
     // spotted to fire multiple times...
 
     if ( pluginProcess != nullptr )
@@ -428,7 +426,7 @@ tresult PLUGIN_API Transformant::setupProcessing( ProcessSetup& newSetup )
 
     // TODO: creating a bunch of extra channels for no apparent reason?
     // get the correct channel amount and don't allocate more than necessary...
-    pluginProcess = new PluginProcess( 6 );
+    pluginProcess = new PluginProcess( 6, newSetup.sampleRate );
 
     syncModel();
 

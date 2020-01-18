@@ -41,9 +41,9 @@ namespace Calc {
      * convert given value in seconds to the appropriate
      * value in samples (for the current sampling rate)
      */
-    inline int secondsToBuffer( float seconds )
+    inline int secondsToBuffer( float seconds, float sampleRate )
     {
-        return ( int )( seconds * Igorski::VST::SAMPLE_RATE );
+        return ( int )( seconds * sampleRate );
     }
 
     /**

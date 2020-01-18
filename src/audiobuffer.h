@@ -1,7 +1,7 @@
 /**
  * The MIT License (MIT)
  *
- * Copyright (c) 2013-2018 Igor Zinken - https://www.igorski.nl
+ * Copyright (c) 2013-2020 Igor Zinken - https://www.igorski.nl
  *
  * Permission is hereby granted, free of charge, to any person obtaining a copy of
  * this software and associated documentation files (the "Software"), to deal in
@@ -41,7 +41,7 @@ class AudioBuffer
         int bufferSize;
         bool loopeable;
 
-        float* getBufferForChannel( int aChannelNum );
+        double* getBufferForChannel( int aChannelNum );
         int mergeBuffers( AudioBuffer* aBuffer, int aReadOffset, int aWriteOffset, float aMixVolume );
         void silenceBuffers();
         void adjustBufferVolumes( float volume );
@@ -49,7 +49,7 @@ class AudioBuffer
         AudioBuffer* clone();
 
     protected:
-        std::vector<float*>* _buffers;
+        std::vector<double*>* _buffers;
 };
 
 #endif

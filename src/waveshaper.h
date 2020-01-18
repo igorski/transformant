@@ -33,7 +33,7 @@ class WaveShaper
         void setAmount( float value ); // range between -1 and +1
         float getLevel();
         void setLevel( float value );
-        void process( float* inBuffer, int bufferSize );
+        void process( double* inBuffer, int bufferSize );
 
     private:
         float _amount;

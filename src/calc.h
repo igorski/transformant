@@ -50,9 +50,9 @@ namespace Calc {
      * convert given value in milliseconds to the appropriate
      * value in samples (for the current sampling rate)
      */
-    inline int millisecondsToBuffer( float milliseconds )
+    inline int millisecondsToBuffer( float milliseconds, float sampleRate )
     {
-        return secondsToBuffer( milliseconds / 1000.f );
+        return secondsToBuffer( milliseconds / 1000.f, sampleRate );
     }
 
     // convenience method to ensure given value is within the 0.f - +1.f range

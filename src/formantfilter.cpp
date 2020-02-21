@@ -119,7 +119,7 @@ void FormantFilter::process( double* inBuffer, int bufferSize )
 
         dp0 = f0 * ( 1 / _halfSampleRate );
         p0 += dp0;  // phase increment
-        p0-= 2 * ( p0 > 1 );
+        p0 -= 2 * ( p0 > 1 );
 
         // calculate the coefficients
 
@@ -206,12 +206,12 @@ double FormantFilter::getCarrier( const double position, const double phase )
     double harmF = position - harmI;  // fractional part of harmonic number
 
     // keep within -1 to +1 range
-    double phi0 = fmodf( phase *  harmI       + 1 + 1000, 2.0 ) - 1.0;
-    double phi1 = fmodf( phase * ( harmI + 1) + 1 + 1000, 2.0 ) - 1.0;
+    double phi1 = fmodf( phase *  harmI        + 1 + 1000, 2.0 ) - 1.0;
+    double phi2 = fmodf( phase * ( harmI + 1 ) + 1 + 1000, 2.0 ) - 1.0;
 
     // calculate the two carriers
-    double carrier1 = fast_cos( phi0 );
-    double carrier2 = fast_cos( phi1 );
+    double carrier1 = fast_cos( phi1 );
+    double carrier2 = fast_cos( phi2 );
 
     // return interpolation between the two carriers
     return carrier1 + harmF * ( carrier2 - carrier1 );

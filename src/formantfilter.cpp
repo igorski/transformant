@@ -9,7 +9,7 @@
  * this software and associated documentation files (the "Software"), to deal in
  * the Software without restriction, including without limitation the rights to
  * use, copy, modify, merge, publish, distribute, sublicense, and/or sell copies of
- * the Software, and to permit persons to whom the Software is furnished to do so,
+ * the Software and to permit persons to whom the Software is furnished to do so,
  * subject to the following conditions:
  *
  * The above copyright notice and this permission notice shall be included in all
@@ -23,7 +23,6 @@
  * CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
  */
 #include "formantfilter.h"
-#include "calc.h"
 #include <cmath>
 
 namespace Igorski {
@@ -74,7 +73,7 @@ void FormantFilter::setVowel( float aVowel )
     // of currently moving vowel in place
     _tempVowel = ( hasLFO ) ? _vowel * tempRatio : _vowel;
 
-    cacheVowelOffset();
+    cacheCoeffOffset();
 
     if ( hasLFO ) {
         cacheLFO();
@@ -113,11 +112,11 @@ void FormantFilter::process( double* inBuffer, int bufferSize )
         lfoValue   = lfo->peek() * .5f  + .5f; // make waveform unipolar
         _tempVowel = std::min( _lfoMax, _lfoMin + _lfoRange * lfoValue ); // relative to depth
 
-        cacheVowelOffset();
+        cacheCoeffOffset();
 
         // calculate the phase for the formant synthesis and carrier
 
-        f0    = 12 * powf( 2.0, 4 - 4 * sLfoValue );  // sweep
+        f0    = 12 * powf( 2.0, 4 - 4 * _tempVowel );  // sweep
         //f0   *= ( 1.0 + 0.01 * sinf( tmp * 0.0015 )); // optional vibrato (sinf value determines speed)
         un_f0 = 1.0 / f0;
 
@@ -132,8 +131,8 @@ void FormantFilter::process( double* inBuffer, int bufferSize )
             a = A_COEFFICIENTS[ j ];
             f = F_COEFFICIENTS[ j ];
 
-            a.value += SCALE * ( a.coeffs[ _vowelOffset ] - a.value );
-            f.value += SCALE * ( f.coeffs[ _vowelOffset ] - f.value );
+            a.value += SCALE * ( a.coeffs[ _coeffOffset ] - a.value );
+            f.value += SCALE * ( f.coeffs[ _coeffOffset ] - f.value );
 
             // apply formant filter onto the input signal
 
@@ -173,7 +172,7 @@ double FormantFilter::generateFormant( double phase, const double width )
     double hann, gaussian, harmonic;
 
     for ( size_t h = 1; h < hmax; h++ ) {
-        phi     += PI * phase;
+        phi     += VST::PI * phase;
         hann     = 0.5f + 0.5f * fast_cos( h * ( 1.0 / hmax ));
         gaussian = 0.85f * exp( -h * h / ( width * width ));
         harmonic = cosf( phi );

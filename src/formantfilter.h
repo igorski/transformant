@@ -26,6 +26,7 @@
 #define __FORMANTFILTER_H_INCLUDED__
 
 #include "lfo.h"
+#include "calc.h"
 #include <math.h>
 
 //Length of the table
@@ -38,7 +39,8 @@ class FormantFilter
     static const int MEMORY_SIZE  = 10;
     static const int VOWEL_AMOUNT = 4;
     static const int COEFF_AMOUNT = 9;
-    static const float SCALE      = 0.001;
+
+    static constexpr double SCALE = 0.1;
 
     static const bool INTERPOLATE = false; // whether to interpolate formants between vowels
 
@@ -60,7 +62,7 @@ class FormantFilter
         float  _halfSampleRate;
         double _vowel;
         double _tempVowel;
-        int    _vowelOffset;
+        int    _coeffOffset;
         float  _lfoDepth;
         double _lfoRange;
         double _lfoMax;
@@ -82,7 +84,7 @@ class FormantFilter
             double coeffs[ COEFF_AMOUNT ];
         };
 
-        double FORMANT_WIDTH_SCALE = { 100, 120, 150, 300 };
+        double FORMANT_WIDTH_SCALE[ VOWEL_AMOUNT ] = { 100, 120, 150, 300 };
 
         Formant A_COEFFICIENTS[ VOWEL_AMOUNT ] = {
             { 0.0, { 1.0, 0.5, 1.0, 1.0, 0.7, 1.0, 1.0, 0.3, 1.0 } },
@@ -109,9 +111,9 @@ class FormantFilter
         double un_f0 = 0.0;
         // QQQ
 
-        inline void cacheVowelOffset()
+        inline void cacheCoeffOffset()
         {
-            _vowelOffset = ( int ) Calc::scale( _tempVowel, 1.f, ( float ) COEFF_AMOUNT - 1 );
+            _coeffOffset = ( int ) Calc::scale( _tempVowel, 1.f, ( float ) COEFF_AMOUNT - 1 );
         }
 
         // Fast approximation of cos( pi * x ) for x in -1 to +1 range

@@ -28,6 +28,11 @@
 #include "lfo.h"
 #include <math.h>
 
+//Length of the table
+#define L_TABLE (256+1) //The last entry of the table equals the first (to avoid a modulo)
+//Maximal formant width
+#define I_MAX 64
+
 namespace Igorski {
 class FormantFilter
 {
@@ -35,6 +40,9 @@ class FormantFilter
     static const int COEFF_AMOUNT = 11;
 
     static const bool INTERPOLATE = false; // whether to interpolate formants between vowels
+
+    //Table of formants
+    double TF[L_TABLE*I_MAX];
 
     public:
         FormantFilter( float aVowel, float sampleRate );
@@ -86,6 +94,38 @@ class FormantFilter
 
             { 4.09431e-07, 8.997322763, -37.20218544, 93.11385476, -156.2530937, 183.7080141, -153.2631681, 89.59539726, -35.12454591, 8.338655623, -0.910251753 }
         };
+
+        double f1 = 100.0;
+        double f2 = 100.0;
+        double f3 = 100.0;
+        double f4 = 100.0;
+        double a1 = 0.0;
+        double a2 = 0.0;
+        double a3 = 0.0;
+        double a4 = 0.0;
+        int tmp; // QQQ
+        
+        double F1[ 9 ] = {  730,  200,  400,  250,  190,  350,  550,  550,  450 };
+        double A1[ 9 ] = { 1.0, 0.5, 1.0, 1.0, 0.7, 1.0, 1.0, 0.3, 1.0 };
+        double F2[ 9 ] = { 1090, 2100,  900, 1700,  800, 1900, 1600,  850, 1100 };
+        double A2[ 9 ] = { 2.0, 0.5, 0.7, 0.7,0.35, 0.3, 0.5, 1.0, 0.7 };
+        double F3[ 9 ] = { 2440, 3100, 2300, 2100, 2000, 2500, 2250, 1900, 1500 };
+        double A3[ 9 ] = { 0.3,0.15, 0.2, 0.4, 0.1, 0.3, 0.7, 0.2, 0.2 };
+        double F4[ 9 ] = { 3400, 4700, 3000, 3300, 3400, 3700, 3200, 3000, 3000 };
+        double A4[ 9 ] = { 0.2, 0.1, 0.2, 0.3, 0.1, 0.1, 0.3, 0.2, 0.3 };
+
+        //Approximates cos(pi*x) for x in [-1,1].
+        inline double fast_cos(const double x)
+        {
+          double x2=x*x;
+          return 1+x2*(-4+2*x2);
+        }
+
+        double fonc_formant(double p, const double I);
+        double formant(double p, double i);
+        double porteuse(const double h, const double p);
+
+        void init_formant();
 
 };
 }

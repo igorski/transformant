@@ -29,18 +29,16 @@
 #include "calc.h"
 #include <math.h>
 
-//Length of the table
 #define FORMANT_TABLE_SIZE (256+1) //The last entry of the table equals the first (to avoid a modulo)
 #define MAX_FORMANT_WIDTH 64
 
 namespace Igorski {
 class FormantFilter
 {
-    static const int MEMORY_SIZE  = 10;
     static const int VOWEL_AMOUNT = 4;
     static const int COEFF_AMOUNT = 9;
 
-    static constexpr double SCALE = 0.1;
+    static constexpr double SCALE = 0.001;
 
     static const bool INTERPOLATE = false; // whether to interpolate formants between vowels
 
@@ -67,9 +65,6 @@ class FormantFilter
         double _lfoRange;
         double _lfoMax;
         double _lfoMin;
-
-        double _currentCoeffs[ COEFF_AMOUNT ];
-        double _memory[ MEMORY_SIZE ];
 
         void cacheLFO();
 

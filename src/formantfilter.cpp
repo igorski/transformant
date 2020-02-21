@@ -31,9 +31,6 @@ namespace Igorski {
 
 FormantFilter::FormantFilter( float aVowel, float sampleRate )
 {
-    memset( _currentCoeffs, 0.0, COEFF_AMOUNT );
-    memset( _memory,        0.0, MEMORY_SIZE );
-
     double coeff = 2.0 / ( FORMANT_TABLE_SIZE - 1 );
 
     for ( size_t i = 0; i < MAX_FORMANT_WIDTH; i++ ) {

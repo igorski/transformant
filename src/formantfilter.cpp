@@ -3,7 +3,7 @@
  *
  * Copyright (c) 2020 Igor Zinken - https://www.igorski.nl
  *
- * Adapted from public source code by alex@smartelectronix.com
+ * Adapted from public source code by Paul Sernine, based on work by Thierry Rochebois
  *
  * Permission is hereby granted, free of charge, to any person obtaining a copy of
  * this software and associated documentation files (the "Software"), to deal in
@@ -30,18 +30,22 @@ namespace Igorski {
 
 /* constructor / destructor */
 
-/**
- * @param aVowel {float} interpolated value within
- *                       the range of the amount specified in the coeffs Array
- */
 FormantFilter::FormantFilter( float aVowel, float sampleRate )
 {
     memset( _currentCoeffs, 0.0, COEFF_AMOUNT );
     memset( _memory,        0.0, MEMORY_SIZE );
 
-    init_formant();
+    double coeff = 2.0 / ( FORMANT_TABLE_SIZE - 1 );
 
-    _sampleRate = sampleRate;
+    for ( size_t i = 0; i < MAX_FORMANT_WIDTH; i++ ) {
+        for ( size_t j = 0; j < FORMANT_TABLE_SIZE; j++ ) {
+            FORMANT_TABLE[ j + i * FORMANT_TABLE_SIZE ] = generateFormant( -1 + j * coeff, double( i ));
+        }
+    }
+
+    _sampleRate     = sampleRate;
+    _halfSampleRate = _sampleRate / 2.f;
+
     setVowel( aVowel );
 
     lfo = new LFO( _sampleRate );
@@ -70,7 +74,7 @@ void FormantFilter::setVowel( float aVowel )
     // of currently moving vowel in place
     _tempVowel = ( hasLFO ) ? _vowel * tempRatio : _vowel;
 
-    F = ( int ) Calc::scale( aVowel, 1.f, ( float ) COEFF_AMOUNT - 1);
+    cacheVowelOffset();
 
     if ( hasLFO ) {
         cacheLFO();
@@ -79,27 +83,15 @@ void FormantFilter::setVowel( float aVowel )
 
 void FormantFilter::setLFO( float LFORatePercentage, float LFODepth )
 {
-    bool wasEnabled = hasLFO;
-    bool enabled    = LFORatePercentage > 0.f;
+    hasLFO = LFORatePercentage > 0.f;
 
-    hasLFO = enabled;
+    lfo->setRate(
+        VST::MIN_LFO_RATE() + (
+            LFORatePercentage * ( VST::MAX_LFO_RATE() - VST::MIN_LFO_RATE() )
+        )
+    );
 
-    bool hadChange = ( wasEnabled != enabled ) || _lfoDepth != LFODepth;
-
-    if ( enabled )
-        lfo->setRate(
-            VST::MIN_LFO_RATE() + (
-                LFORatePercentage * ( VST::MAX_LFO_RATE() - VST::MIN_LFO_RATE() )
-            )
-        );
-
-    // turning LFO off
-    if ( !hasLFO && wasEnabled ) {
-        _tempVowel = _vowel;
-        cacheVowel();
-    }
-
-    if ( hadChange ) {
+    if ( _lfoDepth != LFODepth ) {
         _lfoDepth = LFODepth;
         cacheLFO();
     }
@@ -107,189 +99,126 @@ void FormantFilter::setLFO( float LFORatePercentage, float LFODepth )
 
 void FormantFilter::process( double* inBuffer, int bufferSize )
 {
-    size_t j, k;
-    double res;
-    float halfRate = _sampleRate * 0.5f;
+    float lfoValue;
+    Formant f, a;
+    double in, out, formant, carrier;
 
     for ( size_t i = 0; i < bufferSize; ++i )
     {
-            if (++tmp > (10 *_sampleRate)) tmp = 1; //QQQ
+        in  = inBuffer[ i ];
+        out = 0.0;
 
-        // when LFO is active, keep it moving
+        // sweep the LFO
 
-        if ( hasLFO ) {
-            float lfoValue = lfo->peek() * .5f  + .5f; // make waveform unipolar
-            float scaledValue = std::min( _lfoMax, _lfoMin + _lfoRange * lfoValue ); // relative to depth
+        lfoValue   = lfo->peek() * .5f  + .5f; // make waveform unipolar
+        _tempVowel = std::min( _lfoMax, _lfoMin + _lfoRange * lfoValue ); // relative to depth
 
-            F = ( int ) Calc::scale( scaledValue, 1.f, ( float ) COEFF_AMOUNT - 1);
+        cacheVowelOffset();
 
-            f0=12*powf(2.0, 4 - 4 * scaledValue); //sweep
-            f0*=(1.0 + 0.01 * sinf( tmp * 0.0015));   //vibrato
-            un_f0 = 1.0 / f0;
+        // calculate the phase for the formant synthesis and carrier
 
-//            _tempVowel = ;
-//            cacheVowel();
-        }    else {
-            // todo this should not be the bedoeling
-            // sound stops when disabling lfo
-            f0=12*powf(2.0, 4 - 4 * (tmp/10*_sampleRate)); //sweep
-            f0*=(1.0 + 0.01 * sinf( tmp * 0.0015));   //vibrato
-            un_f0 = 1.0 / f0;
+        f0    = 12 * powf( 2.0, 4 - 4 * sLfoValue );  // sweep
+        //f0   *= ( 1.0 + 0.01 * sinf( tmp * 0.0015 )); // optional vibrato (sinf value determines speed)
+        un_f0 = 1.0 / f0;
+
+        dp0 = f0 * ( 1 / _halfSampleRate );
+        p0 += dp0;  // phase increment
+        p0-= 2 * ( p0 > 1 );
+
+        // calculate the coefficients
+
+        for ( size_t j = 0; j < VOWEL_AMOUNT; ++j )
+        {
+            a = A_COEFFICIENTS[ j ];
+            f = F_COEFFICIENTS[ j ];
+
+            a.value += SCALE * ( a.coeffs[ _vowelOffset ] - a.value );
+            f.value += SCALE * ( f.coeffs[ _vowelOffset ] - f.value );
+
+            // apply formant filter onto the input signal
+
+            // double formant = getFormant( p0, FORMANT_WIDTH_SCALE[ j ] * un_f0 );
+            double carrier = getCarrier( f.value * un_f0, p0 );
+
+            // the f0/fn coefficients stand for a -3dB/oct spectral envelope
+            out += a.value * ( f0 / f.value ) * in /* * formant */ * carrier;
         }
 
+        // write output
 
-        dp0 = f0 * (1 / halfRate );
-        p0 += dp0;  //phase increment
-        p0-= 2 * (p0 > 1);
-
-        { //smoothing of the commands.
-          double r = 0.001;
-          f1 += r * (F1[F] - f1);
-          f2 += r * (F2[F] - f2);
-          f3 += r * (F3[F] - f3);
-          f4 += r * (F4[F] - f4);
-          a1 += r * (A1[F] - a1);
-          a2 += r * (A2[F] - a2);
-          a3 += r * (A3[F] - a3);
-          a4 += r * (A4[F] - a4);
-        }
-
-        double inp0 = inBuffer[ i ];
-
-        //The f0/fn coefficients stand for a -3dB/oct spectral envelope
-
-         inBuffer[ i ] =
-                        a1 * (f0 / f1 ) * inp0 /*formant(p0, 100 * un_f0) */* porteuse(f1 * un_f0, p0)
-                  +/*0.7f**/a2 * (f0 / f2 ) * inp0 /*formant(p0, 120 * un_f0) */* porteuse(f2 * un_f0, p0)
-                  +     a3 * (f0 / f3 ) * inp0 /*formant(p0, 150 * un_f0) */* porteuse(f3 * un_f0, p0)
-                  +     a4 * (f0 / f4 ) * inp0 /*formant(p0, 300 * un_f0) */* porteuse(f4 * un_f0, p0);
-
-//        res = _currentCoeffs[ 0 ] * inBuffer[ i ];
-//
-//        for ( j = 1, k = 0; j < COEFF_AMOUNT; ++j, ++k ) {
-//            res += _currentCoeffs[ j ] * _memory[ k ];
-//        }
-//
-//        j = MEMORY_SIZE;
-//        while ( j-- > 1 ) {
-//            _memory[ j ] = _memory[ j - 1 ];
-//        }
-//
-//        //res = ((fabs(res) > 1.0e-10 && res < 1.0) || res < -1.0e-10 && res > -1.0) && !isinf(res) ? res : 0.0f;
-//        undenormaliseDouble( res );
-//
-//        _memory[ 0 ] = res;
-//
-//        // write output
-//
-//        inBuffer[ i ] = res;
-//
-//
-//
+        inBuffer[ i ] = out;
     }
-}
-
-//Formantic function of width I (used to fill the table of formants)
-double FormantFilter::fonc_formant(double p,const double I)
-{
-  double a=0.5f;
-  int hmax=int(10*I)>L_TABLE/2?L_TABLE/2:int(10*I);
-  double phi=0.0f;
-  for(int h=1;h<hmax;h++)
-  {
-    phi+=3.14159265359f*p;
-    double hann=0.5f+0.5f*fast_cos(h*(1.0f/hmax));
-    double gaussienne=0.85f*exp(-h*h/(I*I));
-    double jupe=0.15f;
-    double harmonique=cosf(phi);
-    a+=hann*(gaussienne+jupe)*harmonique;
-   }
-  return a;
-}
-
-//Initialisation of the table TF with the fonction fonc_formant.
-void FormantFilter::init_formant()
-{ double coef=2.0f/(L_TABLE-1);
-  for(int I=0;I<I_MAX;I++)
-    for(int P=0;P<L_TABLE;P++)
-      TF[P+I*L_TABLE]=fonc_formant(-1+P*coef,double(I));
-}
-
-//This function emulates the function fonc_formant
-// thanks to the table TF. A bilinear interpolation is
-// performed
-double FormantFilter::formant(double p,double i)
-{
-  i=i<0?0:i>I_MAX-2?I_MAX-2:i;    // width limitation
-    double P=(L_TABLE-1)*(p+1)*0.5f; // phase normalisation
-    int P0=(int)P;  double fP=P-P0;  // Integer and fractional
-    int I0=(int)i;  double fI=i-I0;  // parts of the phase (p) and width (i).
-    int i00=P0+L_TABLE*I0;  int i10=i00+L_TABLE;
-    //bilinear interpolation.
-    return (1-fI)*(TF[i00] + fP*(TF[i00+1]-TF[i00]))
-        +    fI*(TF[i10] + fP*(TF[i10+1]-TF[i10]));
-}
-
-// Double carrier.
-// h : position (float harmonic number)
-// p : phase
-double FormantFilter::porteuse(const double h, const double p)
-{
-  double h0 = floor(h);  //integer and
-  double hf = h-h0;      //decimal part of harmonic number.
-  // modulos pour ramener p*h0 et p*(h0+1) dans [-1,1]
-  double phi0 = fmodf(p* h0   +1+1000, 2.0) - 1.0;
-  double phi1 = fmodf(p*(h0+1)+1+1000, 2.0) - 1.0;
-  // two carriers.
-  double Porteuse0=fast_cos(phi0);
-  double Porteuse1=fast_cos(phi1);
-  // crossfade between the two carriers.
-  return Porteuse0 + hf * (Porteuse1 - Porteuse0);
 }
 
 /* private methods */
 
-void FormantFilter::cacheVowel()
-{
-
-/*    _tempVowel;
-
-    // vowels are defined in 0 - MAX_VOWEL range
-    int MAX_VOWEL = VOWEL_AMOUNT - 1;
-
-    double vowelValue = Calc::scale( _tempVowel, 1.f, ( float ) MAX_VOWEL);
-
-    // interpolate the value between vowels
-
-    int roundVowel  = ( int )( vowelValue );
-    double fracpart = ( double ) roundVowel - vowelValue;
-
-    // formants were calculated at 44.1 kHz, scale to match actual sample rate
-
-    double scaleValue = ( double ) _sampleRate / 44100.;
-
-    for ( int i = 0; i < COEFF_AMOUNT; i++ )
-    {
-        double scaledCoeff = COEFFICIENTS[ roundVowel ][ i ] * scaleValue;
-
-        if ( INTERPOLATE ) {
-
-            // add next vowel (note the overflow check when roundVowel is MAX_VOWEL)
-            double nextScaledCoeff = COEFFICIENTS[ roundVowel + ( roundVowel < MAX_VOWEL )][ i ] * vowelValue;
-            _currentCoeffs[ i ]    = fracpart * scaledCoeff + ( 1.0 - fracpart ) * nextScaledCoeff;
-
-        } else {
-            _currentCoeffs[ i ] = scaledCoeff;
-        }
-    }
-    */
-}
-
 void FormantFilter::cacheLFO()
 {
-    _lfoRange = _vowel * _lfoDepth;
+    // when LFO is "off" we mock a depth of 0. In reality we keep
+    // the LFO moving to feed the carrier signal. The LFO won't
+    // change the active vowel coefficient in this mode.
+
+    _lfoRange = _vowel * ( hasLFO ? _lfoDepth : 0 );
     _lfoMax   = std::min( 1., _vowel + _lfoRange / 2. );
     _lfoMin   = std::max( 0., _vowel - _lfoRange / 2. );
+}
+
+double FormantFilter::generateFormant( double phase, const double width )
+{
+    int hmax    = int( 10 * width ) > FORMANT_TABLE_SIZE / 2 ? FORMANT_TABLE_SIZE / 2 : int( 10 * width );
+    double jupe = 0.15f;
+
+    double a = 0.5f;
+    double phi = 0.0f;
+    double hann, gaussian, harmonic;
+
+    for ( size_t h = 1; h < hmax; h++ ) {
+        phi     += PI * phase;
+        hann     = 0.5f + 0.5f * fast_cos( h * ( 1.0 / hmax ));
+        gaussian = 0.85f * exp( -h * h / ( width * width ));
+        harmonic = cosf( phi );
+        a += hann * ( gaussian + jupe ) * harmonic;
+    }
+    return a;
+}
+
+double FormantFilter::getFormant( double phase, double width )
+{
+    width = ( width < 0 ) ? 0 : width > MAX_FORMANT_WIDTH - 2 ? MAX_FORMANT_WIDTH - 2 : width;
+    double P = ( FORMANT_TABLE_SIZE - 1 ) * ( phase + 1 ) * 0.5f; // normalize phase
+
+    // calculate the integer and fractional parts of the phase and width
+
+    int phaseI    = ( int ) P;
+    double phaseF = P - phaseI;
+
+    int widthI    = ( int ) width;
+    double widthF = width - widthI;
+
+    int i00 = phaseI + FORMANT_TABLE_SIZE * widthI;
+    int i10 = i00 + FORMANT_TABLE_SIZE;
+
+    // bilinear interpolation of formant values
+    return ( 1 - widthF ) *
+           ( FORMANT_TABLE[ i00 ] + phaseF * ( FORMANT_TABLE[ i00 + 1 ] - FORMANT_TABLE[ i00 ])) +
+             widthF * ( FORMANT_TABLE[ i10 ] + phaseF * ( FORMANT_TABLE[ i10 + 1 ] - FORMANT_TABLE[ i10 ]));
+}
+
+double FormantFilter::getCarrier( const double position, const double phase )
+{
+    double harmI = floor( position ); // integer and
+    double harmF = position - harmI;  // fractional part of harmonic number
+
+    // keep within -1 to +1 range
+    double phi0 = fmodf( phase *  harmI       + 1 + 1000, 2.0 ) - 1.0;
+    double phi1 = fmodf( phase * ( harmI + 1) + 1 + 1000, 2.0 ) - 1.0;
+
+    // calculate the two carriers
+    double carrier1 = fast_cos( phi0 );
+    double carrier2 = fast_cos( phi1 );
+
+    // return interpolation between the two carriers
+    return carrier1 + harmF * ( carrier2 - carrier1 );
 }
 
 }

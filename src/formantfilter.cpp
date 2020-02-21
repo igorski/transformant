@@ -70,7 +70,7 @@ void FormantFilter::setVowel( float aVowel )
     // of currently moving vowel in place
     _tempVowel = ( hasLFO ) ? _vowel * tempRatio : _vowel;
 
-    cacheVowel();
+    F = ( int ) Calc::scale( aVowel, 1.f, ( float ) COEFF_AMOUNT - 1);
 
     if ( hasLFO ) {
         cacheLFO();
@@ -109,29 +109,39 @@ void FormantFilter::process( double* inBuffer, int bufferSize )
 {
     size_t j, k;
     double res;
-
-    double f0,dp0,p0=0.0f;
-      int F=7; //number of the current formant preset
-
-      float halfRate = _sampleRate * 0.5f;
+    float halfRate = _sampleRate * 0.5f;
 
     for ( size_t i = 0; i < bufferSize; ++i )
     {
-            tmp++; // QQQ
-        //formant change
-        if(0==(tmp%11025)){
-            F++;
-            F%=8;
+            if (++tmp > (10 *_sampleRate)) tmp = 1; //QQQ
+
+        // when LFO is active, keep it moving
+
+        if ( hasLFO ) {
+            float lfoValue = lfo->peek() * .5f  + .5f; // make waveform unipolar
+            float scaledValue = std::min( _lfoMax, _lfoMin + _lfoRange * lfoValue ); // relative to depth
+
+            F = ( int ) Calc::scale( scaledValue, 1.f, ( float ) COEFF_AMOUNT - 1);
+
+            f0=12*powf(2.0, 4 - 4 * scaledValue); //sweep
+            f0*=(1.0 + 0.01 * sinf( tmp * 0.0015));   //vibrato
+            un_f0 = 1.0 / f0;
+
+//            _tempVowel = ;
+//            cacheVowel();
+        }    else {
+            // todo this should not be the bedoeling
+            // sound stops when disabling lfo
+            f0=12*powf(2.0, 4 - 4 * (tmp/10*_sampleRate)); //sweep
+            f0*=(1.0 + 0.01 * sinf( tmp * 0.0015));   //vibrato
+            un_f0 = 1.0 / f0;
         }
-        f0=12*powf(2.0,4-4*tmp/(10*_sampleRate)); //sweep (10 is arbitrary period in seconds, hook this to LFO instead)
-        f0*=(1.0 + 0.01 * sinf( tmp * 0.0015));   //vibrato
-        //dp0=f0 * (1 / halfRate );
 
-        if (tmp > (10 *_sampleRate)) tmp = 0; //QQQ
 
-        double un_f0 = 1.0 / f0;
-        //p0 += dp0;  //phase increment
-        //p0-= 2 * (p0 > 1);
+        dp0 = f0 * (1 / halfRate );
+        p0 += dp0;  //phase increment
+        p0-= 2 * (p0 > 1);
+
         { //smoothing of the commands.
           double r = 0.001;
           f1 += r * (F1[F] - f1);
@@ -144,16 +154,15 @@ void FormantFilter::process( double* inBuffer, int bufferSize )
           a4 += r * (A4[F] - a4);
         }
 
-        p0 = inBuffer[ i ];
+        double inp0 = inBuffer[ i ];
 
         //The f0/fn coefficients stand for a -3dB/oct spectral envelope
-        double out =
-               a1 * (f0 / f1 ) * formant(p0, 100 * un_f0) /* * porteuse(f1 * un_f0, p0)*/
-         +0.7f*a2 * (f0 / f2 ) * formant(p0, 120 * un_f0) /* * porteuse(f2 * un_f0, p0)*/
-         +     a3 * (f0 / f3 ) * formant(p0, 150 * un_f0) /* * porteuse(f3 * un_f0, p0)*/
-         +     a4 * (f0 / f4 ) * formant(p0, 300 * un_f0) /* * porteuse(f4 * un_f0, p0)*/;
 
-         inBuffer[ i ] = out;
+         inBuffer[ i ] =
+                        a1 * (f0 / f1 ) * inp0 /*formant(p0, 100 * un_f0) */* porteuse(f1 * un_f0, p0)
+                  +/*0.7f**/a2 * (f0 / f2 ) * inp0 /*formant(p0, 120 * un_f0) */* porteuse(f2 * un_f0, p0)
+                  +     a3 * (f0 / f3 ) * inp0 /*formant(p0, 150 * un_f0) */* porteuse(f3 * un_f0, p0)
+                  +     a4 * (f0 / f4 ) * inp0 /*formant(p0, 300 * un_f0) */* porteuse(f4 * un_f0, p0);
 
 //        res = _currentCoeffs[ 0 ] * inBuffer[ i ];
 //
@@ -175,16 +184,12 @@ void FormantFilter::process( double* inBuffer, int bufferSize )
 //
 //        inBuffer[ i ] = res;
 //
-//        // if LFO is active, keep it moving
 //
-//        if ( hasLFO ) {
-//            float lfoValue = lfo->peek() * .5f  + .5f; // make waveform unipolar
-//            _tempVowel = std::min( _lfoMax, _lfoMin + _lfoRange * lfoValue );
-//            cacheVowel();
-//        }
+//
     }
 }
 
+//Formantic function of width I (used to fill the table of formants)
 double FormantFilter::fonc_formant(double p,const double I)
 {
   double a=0.5f;
@@ -246,11 +251,13 @@ double FormantFilter::porteuse(const double h, const double p)
 
 void FormantFilter::cacheVowel()
 {
-    _tempVowel;
 
-    // vowels are defined in 0 - 4 range (see COEFFICIENTS)
+/*    _tempVowel;
 
-    double vowelValue = Calc::scale( _tempVowel, 1.f, 4.f );
+    // vowels are defined in 0 - MAX_VOWEL range
+    int MAX_VOWEL = VOWEL_AMOUNT - 1;
+
+    double vowelValue = Calc::scale( _tempVowel, 1.f, ( float ) MAX_VOWEL);
 
     // interpolate the value between vowels
 
@@ -267,14 +274,15 @@ void FormantFilter::cacheVowel()
 
         if ( INTERPOLATE ) {
 
-            // add next vowel (note the overflow check when roundVowel is 4)
-            double nextScaledCoeff = COEFFICIENTS[ roundVowel + ( roundVowel < 4 )][ i ] * vowelValue;
+            // add next vowel (note the overflow check when roundVowel is MAX_VOWEL)
+            double nextScaledCoeff = COEFFICIENTS[ roundVowel + ( roundVowel < MAX_VOWEL )][ i ] * vowelValue;
             _currentCoeffs[ i ]    = fracpart * scaledCoeff + ( 1.0 - fracpart ) * nextScaledCoeff;
 
         } else {
             _currentCoeffs[ i ] = scaledCoeff;
         }
     }
+    */
 }
 
 void FormantFilter::cacheLFO()

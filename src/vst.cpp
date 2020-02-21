@@ -533,14 +533,17 @@ void Transformant::syncModel()
     pluginProcess->waveShaper->setAmount( fDrive );
 
     pluginProcess->formantFilterL->setVowel( fVowelL );
+    pluginProcess->formantFilterL->setLFO( fLFOVowelL, fLFOVowelLDepth );
+
+    // when vowel sync is on, both channels have the same vowel and LFO settings
 
     if ( Calc::toBool( fVowelSync )) {
         pluginProcess->formantFilterR->setVowel( fVowelL );
+        pluginProcess->formantFilterR->setLFO( fLFOVowelL, fLFOVowelLDepth );
     } else {
         pluginProcess->formantFilterR->setVowel( fVowelR );
+        pluginProcess->formantFilterR->setLFO( fLFOVowelR, fLFOVowelRDepth );
     }
-    pluginProcess->formantFilterL->setLFO( fLFOVowelL, fLFOVowelLDepth );
-    pluginProcess->formantFilterR->setLFO( fLFOVowelR, fLFOVowelRDepth );
 }
 
 }

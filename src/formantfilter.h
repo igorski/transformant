@@ -29,15 +29,14 @@
 #include "calc.h"
 #include <math.h>
 
-#define FORMANT_TABLE_SIZE (256+1) // The last entry of the table equals the first (to avoid a modulo)
-#define MAX_FORMANT_WIDTH 64
-
 namespace Igorski {
 class FormantFilter
 {
-    static const int VOWEL_AMOUNT = 4;
-    static const int COEFF_AMOUNT = 9;
-    static constexpr double SCALE = 0.001;
+    static const int VOWEL_AMOUNT       = 4;
+    static const int COEFF_AMOUNT       = 9;
+    static const int FORMANT_TABLE_SIZE = (256+1); // The last entry of the table equals the first (to avoid a modulo)
+    static const int MAX_FORMANT_WIDTH  = 64;
+    static constexpr double ATTENUATOR  = 0.001;
 
     // whether to apply the formant synthesis to the signal
     // otherwise the input is applied to the carrier directly
@@ -101,10 +100,7 @@ class FormantFilter
 
         double FORMANT_TABLE[ FORMANT_TABLE_SIZE * MAX_FORMANT_WIDTH ];
 
-        double _formantPhase   = 0.0;
-        double _unFormantPhase = 0.0;
-        double _phaseAcc       = 0.0;
-        double _phase          = 0.0;
+        double _phase = 0.0;
 
         double generateFormant( double phase, const double width );
         double getFormant( double phase, double width );

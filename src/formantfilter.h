@@ -29,7 +29,7 @@
 #include "calc.h"
 #include <math.h>
 
-#define FORMANT_TABLE_SIZE (256+1) //The last entry of the table equals the first (to avoid a modulo)
+#define FORMANT_TABLE_SIZE (256+1) // The last entry of the table equals the first (to avoid a modulo)
 #define MAX_FORMANT_WIDTH 64
 
 namespace Igorski {
@@ -37,10 +37,12 @@ class FormantFilter
 {
     static const int VOWEL_AMOUNT = 4;
     static const int COEFF_AMOUNT = 9;
-
     static constexpr double SCALE = 0.001;
 
-    static const bool INTERPOLATE = false; // whether to interpolate formants between vowels
+    // whether to apply the formant synthesis to the signal
+    // otherwise the input is applied to the carrier directly
+
+    static const bool APPLY_SYNTHESIS_SIGNAL = false;
 
     public:
         FormantFilter( float aVowel, float sampleRate );
@@ -57,7 +59,7 @@ class FormantFilter
     private:
 
         float  _sampleRate;
-        float  _halfSampleRate;
+        float  _halfSampleRateFrac;
         double _vowel;
         double _tempVowel;
         int    _coeffOffset;
@@ -67,10 +69,10 @@ class FormantFilter
         double _lfoMin;
 
         void cacheLFO();
-
-        double generateFormant( double phase, const double width );
-        double getFormant( double phase, double width );
-        double getCarrier( const double position, const double phase );
+        inline void cacheCoeffOffset()
+        {
+            _coeffOffset = ( int ) Calc::scale( _tempVowel, 1.f, ( float ) COEFF_AMOUNT - 1 );
+        }
 
         // vowel definitions
 
@@ -95,21 +97,18 @@ class FormantFilter
             { 100.0, { 3400, 4700, 3000, 3300, 3400, 3700, 3200, 3000, 3000 } }
         };
 
-        // table used for formant synthesis
+        // the below are used for the formant synthesis
 
         double FORMANT_TABLE[ FORMANT_TABLE_SIZE * MAX_FORMANT_WIDTH ];
 
-        // QQQ
-        double f0 = 0.0;
-        double dp0 = 0.0;
-        double p0 = 0.0;
-        double un_f0 = 0.0;
-        // QQQ
+        double _formantPhase   = 0.0;
+        double _unFormantPhase = 0.0;
+        double _phaseAcc       = 0.0;
+        double _phase          = 0.0;
 
-        inline void cacheCoeffOffset()
-        {
-            _coeffOffset = ( int ) Calc::scale( _tempVowel, 1.f, ( float ) COEFF_AMOUNT - 1 );
-        }
+        double generateFormant( double phase, const double width );
+        double getFormant( double phase, double width );
+        double getCarrier( const double position, const double phase );
 
         // Fast approximation of cos( pi * x ) for x in -1 to +1 range
 

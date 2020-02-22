@@ -39,8 +39,8 @@ FormantFilter::FormantFilter( float aVowel, float sampleRate )
         }
     }
 
-    _sampleRate     = sampleRate;
-    _halfSampleRate = _sampleRate / 2.f;
+    _sampleRate         = sampleRate;
+    _halfSampleRateFrac = 1.f / ( _sampleRate / 2.f );
 
     setVowel( aVowel );
 
@@ -107,19 +107,19 @@ void FormantFilter::process( double* inBuffer, int bufferSize )
         // sweep the LFO
 
         lfoValue   = lfo->peek() * .5f  + .5f; // make waveform unipolar
-        _tempVowel = std::min( _lfoMax, _lfoMin + _lfoRange * lfoValue ); // relative to depth
+        _tempVowel = std::min( _lfoMax, _lfoMin + _lfoRange * lfoValue ); // relative to LFO depth
 
-        cacheCoeffOffset();
+        cacheCoeffOffset(); // ensure the appropriate coeff is used for the new _tempVowel value
 
         // calculate the phase for the formant synthesis and carrier
 
-        f0    = 12 * powf( 2.0, 4 - 4 * _tempVowel );  // sweep
-        //f0   *= ( 1.0 + 0.01 * sinf( tmp * 0.0015 )); // optional vibrato (sinf value determines speed)
-        un_f0 = 1.0 / f0;
+        _formantPhase   = 12 * powf( 2.0, 4 - 4 * _tempVowel );   // sweep
+        // _formantPhase  *= ( 1.0 + 0.01 * sinf( tmp * 0.0015 )); // optional vibrato (sinf value determines speed)
+        _unFormantPhase = 1.0 / _formantPhase;
 
-        dp0 = f0 * ( 1 / _halfSampleRate );
-        p0 += dp0;  // phase increment
-        p0 -= 2 * ( p0 > 1 );
+        _phaseAcc = _formantPhase * _halfSampleRateFrac;
+        _phase   += _phaseAcc;
+        _phase   -= 2 * ( _phase > 1 );
 
         // calculate the coefficients
 
@@ -131,13 +131,13 @@ void FormantFilter::process( double* inBuffer, int bufferSize )
             a.value += SCALE * ( a.coeffs[ _coeffOffset ] - a.value );
             f.value += SCALE * ( f.coeffs[ _coeffOffset ] - f.value );
 
-            // apply formant filter onto the input signal
+            // apply formant onto the input signal
 
-            // double formant = getFormant( p0, FORMANT_WIDTH_SCALE[ j ] * un_f0 );
-            double carrier = getCarrier( f.value * un_f0, p0 );
+            double formant = APPLY_SYNTHESIS_SIGNAL ? getFormant( _phase, FORMANT_WIDTH_SCALE[ j ] * _unFormantPhase ) : 1.0;
+            double carrier = getCarrier( f.value * _unFormantPhase, _phase );
 
-            // the f0/fn coefficients stand for a -3dB/oct spectral envelope
-            out += a.value * ( f0 / f.value ) * in /* * formant */ * carrier;
+            // the _formantPhase/fn coefficients stand for a -3dB/oct spectral envelope
+            out += a.value * ( _formantPhase / f.value ) * in * formant * carrier;
         }
 
         // write output

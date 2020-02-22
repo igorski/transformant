@@ -97,7 +97,6 @@ void FormantFilter::setLFO( float LFORatePercentage, float LFODepth )
 void FormantFilter::process( double* inBuffer, int bufferSize )
 {
     float lfoValue;
-    Formant f, a;
     double in, out, fp, ufp, phaseAcc, formant, carrier;
 
     for ( size_t i = 0; i < bufferSize; ++i )
@@ -126,19 +125,19 @@ void FormantFilter::process( double* inBuffer, int bufferSize )
 
         for ( size_t j = 0; j < VOWEL_AMOUNT; ++j )
         {
-            a = A_COEFFICIENTS[ j ];
-            f = F_COEFFICIENTS[ j ];
+            auto a = &A_COEFFICIENTS[ j ];
+            auto f = &F_COEFFICIENTS[ j ];
 
-            a.value += ATTENUATOR * ( a.coeffs[ _coeffOffset ] - a.value );
-            f.value += ATTENUATOR * ( f.coeffs[ _coeffOffset ] - f.value );
+            a->value += ATTENUATOR * ( a->coeffs[ _coeffOffset ] - a->value );
+            f->value += ATTENUATOR * ( f->coeffs[ _coeffOffset ] - f->value );
 
             // apply formant onto the input signal
 
             double formant = APPLY_SYNTHESIS_SIGNAL ? getFormant( _phase, FORMANT_WIDTH_SCALE[ j ] * ufp ) : 1.0;
-            double carrier = getCarrier( f.value * ufp, _phase );
+            double carrier = getCarrier( f->value * ufp, _phase );
 
             // the fp/fn coefficients stand for a -3dB/oct spectral envelope
-            out += a.value * ( fp / f.value ) * in * formant * carrier;
+            out += a->value * ( fp / f->value ) * in * formant * carrier;
         }
 
         // write output

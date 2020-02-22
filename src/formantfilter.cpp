@@ -44,7 +44,7 @@ FormantFilter::FormantFilter( float aVowel, float sampleRate )
     _halfSampleRateFrac = 1.f / ( _sampleRate * 0.5f );
 
     setVowel( aVowel );
-    recalculate();
+    cacheDynamicsProcessing();
 
     // note: LFO is always "on" as its used by the formant synthesis
     // when we want the audible oscillation of vowels to stop, the LFO
@@ -222,64 +222,12 @@ double FormantFilter::getCarrier( const double position, const double phase )
     return carrier1 + harmF * ( carrier2 - carrier1 );
 }
 
-double FormantFilter::compress(double sample)
+void FormantFilter::cacheDynamicsProcessing()
 {
-    double a, b, i, j, g, e=env, e2=env2, ra=rat, re= (1.f-rel), at=att, ga=gatt;
-    double tr=trim, th=thr, lth=lthr, xth=xthr, ge=genv, y =dry;
-    double out;
-
-    if (mode) //comp/gate/lim
-    {
-        if (lth==0.f) lth=1000.f;
-        a = sample;
-        i = (a<0.f)? -a : a;
-
-        e = (i>e)? e + at * (i - e) : e * re;
-        e2 = (i>e)? i : e2 * re; //ir;
-
-        g = (e>th)? tr / (1.f + ra * ((e / th) - 1.f)) : tr;
-
-        if (g<0.f) g=0.f;
-        if (g*e2>lth) g = lth/e2; //limit
-
-        ge = (e>xth)? ge + ga - ga * ge : ge * xrat; //gate
-
-        out = a * (g * ge + y);
-    }
-    else //compressor only
-    {
-        a = sample;
-        i = (a<0.f)? -a : a;
-
-        e = (i>e)? e + at * (i - e) : e * re; //envelope
-        g = (e>th)? tr / (1.f + ra * ((e / th) - 1.f)) : tr; //gain
-
-        out = a * (g + y); //vca
-    }
-    if (e <1.0e-10) env =0.f; else env =e;
-    if (e2<1.0e-10) env2=0.f; else env2=e2;
-    if (ge<1.0e-10) genv=0.f; else genv=ge;
-
-    return out;
-}
-
-void FormantFilter::recalculate ()
-{
-    // make static
-    double threshold = 0.10;
-    double ratio = 0.50;
-    double level = 0.65;
-    double attack = 0.18; 
-    double release = 0.55;
-    double limiterThreshold = 0.99;
-    double gateThreshold = 0.02;
-    double gateAttack = 0.10;
-    double gateDecay = 0.50;
-    double fxMix = 1.00;
-    
     mode = 0;
-    thr  = pow( 10.0, ( 2.0 * threshold - 2.0 ));
-    rat  = 2.5 * ratio - 0.5;
+    thr  = pow( 10.0, ( 2.0 * DYNAMICS_THRESHOLD - 2.0 ));
+    rat  = 2.5 * DYNAMICS_RATIO - 0.5;
+
     if ( rat > 1.0 ) {
         rat = 1.f + 16.f*(rat-1.f) * (rat - 1.f);
         mode = 1;
@@ -288,38 +236,38 @@ void FormantFilter::recalculate ()
         rat = 0.6f * rat;
         mode = 1;
     }
-    trim = pow( 10.0,( 2.0 * level ));
-    att  = pow( 10.0,( -0.002 - 2.0 * attack ));
-    rel  = pow( 10.0,( -2.0 - 3.0 * release ));
+    trim = pow( 10.0,( 2.0 * DYNAMICS_LEVEL ));
+    att  = pow( 10.0,( -0.002 - 2.0 * DYNAMICS_ATTACK ));
+    rel  = pow( 10.0,( -2.0 - 3.0 * DYNAMICS_RELEASE ));
     
     // limiter
     
-    if ( limiterThreshold > 0.98 ) {
+    if ( DYNAMICS_LIMITER_DYNAMICS_THRESHOLD > 0.98 ) {
         lthr = 0.f;
     }
     else {
-        lthr = 0.99 * pow( 10.0, int( 30.0 * limiterThreshold - 20.0 ) / 20.f );
+        lthr = 0.99 * pow( 10.0, int( 30.0 * DYNAMICS_LIMITER_DYNAMICS_THRESHOLD - 20.0 ) / 20.f );
         mode = 1;
     }
     
     // expander
     
-    if ( gateThreshold < 0.02 ) {
+    if ( DYNAMICS_GATE_DYNAMICS_THRESHOLD < 0.02 ) {
         xthr = 0.f;
     }
     else {
-        xthr = pow( 10.f, ( 3.0 * gateThreshold - 3.0 ));
+        xthr = pow( 10.f, ( 3.0 * DYNAMICS_GATE_DYNAMICS_THRESHOLD - 3.0 ));
         mode = 1;
     }
-    xrat = 1.0 - pow( 10.f, ( -2.0 - 3.3 * gateDecay ));
+    xrat = 1.0 - pow( 10.f, ( -2.0 - 3.3 * DYNAMICS_GATE_DECAY ));
     irel = pow( 10.0, -2.0 / _sampleRate );
-    gatt = pow( 10.0, (-0.002 - 3.0 * gateAttack ));
+    gatt = pow( 10.0, (-0.002 - 3.0 * DYNAMICS_GATE_DYNAMICS_ATTACK ));
     
     if ( rat < 0.0f && thr < 0.1f ) {
         rat *= thr * 15.f;
     }
-    dry   = 1.0f - fxMix; 
-    trim *= fxMix;
+    dry   = 1.0f - DYNAMICS_MIX; 
+    trim *= DYNAMICS_MIX;
 }
 
 }

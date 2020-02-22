@@ -38,6 +38,19 @@ class FormantFilter
     static const int MAX_FORMANT_WIDTH  = 64;
     static constexpr double ATTENUATOR  = 0.001;
 
+    // hard coded values for dynamics processing, in -1 to +1 range
+
+    static constexpr double DYNAMICS_THRESHOLD                  = 0.10;
+    static constexpr double DYNAMICS_RATIO                      = 0.50;
+    static constexpr double DYNAMICS_LEVEL                      = 0.65;
+    static constexpr double DYNAMICS_ATTACK                     = 0.18;
+    static constexpr double DYNAMICS_RELEASE                    = 0.55;
+    static constexpr double DYNAMICS_LIMITER_DYNAMICS_THRESHOLD = 0.99;
+    static constexpr double DYNAMICS_GATE_DYNAMICS_THRESHOLD    = 0.02;
+    static constexpr double DYNAMICS_GATE_DYNAMICS_ATTACK       = 0.10;
+    static constexpr double DYNAMICS_GATE_DECAY                 = 0.50;
+    static constexpr double DYNAMICS_MIX                        = 1.00;
+
     // whether to apply the formant synthesis to the signal
     // otherwise the input is applied to the carrier directly
 
@@ -99,7 +112,6 @@ class FormantFilter
         // the below are used for the formant synthesis
 
         double FORMANT_TABLE[ FORMANT_TABLE_SIZE * MAX_FORMANT_WIDTH ];
-
         double _phase = 0.0;
 
         double generateFormant( double phase, const double width );
@@ -114,8 +126,56 @@ class FormantFilter
             return 1 + x2 * ( -4 + 2 * x2 );
         }
 
-        void recalculate ();
-        double compress( double sample );
+        // dynamics processing (compression and limiting to keep vowel level constant)
+
+        inline double compress( double sample )
+        {
+            double a, b, i, j, g, out;
+            double e = env, e2 = env2, ge = genv, re = ( 1.f - rel ), lth = lthr;
+
+            if ( mode ) {
+                // apply compression, gating and limiting
+
+                if ( lth == 0.f ) {
+                    lth = 1000.f;
+                }
+                a = sample;
+                i = ( a < 0.f )? -a : a;
+
+                e  = ( i > e ) ? e + att * ( i - e ) : e * re;
+                e2 = ( i > e ) ? i : e2 * re; // ir;
+
+                g = ( e > thr ) ? trim / ( 1.f + rat * (( e / thr ) - 1.f )) : trim;
+
+                if ( g < 0.f ) {
+                    g = 0.f;
+                }
+                if ( g * e2 > lth ) {
+                    g = lth / e2; // limiting
+                }
+                ge  = ( e > xthr )? ge + gatt - gatt * ge : ge * xrat; // gating
+                out = a * ( g * ge + dry );
+            }
+            else {
+                // compression only
+                a = sample;
+                i = ( a < 0.f ) ? -a : a;
+
+                e = ( i > e )  ? e + att * ( i - e ) : e * re; // envelope
+                g = ( e > thr ) ? trim / ( 1.f + rat * (( e / thr ) - 1.f )) : trim; // gain
+
+                out = a * ( g + dry ); //vca
+            }
+
+            // catch denormals
+            env  = ( e  < 1.0e-10 ) ? 0.f : e;
+            env2 = ( e2 < 1.0e-10 ) ? 0.f : e2;
+            genv = ( ge < 1.0e-10 ) ? 0.f : ge;
+
+            return out;
+        }
+
+        void cacheDynamicsProcessing();
 
         double thr, rat, env, env2, att, rel, trim, lthr, xthr, xrat, dry;
         double genv, gatt, irel;

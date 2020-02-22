@@ -114,6 +114,13 @@ class FormantFilter
             return 1 + x2 * ( -4 + 2 * x2 );
         }
 
+        void recalculate ();
+        double compress( double sample );
+
+        double thr, rat, env, env2, att, rel, trim, lthr, xthr, xrat, dry;
+        double genv, gatt, irel;
+        int mode;
+
 };
 }
 

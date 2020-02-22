@@ -224,50 +224,50 @@ double FormantFilter::getCarrier( const double position, const double phase )
 
 void FormantFilter::cacheDynamicsProcessing()
 {
-    mode = 0;
-    thr  = pow( 10.0, ( 2.0 * DYNAMICS_THRESHOLD - 2.0 ));
-    rat  = 2.5 * DYNAMICS_RATIO - 0.5;
+    _fullDynamicsProcessing = false;
 
-    if ( rat > 1.0 ) {
-        rat = 1.f + 16.f*(rat-1.f) * (rat - 1.f);
-        mode = 1;
+    _dThreshold = pow( 10.0, ( 2.0 * DYNAMICS_THRESHOLD - 2.0 ));
+    _dRatio     = 2.5 * DYNAMICS_RATIO - 0.5;
+
+    if ( _dRatio > 1.0 ) {
+        _dRatio = 1.f + 16.f * ( _dRatio - 1.f ) * ( _dRatio - 1.f );
+        _fullDynamicsProcessing = true;
     }
-    if ( rat < 0.0 ) {
-        rat = 0.6f * rat;
-        mode = 1;
+    if ( _dRatio < 0.0 ) {
+        _dRatio = 0.6f * _dRatio;
+        _fullDynamicsProcessing = true;
     }
-    trim = pow( 10.0,( 2.0 * DYNAMICS_LEVEL ));
-    att  = pow( 10.0,( -0.002 - 2.0 * DYNAMICS_ATTACK ));
-    rel  = pow( 10.0,( -2.0 - 3.0 * DYNAMICS_RELEASE ));
+    _dTrim    = pow( 10.0,( 2.0 * DYNAMICS_LEVEL ));
+    _dAttack  = pow( 10.0,( -0.002 - 2.0 * DYNAMICS_ATTACK ));
+    _dRelease = pow( 10.0,( -2.0 - 3.0 * DYNAMICS_RELEASE ));
     
     // limiter
     
     if ( DYNAMICS_LIMITER_DYNAMICS_THRESHOLD > 0.98 ) {
-        lthr = 0.f;
+        _dLimThreshold = 0.f;
     }
     else {
-        lthr = 0.99 * pow( 10.0, int( 30.0 * DYNAMICS_LIMITER_DYNAMICS_THRESHOLD - 20.0 ) / 20.f );
-        mode = 1;
+        _dLimThreshold = 0.99 * pow( 10.0, int( 30.0 * DYNAMICS_LIMITER_DYNAMICS_THRESHOLD - 20.0 ) / 20.f );
+        _fullDynamicsProcessing = true;
     }
     
     // expander
     
     if ( DYNAMICS_GATE_DYNAMICS_THRESHOLD < 0.02 ) {
-        xthr = 0.f;
+        _dExpThreshold = 0.f;
     }
     else {
-        xthr = pow( 10.f, ( 3.0 * DYNAMICS_GATE_DYNAMICS_THRESHOLD - 3.0 ));
-        mode = 1;
+        _dExpThreshold = pow( 10.f, ( 3.0 * DYNAMICS_GATE_DYNAMICS_THRESHOLD - 3.0 ));
+        _fullDynamicsProcessing = true;
     }
-    xrat = 1.0 - pow( 10.f, ( -2.0 - 3.3 * DYNAMICS_GATE_DECAY ));
-    irel = pow( 10.0, -2.0 / _sampleRate );
-    gatt = pow( 10.0, (-0.002 - 3.0 * DYNAMICS_GATE_DYNAMICS_ATTACK ));
+    _dExpRatio   = 1.0 - pow( 10.f, ( -2.0 - 3.3 * DYNAMICS_GATE_DECAY ));
+    _dGateAttack = pow( 10.0, (-0.002 - 3.0 * DYNAMICS_GATE_DYNAMICS_ATTACK ));
     
-    if ( rat < 0.0f && thr < 0.1f ) {
-        rat *= thr * 15.f;
+    if ( _dRatio < 0.0f && _dThreshold < 0.1f ) {
+        _dRatio *= _dThreshold * 15.f;
     }
-    dry   = 1.0f - DYNAMICS_MIX; 
-    trim *= DYNAMICS_MIX;
+    _dDry   = 1.0f - DYNAMICS_MIX;
+    _dTrim *= DYNAMICS_MIX;
 }
 
 }

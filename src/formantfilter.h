@@ -131,21 +131,26 @@ class FormantFilter
         inline double compress( double sample )
         {
             double a, b, i, j, g, out;
-            double e = env, e2 = env2, ge = genv, re = ( 1.f - rel ), lth = lthr;
+            double e = _dEnv,
+                   e2 = _dEnv2,
+                   ge = _dGainEnv,
+                   re = ( 1.f - _dRelease ),
+                   lth = _dLimThreshold;
 
-            if ( mode ) {
+            if ( _fullDynamicsProcessing ) {
+
                 // apply compression, gating and limiting
 
                 if ( lth == 0.f ) {
                     lth = 1000.f;
                 }
                 a = sample;
-                i = ( a < 0.f )? -a : a;
+                i = ( a < 0.f ) ? -a : a;
 
-                e  = ( i > e ) ? e + att * ( i - e ) : e * re;
+                e  = ( i > e ) ? e + _dAttack * ( i - e ) : e * re;
                 e2 = ( i > e ) ? i : e2 * re; // ir;
 
-                g = ( e > thr ) ? trim / ( 1.f + rat * (( e / thr ) - 1.f )) : trim;
+                g = ( e > _dThreshold ) ? _dTrim / ( 1.f + _dRatio * (( e / _dThreshold ) - 1.f )) : _dTrim;
 
                 if ( g < 0.f ) {
                     g = 0.f;
@@ -153,33 +158,45 @@ class FormantFilter
                 if ( g * e2 > lth ) {
                     g = lth / e2; // limiting
                 }
-                ge  = ( e > xthr )? ge + gatt - gatt * ge : ge * xrat; // gating
-                out = a * ( g * ge + dry );
+                ge  = ( e > _dExpThreshold ) ? ge + _dGateAttack - _dGateAttack * ge : ge * _dExpRatio; // gating
+                out = a * ( g * ge + _dDry );
             }
             else {
                 // compression only
                 a = sample;
                 i = ( a < 0.f ) ? -a : a;
 
-                e = ( i > e )  ? e + att * ( i - e ) : e * re; // envelope
-                g = ( e > thr ) ? trim / ( 1.f + rat * (( e / thr ) - 1.f )) : trim; // gain
+                e = ( i > e )  ? e + _dAttack * ( i - e ) : e * re; // envelope
+                g = ( e > _dThreshold ) ? _dTrim / ( 1.f + _dRatio * (( e / _dThreshold ) - 1.f )) : _dTrim; // gain
 
-                out = a * ( g + dry ); //vca
+                out = a * ( g + _dDry ); //vca
             }
 
             // catch denormals
-            env  = ( e  < 1.0e-10 ) ? 0.f : e;
-            env2 = ( e2 < 1.0e-10 ) ? 0.f : e2;
-            genv = ( ge < 1.0e-10 ) ? 0.f : ge;
+
+            _dEnv     = ( e  < 1.0e-10 ) ? 0.f : e;
+            _dEnv2    = ( e2 < 1.0e-10 ) ? 0.f : e2;
+            _dGainEnv = ( ge < 1.0e-10 ) ? 0.f : ge;
 
             return out;
         }
 
         void cacheDynamicsProcessing();
 
-        double thr, rat, env, env2, att, rel, trim, lthr, xthr, xrat, dry;
-        double genv, gatt, irel;
-        int mode;
+        double _dThreshold;
+        double _dRatio;
+        double _dAttack;
+        double _dRelease;
+        double _dTrim;
+        double _dLimThreshold;
+        double _dExpThreshold;
+        double _dExpRatio;
+        double _dDry;
+        double _dEnv;
+        double _dEnv2;
+        double _dGainEnv;
+        double _dGateAttack;
+        bool _fullDynamicsProcessing;
 
 };
 }

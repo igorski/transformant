@@ -80,7 +80,10 @@ void FormantFilter::setVowel( float aVowel )
 
 void FormantFilter::setLFO( float LFORatePercentage, float LFODepth )
 {
-    hasLFO = LFORatePercentage > 0.f;
+    bool isLFOenabled  = LFORatePercentage > 0.f;
+    bool hasToggledLFO = hasLFO != isLFOenabled;
+
+    hasLFO = isLFOenabled;
 
     lfo->setRate(
         VST::MIN_LFO_RATE() + (
@@ -88,7 +91,7 @@ void FormantFilter::setLFO( float LFORatePercentage, float LFODepth )
         )
     );
 
-    if ( _lfoDepth != LFODepth ) {
+    if ( hasToggledLFO || _lfoDepth != LFODepth ) {
         _lfoDepth = LFODepth;
         cacheLFO();
     }

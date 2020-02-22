@@ -32,7 +32,7 @@ namespace Igorski {
 namespace VST {
 
     static const int   ID     = 9715187;
-    static const char* NAME   = "TRANSFORMANT";
+    static const char* NAME   = "Transformant";
     static const char* VENDOR = "igorski.nl";
 
     static const FUID ProcessorUID( 0x9B87BC9B, 0x0D974BF4, 0x812B59EA, 0xAE2F10A2 );

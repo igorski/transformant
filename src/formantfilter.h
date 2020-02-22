@@ -131,10 +131,10 @@ class FormantFilter
         inline double compress( double sample )
         {
             double a, b, i, j, g, out;
-            double e = _dEnv,
-                   e2 = _dEnv2,
-                   ge = _dGainEnv,
-                   re = ( 1.f - _dRelease ),
+            double e   = _dEnv,
+                   e2  = _dEnv2,
+                   ge  = _dGainEnv,
+                   re  = ( 1.f - _dRelease ),
                    lth = _dLimThreshold;
 
             if ( _fullDynamicsProcessing ) {
@@ -169,14 +169,14 @@ class FormantFilter
                 e = ( i > e )  ? e + _dAttack * ( i - e ) : e * re; // envelope
                 g = ( e > _dThreshold ) ? _dTrim / ( 1.f + _dRatio * (( e / _dThreshold ) - 1.f )) : _dTrim; // gain
 
-                out = a * ( g + _dDry ); //vca
+                out = a * ( g + _dDry ); // VCA
             }
 
             // catch denormals
 
-            _dEnv     = ( e  < 1.0e-10 ) ? 0.f : e;
-            _dEnv2    = ( e2 < 1.0e-10 ) ? 0.f : e2;
-            _dGainEnv = ( ge < 1.0e-10 ) ? 0.f : ge;
+            _dEnv     = ( e  < 1.0e-10 ) ? 0.0 : e;
+            _dEnv2    = ( e2 < 1.0e-10 ) ? 0.0 : e2;
+            _dGainEnv = ( ge < 1.0e-10 ) ? 0.0 : ge;
 
             return out;
         }

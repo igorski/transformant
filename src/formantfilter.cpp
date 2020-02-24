@@ -145,6 +145,10 @@ void FormantFilter::process( double* inBuffer, int bufferSize )
             out += a->value * ( fp / f->value ) * in * formant * carrier;
         }
 
+        // catch denormals
+
+        undenormaliseDouble( out );
+
         // compress signal and write to output
 
         inBuffer[ i ] = compress( out );

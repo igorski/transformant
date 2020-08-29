@@ -3,8 +3,8 @@
 
 #define APSTUDIO_READONLY_SYMBOLS
 
-transformant.uidesc DATA "transformant.uidesc"
-background.png		PNG  "background.png"
+plugin.uidesc   DATA "plugin.uidesc"
+background.png  PNG "background.png"
 
 /////////////////////////////////////////////////////////////////////////////
 // Version

@@ -31,6 +31,8 @@
 namespace Steinberg {
 namespace Vst {
 
+using namespace VSTGUI;
+
 template<typename T>
 class UIMessageController;
 

@@ -42,7 +42,7 @@ namespace VST {
     static const float TWO_PI = PI * 2.f;
 
     // maximum and minimum rate of oscillation in Hz
-    // also see .uidesc to update the controls to match
+    // also see plugin.uidesc to update the controls to match
 
     static const float MAX_LFO_RATE() { return 10.f; }
     static const float MIN_LFO_RATE() { return .1f; }

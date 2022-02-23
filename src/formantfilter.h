@@ -36,7 +36,7 @@ class FormantFilter
     static const int COEFF_AMOUNT       = 9;
     static const int FORMANT_TABLE_SIZE = (256+1); // The last entry of the table equals the first (to avoid a modulo)
     static const int MAX_FORMANT_WIDTH  = 64;
-    static constexpr double ATTENUATOR  = 0.001;
+    static constexpr double ATTENUATOR  = 0.0005;
 
     // hard coded values for dynamics processing, in -1 to +1 range
 

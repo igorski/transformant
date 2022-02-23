@@ -26,6 +26,8 @@ template <typename SampleType>
 void PluginProcess::process( SampleType** inBuffer, SampleType** outBuffer, int numInChannels, int numOutChannels,
                              int bufferSize, uint32 sampleFramesSize ) {
 
+    ScopedNoDenormals noDenormals;
+
     // prepare the mix buffers and clone the incoming buffer contents into the pre-mix buffer
 
     prepareMixBuffers( inBuffer, numInChannels, bufferSize );

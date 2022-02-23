@@ -29,6 +29,7 @@
 #include "waveshaper.h"
 #include "formantfilter.h"
 #include "limiter.h"
+#include "snd.h"
 #include <vector>
 
 using namespace Steinberg;

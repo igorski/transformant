@@ -39,7 +39,7 @@ class UIMessageController;
 //------------------------------------------------------------------------
 // Controller
 //------------------------------------------------------------------------
-class Controller : public EditControllerEx1, public IMidiMapping, public VST3EditorDelegate
+class Controller : public EditControllerEx1, public IMidiMapping, public VSTGUI::VST3EditorDelegate
 {
     public:
         typedef UIMessageController<Controller> UIMessageController;

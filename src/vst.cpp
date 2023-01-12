@@ -132,60 +132,51 @@ tresult PLUGIN_API Transformant::process( ProcessData& data )
                 ParamValue value;
                 int32 sampleOffset;
                 int32 numPoints = paramQueue->getPointCount();
+
+                if ( paramQueue->getPoint( numPoints - 1, sampleOffset, value ) != kResultTrue ) {
+                    continue;
+                }
+
                 switch ( paramQueue->getParameterId())
                 {
-                    // we use in this example only the last point of the queue.
-                    // in some wanted case for specific kind of parameter it makes sense to retrieve all points
-                    // and process the whole audio block in small blocks.
-
                     case kVowelLId:
-                        if ( paramQueue->getPoint( numPoints - 1, sampleOffset, value ) == kResultTrue )
-                            fVowelL = ( float ) value;
+                        fVowelL = ( float ) value;
                         break;
 
                     case kVowelRId:
-                        if ( paramQueue->getPoint( numPoints - 1, sampleOffset, value ) == kResultTrue )
-                            fVowelR = ( float ) value;
+                        fVowelR = ( float ) value;
                         break;
 
                     case kVowelSyncId:
-                        if ( paramQueue->getPoint( numPoints - 1, sampleOffset, value ) == kResultTrue )
-                            fVowelSync = ( float ) value;
+                        fVowelSync = ( float ) value;
                         break;
 
                     case kLFOVowelLId:
-                        if ( paramQueue->getPoint( numPoints - 1, sampleOffset, value ) == kResultTrue )
-                            fLFOVowelL = ( float ) value;
+                        fLFOVowelL = ( float ) value;
                         break;
 
                     case kLFOVowelRId:
-                        if ( paramQueue->getPoint( numPoints - 1, sampleOffset, value ) == kResultTrue )
-                            fLFOVowelR = ( float ) value;
+                        fLFOVowelR = ( float ) value;
                         break;
 
                     case kLFOVowelLDepthId:
-                        if ( paramQueue->getPoint( numPoints - 1, sampleOffset, value ) == kResultTrue )
-                            fLFOVowelLDepth = ( float ) value;
+                        fLFOVowelLDepth = ( float ) value;
                         break;
 
                     case kLFOVowelRDepthId:
-                        if ( paramQueue->getPoint( numPoints - 1, sampleOffset, value ) == kResultTrue )
-                            fLFOVowelRDepth = ( float ) value;
+                        fLFOVowelRDepth = ( float ) value;
                         break;
 
                     case kDistortionTypeId:
-                        if ( paramQueue->getPoint( numPoints - 1, sampleOffset, value ) == kResultTrue )
-                            fDistortionType = ( float ) value;
+                        fDistortionType = ( float ) value;
                         break;
 
                     case kDriveId:
-                        if ( paramQueue->getPoint( numPoints - 1, sampleOffset, value ) == kResultTrue )
-                            fDrive = ( float ) value;
+                        fDrive = ( float ) value;
                         break;
 
                     case kDistortionChainId:
-                        if ( paramQueue->getPoint( numPoints - 1, sampleOffset, value ) == kResultTrue )
-                            fDistortionChain = ( float ) value;
+                        fDistortionChain = ( float ) value;
                         break;
                 }
                 syncModel();

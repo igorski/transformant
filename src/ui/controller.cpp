@@ -1,7 +1,7 @@
 /**
  * The MIT License (MIT)
  *
- * Copyright (c) 2018-2020 Igor Zinken - https://www.igorski.nl
+ * Copyright (c) 2020-2023 Igor Zinken - https://www.igorski.nl
  *
  * Permission is hereby granted, free of charge, to any person obtaining a copy of
  * this software and associated documentation files (the "Software"), to deal in
@@ -42,7 +42,7 @@ namespace Vst {
 //------------------------------------------------------------------------
 // Controller Implementation
 //------------------------------------------------------------------------
-tresult PLUGIN_API Controller::initialize( FUnknown* context )
+tresult PLUGIN_API PluginController::initialize( FUnknown* context )
 {
     tresult result = EditControllerEx1::initialize( context );
 
@@ -143,13 +143,13 @@ tresult PLUGIN_API Controller::initialize( FUnknown* context )
 }
 
 //------------------------------------------------------------------------
-tresult PLUGIN_API Controller::terminate()
+tresult PLUGIN_API PluginController::terminate()
 {
     return EditControllerEx1::terminate ();
 }
 
 //------------------------------------------------------------------------
-tresult PLUGIN_API Controller::setComponentState( IBStream* state )
+tresult PLUGIN_API PluginController::setComponentState( IBStream* state )
 {
     // we receive the current state of the component (processor part)
     if ( state )
@@ -224,7 +224,7 @@ tresult PLUGIN_API Controller::setComponentState( IBStream* state )
 }
 
 //------------------------------------------------------------------------
-IPlugView* PLUGIN_API Controller::createView( const char* name )
+IPlugView* PLUGIN_API PluginController::createView( const char* name )
 {
     // create the visual editor
     if ( name && strcmp( name, "editor" ) == 0 )
@@ -236,7 +236,7 @@ IPlugView* PLUGIN_API Controller::createView( const char* name )
 }
 
 //------------------------------------------------------------------------
-IController* Controller::createSubController( UTF8StringPtr name,
+IController* PluginController::createSubController( UTF8StringPtr name,
                                                     const IUIDescription* /*description*/,
                                                     VST3Editor* /*editor*/ )
 {
@@ -250,7 +250,7 @@ IController* Controller::createSubController( UTF8StringPtr name,
 }
 
 //------------------------------------------------------------------------
-tresult PLUGIN_API Controller::setState( IBStream* state )
+tresult PLUGIN_API PluginController::setState( IBStream* state )
 {
     tresult result = kResultFalse;
 
@@ -276,7 +276,7 @@ tresult PLUGIN_API Controller::setState( IBStream* state )
 }
 
 //------------------------------------------------------------------------
-tresult PLUGIN_API Controller::getState( IBStream* state )
+tresult PLUGIN_API PluginController::getState( IBStream* state )
 {
     // here we can save UI settings for example
 
@@ -290,7 +290,7 @@ tresult PLUGIN_API Controller::getState( IBStream* state )
 }
 
 //------------------------------------------------------------------------
-tresult Controller::receiveText( const char* text )
+tresult PluginController::receiveText( const char* text )
 {
     // received from Component
     if ( text )
@@ -303,7 +303,7 @@ tresult Controller::receiveText( const char* text )
 }
 
 //------------------------------------------------------------------------
-tresult PLUGIN_API Controller::setParamNormalized( ParamID tag, ParamValue value )
+tresult PLUGIN_API PluginController::setParamNormalized( ParamID tag, ParamValue value )
 {
     // called from host to update our parameters state
     tresult result = EditControllerEx1::setParamNormalized( tag, value );
@@ -311,7 +311,7 @@ tresult PLUGIN_API Controller::setParamNormalized( ParamID tag, ParamValue value
 }
 
 //------------------------------------------------------------------------
-tresult PLUGIN_API Controller::getParamStringByValue( ParamID tag, ParamValue valueNormalized, String128 string )
+tresult PLUGIN_API PluginController::getParamStringByValue( ParamID tag, ParamValue valueNormalized, String128 string )
 {
     switch ( tag )
     {
@@ -374,7 +374,7 @@ tresult PLUGIN_API Controller::getParamStringByValue( ParamID tag, ParamValue va
 }
 
 //------------------------------------------------------------------------
-tresult PLUGIN_API Controller::getParamValueByString( ParamID tag, TChar* string, ParamValue& valueNormalized )
+tresult PLUGIN_API PluginController::getParamValueByString( ParamID tag, TChar* string, ParamValue& valueNormalized )
 {
     /* example, but better to use a custom Parameter as seen in RangeParameter
     switch (tag)
@@ -395,13 +395,13 @@ tresult PLUGIN_API Controller::getParamValueByString( ParamID tag, TChar* string
 }
 
 //------------------------------------------------------------------------
-void Controller::addUIMessageController( UIMessageController* controller )
+void PluginController::addUIMessageController( UIMessageController* controller )
 {
     uiMessageControllers.push_back( controller );
 }
 
 //------------------------------------------------------------------------
-void Controller::removeUIMessageController( UIMessageController* controller )
+void PluginController::removeUIMessageController( UIMessageController* controller )
 {
     UIMessageControllerList::const_iterator it = std::find(
         uiMessageControllers.begin(), uiMessageControllers.end (), controller
@@ -411,27 +411,27 @@ void Controller::removeUIMessageController( UIMessageController* controller )
 }
 
 //------------------------------------------------------------------------
-void Controller::setDefaultMessageText( String128 text )
+void PluginController::setDefaultMessageText( String128 text )
 {
     String tmp( text );
     tmp.copyTo16( defaultMessageText, 0, 127 );
 }
 
 //------------------------------------------------------------------------
-TChar* Controller::getDefaultMessageText()
+TChar* PluginController::getDefaultMessageText()
 {
     return defaultMessageText;
 }
 
 //------------------------------------------------------------------------
-tresult PLUGIN_API Controller::queryInterface( const char* iid, void** obj )
+tresult PLUGIN_API PluginController::queryInterface( const char* iid, void** obj )
 {
     QUERY_INTERFACE( iid, obj, IMidiMapping::iid, IMidiMapping );
     return EditControllerEx1::queryInterface( iid, obj );
 }
 
 //------------------------------------------------------------------------
-tresult PLUGIN_API Controller::getMidiControllerAssignment( int32 busIndex, int16 /*midiChannel*/,
+tresult PLUGIN_API PluginController::getMidiControllerAssignment( int32 busIndex, int16 /*midiChannel*/,
     CtrlNumber midiControllerNumber, ParamID& tag )
 {
     // we support for the Gain parameter all MIDI Channel but only first bus (there is only one!)

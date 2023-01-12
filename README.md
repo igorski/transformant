@@ -45,10 +45,10 @@ Which will allow you to compile a single, "fat" binary that supports all archite
 
 ```
 cmake.exe -G "Visual Studio 16 2019" -A Win64 -S .. -B "build64"
-cmake.exe --build build64 --config Release
+cmake.exe --build . --config Release
 
 cmake.exe -G "Visual Studio 16 2019" -A Win32 -S .. -B "build32"
-cmake.exe --build build32 --config Release
+cmake.exe --build . --config Release
 ```
 
 Which is a little more cumbersome as you compile separate binaries for the separate architectures.
@@ -71,11 +71,11 @@ Be aware that prior to building the plugin, the Steinberg SDK needs to be built 
 To generate a release build of the library, execute the following commands from the root of the Steinberg SDK folder:
 
 ```
-cd VST3_SDK
+cd vst3sdk
 mkdir build
 cd build
 cmake -DCMAKE_BUILD_TYPE=Release ..
-cmake --build .
+cmake --build . --config Release
 ```
 
 The result being that _{VST3_SDK_ROOT}/build/lib/Release/_ will contain the Steinberg VST libraries required to build the plugin.
@@ -136,10 +136,19 @@ When debugging, you can also choose to run the plugin against Steinbergs validat
 
 ### Build as Audio Unit (macOS only)
 
-Is aided by the excellent [Jamba framework](https://github.com/pongasoft/jamba) by Pongasoft, which provides a toolchain around Steinbergs SDK. Execute the following instructions to build Transformant as an Audio Unit:
+For this you will need a little extra preparation while building Steinberg SDK. Additionally, you will need the
+CoreAudio SDK and XCode. Execute the following instructions to build the SDK with Audio Unit support, replace `SMTG_COREAUDIO_SDK_PATH` with the actual installation location of the CoreAudio SDK:
 
-* Build the AUWrapper Project in the Steinberg SDK folder
-* Create a Release build of the Xcode project generated in step 1, this creates _vst3sdk/public.sdk/source/vst/auwrapper/build/lib/Release/libauwrapper.a_
+```
+cd vst3sdk
+mkdir build
+cd build
+cmake -GXcode -DCMAKE_BUILD_TYPE=Release -DSMTG_COREAUDIO_SDK_PATH=/Library/CoreAudioSDK/CoreAudio ..
+cmake --build . --config Release
+```
+
+Execute the following instructions to build the plugin as an Audio Unit:
+
 * Run _sh build_au.sh_ from the repository root, providing the path to _VST3_SDK_ROOT_ as before:
 
 ```
@@ -149,4 +158,9 @@ VST3_SDK_ROOT=/path/to/VST_SDK/vst3sdk sh build_au.sh
 The subsequent Audio Unit component will be located in _./build/VST3/transformant.component_ as well as linked
 in _~/Library/Audio/Plug-Ins/Components/_
 
-You can validate the Audio Unit using Apple's _auval_ utility, by running _auval -v aufx dely IGOR_ on the command line. Note that there is the curious behaviour that you might need to reboot before the plugin shows up, though you can force a flush of the Audio Unit cache at runtime by running _killall -9 AudioComponentRegistrar_.
+You can validate the Audio Unit using Apple's _auval_ utility, by running _auval -v aufx frmt IGOR_ on the command line. Note that there is the curious behaviour that you might need to reboot before the plugin shows up, though you can force a flush of the Audio Unit cache at runtime by running _killall -9 AudioComponentRegistrar_. If you
+experience errors testing your plugin, you can look up the [error code](https://www.osstatus.com/).
+
+NOTE: Updates of the Steinberg SDK have been known to break Audio Unit support. You can always try building
+the plugin as part of the SDK examples (see CMakeLists.txt in audio-unit folder) when building the VST3_SDK as
+that _might_ work.

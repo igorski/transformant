@@ -1,7 +1,7 @@
 /**
  * The MIT License (MIT)
  *
- * Copyright (c) 2018-2020 Igor Zinken - https://www.igorski.nl
+ * Copyright (c) 2020-2023 Igor Zinken - https://www.igorski.nl
  *
  * Permission is hereby granted, free of charge, to any person obtaining a copy of
  * this software and associated documentation files (the "Software"), to deal in
@@ -34,22 +34,19 @@ namespace Vst {
 using namespace VSTGUI;
 
 template<typename T>
-class UIMessageController;
+class PluginUIMessageController;
 
-//------------------------------------------------------------------------
-// Controller
-//------------------------------------------------------------------------
-class Controller : public EditControllerEx1, public IMidiMapping, public VSTGUI::VST3EditorDelegate
+class PluginController : public EditControllerEx1, public IMidiMapping, public VSTGUI::VST3EditorDelegate
 {
     public:
-        typedef UIMessageController<Controller> UIMessageController;
+        typedef PluginUIMessageController<PluginController> UIMessageController;
         //--- ---------------------------------------------------------------------
         // create function required for Plug-in factory,
         // it will be called to create new instances of this controller
         //--- ---------------------------------------------------------------------
         static FUnknown* createInstance( void* /*context*/ )
         {
-            return ( IEditController* ) new Controller;
+            return ( IEditController* ) new PluginController;
         }
 
         //---from IPluginBase--------

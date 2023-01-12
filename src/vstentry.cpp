@@ -36,7 +36,6 @@ using namespace Steinberg::Vst;
 using namespace Igorski;
 
 #if TARGET_OS_IPHONE
-    Steinberg::Vst::VSTGUIEditor::setBundleRef( moduleHandle );
 #include "public.sdk/source/vst/vstguieditor.h"
 extern void* moduleHandle;
 #endif
@@ -72,6 +71,6 @@ BEGIN_FACTORY_DEF( "igorski.nl",
                 0, "",                        // neither of these are used here
                 FULL_VERSION_STR,             // Plug-in version
                 kVstVersionString,            // the VST 3 SDK version (do not change this)
-                Controller::createInstance )  // function pointer called when this component should be instantiated
+                PluginController::createInstance )  // function pointer called when this component should be instantiated
 
 END_FACTORY

@@ -1,7 +1,7 @@
 /**
  * The MIT License (MIT)
  *
- * Copyright (c) 2018-2020 Igor Zinken - https://www.igorski.nl
+ * Copyright (c) 2020-2023 Igor Zinken - https://www.igorski.nl
  *
  * Permission is hereby granted, free of charge, to any person obtaining a copy of
  * this software and associated documentation files (the "Software"), to deal in
@@ -31,25 +31,25 @@ namespace Steinberg {
 namespace Vst {
 
 //------------------------------------------------------------------------
-// UIMessageController
+// PluginUIMessageController
 //------------------------------------------------------------------------
 template <typename ControllerType>
-class UIMessageController : public VSTGUI::IController, public VSTGUI::ViewListenerAdapter
+class PluginUIMessageController : public VSTGUI::IController, public VSTGUI::ViewListenerAdapter
 {
     public:
         enum Tags
         {
-            kSendMessageTag = 1000
+            kSendMessageTag = 1000 // see plugin.uidesc tags
         };
 
-        UIMessageController( ControllerType* controller ) : controller( controller ), textEdit( nullptr )
+        PluginUIMessageController( ControllerType* pluginController ) : pluginController( pluginController ), textEdit( nullptr )
         {
         }
 
-        ~UIMessageController()
+        ~PluginUIMessageController()
         {
             viewWillDelete( textEdit );
-            controller->removeUIMessageController( this );
+            pluginController->removeUIMessageController( this );
         }
 
         void setMessageText( String128 msgText )
@@ -77,12 +77,12 @@ class UIMessageController : public VSTGUI::IController, public VSTGUI::ViewListe
             {
                 if ( pControl->getValueNormalized () > 0.5f )
                 {
-                    controller->sendTextMessage( textEdit->getText ().data() );
+                    pluginController->sendTextMessage( textEdit->getText ().data() );
                     pControl->setValue( 0.f );
                     pControl->invalid();
 
                     //---send a binary message
-                    if ( IPtr<IMessage> message = owned( controller->allocateMessage()))
+                    if ( IPtr<IMessage> message = owned( pluginController->allocateMessage()))
                     {
                         message->setMessageID ("BinaryMessage");
                         uint32 size = 100;
@@ -92,7 +92,7 @@ class UIMessageController : public VSTGUI::IController, public VSTGUI::ViewListe
                         for ( uint32 i = 0; i < size; i++ )
                             data[ i ] = i;
                         message->getAttributes ()->setBinary( "MyData", data, size );
-                        controller->sendMessage( message );
+                        pluginController->sendMessage( message );
                     }
                 }
             }
@@ -111,7 +111,7 @@ class UIMessageController : public VSTGUI::IController, public VSTGUI::ViewListe
                 textEdit->registerViewListener (this);
 
                 // initialize it content
-                String str( controller->getDefaultMessageText());
+                String str( pluginController->getDefaultMessageText());
                 str.toMultiByte (kCP_Utf8);
                 textEdit->setText (str.text8 ());
             }
@@ -138,10 +138,10 @@ class UIMessageController : public VSTGUI::IController, public VSTGUI::ViewListe
                 String str;
                 str.fromUTF8 (text.data ());
                 str.copyTo (messageText, 128);
-                controller->setDefaultMessageText (messageText);
+                pluginController->setDefaultMessageText (messageText);
             }
         }
-        ControllerType* controller;
+        ControllerType* pluginController;
         CTextEdit* textEdit;
 };
 

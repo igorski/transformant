@@ -60,6 +60,10 @@ class PluginProcess {
         bool distortionPostMix     = false;
         bool distortionTypeCrusher = false;
 
+        inline bool hasLFO() {
+            return formantFilterL->hasLFO || formantFilterR->hasLFO;
+        }
+
     private:
         AudioBuffer* _mixBuffer;  // buffer used for the sample process mixing
 

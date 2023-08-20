@@ -1,7 +1,7 @@
 /**
  * The MIT License (MIT)
  *
- * Copyright (c) 2018-2020 Igor Zinken - https://www.igorski.nl
+ * Copyright (c) 2018-2023 Igor Zinken - https://www.igorski.nl
  *
  * Permission is hereby granted, free of charge, to any person obtaining a copy of
  * this software and associated documentation files (the "Software"), to deal in
@@ -209,8 +209,9 @@ tresult PLUGIN_API Transformant::process( ProcessData& data )
 
     bool isDoublePrecision = data.symbolicSampleSize == kSample64;
     bool isSilent = data.inputs[ 0 ].silenceFlags != 0;
+    bool doProcessing = !isSilent || pluginProcess->hasLFO();
 
-    if ( !isSilent ) {
+    if ( doProcessing ) {
         if ( isDoublePrecision ) {
             // 64-bit samples, e.g. Reaper64
             pluginProcess->process<double>(
@@ -229,7 +230,7 @@ tresult PLUGIN_API Transformant::process( ProcessData& data )
 
     // output flags
 
-    if ( isSilent ) {
+    if ( isSilent && !doProcessing ) {
         data.outputs[ 0 ].silenceFlags = (( uint64 ) 1 << numOutChannels ) - 1;
     }
 

@@ -61,6 +61,7 @@ smtg_target_add_plugin_resources(${target}
     RESOURCES
         resource/plugin.uidesc
         resource/background.png
+        resource/version.png
 )
 
 #smtg_target_add_plugin_snapshots (${target}

@@ -1,7 +1,7 @@
 /**
  * The MIT License (MIT)
  *
- * Copyright (c) 2018-2020 Igor Zinken - https://www.igorski.nl
+ * Copyright (c) 2018-2023 Igor Zinken - https://www.igorski.nl
  *
  * Permission is hereby granted, free of charge, to any person obtaining a copy of
  * this software and associated documentation files (the "Software"), to deal in
@@ -52,7 +52,7 @@ Transformant::Transformant()
 , fDrive( 0.f )
 , fDistortionChain( 0.f )
 , pluginProcess( nullptr )
-, outputGainOld( 0.f )
+// , outputGainOld( 0.f )
 , currentProcessMode( -1 ) // -1 means not initialized
 {
     // register its editor class (the same as used in vstentry.cpp)
@@ -104,7 +104,7 @@ tresult PLUGIN_API Transformant::setActive (TBool state)
         sendTextMessage( "Transformant::setActive (false)" );
 
     // reset output level meter
-    outputGainOld = 0.f;
+    // outputGainOld = 0.f;
 
     // call our parent setActive
     return AudioEffect::setActive( state );
@@ -207,39 +207,45 @@ tresult PLUGIN_API Transformant::process( ProcessData& data )
 
     // process the incoming sound!
 
-    bool isDoublePrecision = ( data.symbolicSampleSize == kSample64 );
+    bool isDoublePrecision = data.symbolicSampleSize == kSample64;
+    bool isSilent = data.inputs[ 0 ].silenceFlags != 0;
+    bool doProcessing = !isSilent || pluginProcess->hasLFO();
 
-    if ( isDoublePrecision ) {
-        // 64-bit samples, e.g. Reaper64
-        pluginProcess->process<double>(
-            ( double** ) in, ( double** ) out, numInChannels, numOutChannels,
-            data.numSamples, sampleFramesSize
-        );
-    }
-    else {
-        // 32-bit samples, e.g. Ableton Live, Bitwig Studio... (oddly enough also when 64-bit?)
-        pluginProcess->process<float>(
-            ( float** ) in, ( float** ) out, numInChannels, numOutChannels,
-            data.numSamples, sampleFramesSize
-        );
+    if ( doProcessing ) {
+        if ( isDoublePrecision ) {
+            // 64-bit samples, e.g. Reaper64
+            pluginProcess->process<double>(
+                ( double** ) in, ( double** ) out, numInChannels, numOutChannels,
+                data.numSamples, sampleFramesSize
+            );
+        }
+        else {
+            // 32-bit samples, e.g. Ableton Live, Bitwig Studio... (oddly enough also when 64-bit?)
+            pluginProcess->process<float>(
+                ( float** ) in, ( float** ) out, numInChannels, numOutChannels,
+                data.numSamples, sampleFramesSize
+            );
+        }
     }
 
     // output flags
 
-    data.outputs[ 0 ].silenceFlags = false; // there should always be output
-    float outputGain = pluginProcess->limiter->getLinearGR();
-
-    //---4) Write output parameter changes-----------
-    IParameterChanges* outParamChanges = data.outputParameterChanges;
-    // a new value of VuMeter will be sent to the host
-    // (the host will send it back in sync to our controller for updating our editor)
-    if ( !isDoublePrecision && outParamChanges && outputGainOld != outputGain ) {
-        int32 index = 0;
-        IParamValueQueue* paramQueue = outParamChanges->addParameterData( kVuPPMId, index );
-        if ( paramQueue )
-            paramQueue->addPoint( 0, outputGain, index );
+    if ( isSilent && !doProcessing ) {
+        data.outputs[ 0 ].silenceFlags = (( uint64 ) 1 << numOutChannels ) - 1;
     }
-    outputGainOld = outputGain;
+
+    // float outputGain = pluginProcess->limiter->getLinearGR();
+    //---4) Write output parameter changes-----------
+    // IParameterChanges* outParamChanges = data.outputParameterChanges;
+    // // a new value of VuMeter will be sent to the host
+    // // (the host will send it back in sync to our controller for updating our editor)
+    // if ( !isDoublePrecision && outParamChanges && outputGainOld != outputGain ) {
+    //     int32 index = 0;
+    //     IParamValueQueue* paramQueue = outParamChanges->addParameterData( kVuPPMId, index );
+    //     if ( paramQueue )
+    //         paramQueue->addPoint( 0, outputGain, index );
+    // }
+    // outputGainOld = outputGain;
 
     return kResultOk;
 }

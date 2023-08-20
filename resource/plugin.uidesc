@@ -120,6 +120,8 @@
               title="" transparent="false" wants-focus="true" wheel-inc-value="0.1"
         />
 
+         <view class="CView" size="36, 8" origin="323, 561" bitmap="version" />
+
     </template>
     <variables/>
     <custom>
@@ -145,6 +147,7 @@
     </custom>
     <bitmaps>
         <bitmap name="background" path="background.png"/>
+        <bitmap name="version" path="version.png"/>
     </bitmaps>
 
     <!-- map the controllers listed above to their paramids by tag index -->

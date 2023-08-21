@@ -208,32 +208,34 @@ tresult PLUGIN_API Transformant::process( ProcessData& data )
     // process the incoming sound!
 
     bool isDoublePrecision = data.symbolicSampleSize == kSample64;
-    bool isSilent = data.inputs[ 0 ].silenceFlags != 0;
-    bool doProcessing = !isSilent || pluginProcess->hasLFO();
+    bool isSilentInput  = data.inputs[ 0 ].silenceFlags != 0;
+    bool isSilentOutput = false;
 
-    if ( doProcessing ) {
-        if ( isDoublePrecision ) {
-            // 64-bit samples, e.g. Reaper64
-            pluginProcess->process<double>(
-                ( double** ) in, ( double** ) out, numInChannels, numOutChannels,
-                data.numSamples, sampleFramesSize
-            );
+    if ( isDoublePrecision ) {
+        // 64-bit samples, e.g. Reaper64
+        pluginProcess->process<double>(
+            ( double** ) in, ( double** ) out, numInChannels, numOutChannels,
+            data.numSamples, sampleFramesSize
+        );
+        if ( isSilentInput ) {
+            isSilentOutput = pluginProcess->isBufferSilent(( double** ) out, numOutChannels, data.numSamples );
         }
-        else {
-            // 32-bit samples, e.g. Ableton Live, Bitwig Studio... (oddly enough also when 64-bit?)
-            pluginProcess->process<float>(
-                ( float** ) in, ( float** ) out, numInChannels, numOutChannels,
-                data.numSamples, sampleFramesSize
-            );
+    }
+    else {
+        // 32-bit samples, e.g. Ableton Live, Bitwig Studio... (oddly enough also when 64-bit?)
+        pluginProcess->process<float>(
+            ( float** ) in, ( float** ) out, numInChannels, numOutChannels,
+            data.numSamples, sampleFramesSize
+        );
+        if ( isSilentInput ) {
+            isSilentOutput = pluginProcess->isBufferSilent(( float** ) out, numOutChannels, data.numSamples );
         }
     }
 
     // output flags
-
-    if ( isSilent && !doProcessing ) {
-        data.outputs[ 0 ].silenceFlags = (( uint64 ) 1 << numOutChannels ) - 1;
-    }
-
+   
+    data.outputs[ 0 ].silenceFlags = isSilentOutput ? (( uint64 ) 1 << numOutChannels ) - 1 : 0;
+ 
     // float outputGain = pluginProcess->limiter->getLinearGR();
     //---4) Write output parameter changes-----------
     // IParameterChanges* outParamChanges = data.outputParameterChanges;

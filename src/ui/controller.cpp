@@ -1,7 +1,7 @@
 /**
  * The MIT License (MIT)
  *
- * Copyright (c) 2020-2023 Igor Zinken - https://www.igorski.nl
+ * Copyright (c) 2020-2024 Igor Zinken - https://www.igorski.nl
  *
  * Permission is hereby granted, free of charge, to any person obtaining a copy of
  * this software and associated documentation files (the "Software"), to deal in
@@ -89,7 +89,7 @@ tresult PLUGIN_API PluginController::initialize( FUnknown* context )
     ));
 
     parameters.addParameter(
-        USTRING( "Vowel Sync" ), 0, 1, 0, ParameterInfo::kCanAutomate, kVowelSyncId, unitId
+        USTRING( "Vowel Sync" ), 0, 1, 1, ParameterInfo::kCanAutomate, kVowelSyncId, unitId
     );
 
     // LFO controls
@@ -102,7 +102,7 @@ tresult PLUGIN_API PluginController::initialize( FUnknown* context )
 
     parameters.addParameter( new RangeParameter(
         USTRING( "Vowel L LFO depth" ), kLFOVowelLDepthId, USTRING( "%" ),
-        0.f, 1.f, 0.f,
+        0.f, 1.f, 0.5f,
         0, ParameterInfo::kCanAutomate, unitId
     ));
 
@@ -114,7 +114,7 @@ tresult PLUGIN_API PluginController::initialize( FUnknown* context )
 
     parameters.addParameter( new RangeParameter(
         USTRING( "Vowel R LFO depth" ), kLFOVowelRDepthId, USTRING( "%" ),
-        0.f, 1.f, 0.f,
+        0.f, 1.f, 0.5f,
         0, ParameterInfo::kCanAutomate, unitId
     ));
 

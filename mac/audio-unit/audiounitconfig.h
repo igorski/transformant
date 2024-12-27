@@ -19,7 +19,7 @@
 
 // The full name of the audio unit.
 // This is derived from the manufacturer and description key values
-#define kAUcomponentName Transformant
+#define kAUcomponentName Igorski: Transformant
 
 // Displayed Tags
 #define kAUcomponentTag Effects

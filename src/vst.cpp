@@ -535,6 +535,7 @@ void Transformant::syncModel()
     if ( Calc::toBool( fVowelSync )) {
         pluginProcess->formantFilterR.setVowel( fVowelL );
         pluginProcess->formantFilterR.setLFO( fLFOVowelL, fLFOVowelLDepth );
+        pluginProcess->formantFilterR.lfo.setAccumulator( pluginProcess->formantFilterL.lfo.getAccumulator());
     } else {
         pluginProcess->formantFilterR.setVowel( fVowelR );
         pluginProcess->formantFilterR.setLFO( fLFOVowelR, fLFOVowelRDepth );

@@ -32,7 +32,7 @@ class BitCrusher {
         BitCrusher( float amount = 8.f, float inputMix = 1.f, float outputMix = 0.5f );
         ~BitCrusher();
 
-        void process( double* inBuffer, int bufferSize );
+        void process( float* inBuffer, int bufferSize );
 
         void setAmount( float value ); // range between -1 to +1
         void setInputMix( float value );

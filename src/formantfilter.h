@@ -1,7 +1,7 @@
 /**
  * The MIT License (MIT)
  *
- * Copyright (c) 2020 Igor Zinken - https://www.igorski.nl
+ * Copyright (c) 2020-2026 Igor Zinken - https://www.igorski.nl
  *
  * Adapted from public source code by Paul Sernine, based on work by Thierry Rochebois
  *
@@ -37,20 +37,20 @@ class FormantFilter
     static const int COEFF_AMOUNT       = 9;
     static const int FORMANT_TABLE_SIZE = ( 256 + 1 ); // The last entry of the table equals the first (to avoid a modulo)
     static const int MAX_FORMANT_WIDTH  = 64;
-    static constexpr double ATTENUATOR  = 0.0005;
+    static constexpr float ATTENUATOR  = 0.0005f;
 
     // hard coded values for dynamics processing, in -1 to +1 range
 
-    static constexpr double DYNAMICS_THRESHOLD                  = 0.10;
-    static constexpr double DYNAMICS_RATIO                      = 0.50;
-    static constexpr double DYNAMICS_LEVEL                      = 0.65;
-    static constexpr double DYNAMICS_ATTACK                     = 0.18;
-    static constexpr double DYNAMICS_RELEASE                    = 0.55;
-    static constexpr double DYNAMICS_LIMITER_DYNAMICS_THRESHOLD = 0.99;
-    static constexpr double DYNAMICS_GATE_DYNAMICS_THRESHOLD    = 0.02;
-    static constexpr double DYNAMICS_GATE_DYNAMICS_ATTACK       = 0.10;
-    static constexpr double DYNAMICS_GATE_DECAY                 = 0.50;
-    static constexpr double DYNAMICS_MIX                        = 1.00;
+    static constexpr float DYNAMICS_THRESHOLD                  = 0.10f;
+    static constexpr float DYNAMICS_RATIO                      = 0.50f;
+    static constexpr float DYNAMICS_LEVEL                      = 0.65f;
+    static constexpr float DYNAMICS_ATTACK                     = 0.18f;
+    static constexpr float DYNAMICS_RELEASE                    = 0.55f;
+    static constexpr float DYNAMICS_LIMITER_DYNAMICS_THRESHOLD = 0.99f;
+    static constexpr float DYNAMICS_GATE_DYNAMICS_THRESHOLD    = 0.02f;
+    static constexpr float DYNAMICS_GATE_DYNAMICS_ATTACK       = 0.10f;
+    static constexpr float DYNAMICS_GATE_DECAY                 = 0.50f;
+    static constexpr float DYNAMICS_MIX                        = 1.00f;
 
     // whether to apply the formant synthesis to the signal
     // otherwise the input is applied to the carrier directly
@@ -65,79 +65,79 @@ class FormantFilter
         void setVowel( float aVowel );
         float getVowel();
         void setLFO( float LFORatePercentage, float LFODepth );
-        void process( double* inBuffer, int bufferSize );
+        void process( float* inBuffer, int bufferSize );
 
         LFO lfo;
         bool hasLFO;
 
     private:
 
-        float  _sampleRate;
-        float  _halfSampleRateFrac;
-        double _vowel;
-        double _tempVowel;
-        int    _coeffOffset;
-        float  _lfoDepth;
-        double _lfoRange;
-        double _lfoMax;
-        double _lfoMin;
+        float _sampleRate;
+        float _halfSampleRateFrac;
+        float _vowel;
+        float _tempVowel;
+        int   _coeffOffset;
+        float _lfoDepth;
+        float _lfoRange;
+        float _lfoMax;
+        float _lfoMin;
 
         void cacheLFO();
         inline void cacheCoeffOffset()
         {
-            _coeffOffset = ( int ) Calc::scale( _tempVowel, 1.f, ( float ) COEFF_AMOUNT - 1 );
+            _coeffOffset = static_cast<int>( Calc::scale( _tempVowel, 1.f, static_cast<float>( COEFF_AMOUNT ) - 1 ));
         }
 
         // vowel definitions
 
         struct Formant {
-            double value;
-            double coeffs[ COEFF_AMOUNT ];
+            float value;
+            float coeffs[ COEFF_AMOUNT ];
         };
 
-        double FORMANT_WIDTH_SCALE[ VOWEL_AMOUNT ] = { 100, 120, 150, 300 };
+        float FORMANT_WIDTH_SCALE[ VOWEL_AMOUNT ] = { 100.f, 120.f, 150.f, 300.f };
 
         Formant A_COEFFICIENTS[ VOWEL_AMOUNT ] = {
-            { 0.0, { 1.0, 0.5, 1.0, 1.0, 0.7, 1.0, 1.0, 0.3, 1.0 } },
-            { 0.0, { 2.0, 0.5, 0.7, 0.7,0.35, 0.3, 0.5, 1.0, 0.7 } },
-            { 0.0, { 0.3,0.15, 0.2, 0.4, 0.1, 0.3, 0.7, 0.2, 0.2 } },
-            { 0.0, { 0.2, 0.1, 0.2, 0.3, 0.1, 0.1, 0.3, 0.2, 0.3 } }
+            { 0.f, { 1.f, 0.5f, 1.f, 1.f, 0.7f, 1.f, 1.f, 0.3f, 1.f } },
+            { 0.f, { 2.f, 0.5f, 0.7f, 0.7f, 0.35f, 0.3f, 0.5f, 1.f, 0.7f } },
+            { 0.f, { 0.3f, 0.15f, 0.2f, 0.4f, 0.1f, 0.3f, 0.7f, 0.2f, 0.2f } },
+            { 0.f, { 0.2f, 0.1f, 0.2f, 0.3f, 0.1f, 0.1f, 0.3f, 0.2f, 0.3f } }
         };
 
         Formant F_COEFFICIENTS[ VOWEL_AMOUNT ] = {
-            { 100.0, {  730,  200,  400,  250,  190,  350,  550,  550,  450 } },
-            { 100.0, { 1090, 2100,  900, 1700,  800, 1900, 1600,  850, 1100 } },
-            { 100.0, { 2440, 3100, 2300, 2100, 2000, 2500, 2250, 1900, 1500 } },
-            { 100.0, { 3400, 4700, 3000, 3300, 3400, 3700, 3200, 3000, 3000 } }
+            { 100.f, {  730.f,  200.f,  400.f,  250.f,  190.f,  350.f,  550.f,  550.f,  450.f } },
+            { 100.f, { 1090.f, 2100.f,  900.f, 1700.f,  800.f, 1900.f, 1600.f,  850.f, 1100.f } },
+            { 100.f, { 2440.f, 3100.f, 2300.f, 2100.f, 2000.f, 2500.f, 2250.f, 1900.f, 1500.f } },
+            { 100.f, { 3400.f, 4700.f, 3000.f, 3300.f, 3400.f, 3700.f, 3200.f, 3000.f, 3000.f } }
         };
 
         // the below are used for the formant synthesis
 
-        double FORMANT_TABLE[ FORMANT_TABLE_SIZE * MAX_FORMANT_WIDTH ];
-        double _phase = 0.0;
+        float FORMANT_TABLE[ FORMANT_TABLE_SIZE * MAX_FORMANT_WIDTH ];
+        float _phase = 0.f;
 
-        double generateFormant( double phase, const double width );
-        double getFormant( double phase, double width );
-        double getCarrier( const double position, const double phase );
+        float generateFormant( float phase, const float width );
+        float getFormant( float phase, float width );
+        float getCarrier( const float position, const float phase );
 
         // Fast approximation of cos( pi * x ) for x in -1 to +1 range
 
-        inline double fast_cos( const double x )
+        inline float fast_cos( const float x )
         {
-            double x2 = x * x;
-            return 1 + x2 * ( -4 + 2 * x2 );
+            float x2 = x * x;
+            return 1.f + x2 * ( -4.f + 2.f * x2 );
         }
 
         // dynamics processing (compression and limiting to keep vowel level constant)
 
-        inline double compress( double sample )
+        inline float compress( float sample )
         {
-            double a, b, i, j, g, out;
-            double e   = _dEnv,
-                   e2  = _dEnv2,
-                   ge  = _dGainEnv,
-                   re  = ( 1.f - _dRelease ),
-                   lth = _dLimThreshold;
+            float a, b, i, j, g, out;
+            float e   = _dEnv;
+            float e2  = _dEnv2;
+            float ge  = _dGainEnv;
+            float re  = ( 1.f - _dRelease );
+            float lth = _dLimThreshold;
 
             if ( _fullDynamicsProcessing ) {
 
@@ -176,28 +176,28 @@ class FormantFilter
 
             // catch denormals
 
-            _dEnv     = ( e  < 1.0e-10 ) ? 0.0 : e;
-            _dEnv2    = ( e2 < 1.0e-10 ) ? 0.0 : e2;
-            _dGainEnv = ( ge < 1.0e-10 ) ? 0.0 : ge;
+            _dEnv     = ( e  < 1.0e-10 ) ? 0.f : e;
+            _dEnv2    = ( e2 < 1.0e-10 ) ? 0.f : e2;
+            _dGainEnv = ( ge < 1.0e-10 ) ? 0.f : ge;
 
             return out;
         }
 
         void cacheDynamicsProcessing();
 
-        double _dThreshold;
-        double _dRatio;
-        double _dAttack;
-        double _dRelease;
-        double _dTrim;
-        double _dLimThreshold;
-        double _dExpThreshold;
-        double _dExpRatio;
-        double _dDry;
-        double _dEnv;
-        double _dEnv2;
-        double _dGainEnv;
-        double _dGateAttack;
+        float _dThreshold;
+        float _dRatio;
+        float _dAttack;
+        float _dRelease;
+        float _dTrim;
+        float _dLimThreshold;
+        float _dExpThreshold;
+        float _dExpRatio;
+        float _dDry;
+        float _dEnv;
+        float _dEnv2;
+        float _dGainEnv;
+        float _dGateAttack;
         bool _fullDynamicsProcessing;
 
 };

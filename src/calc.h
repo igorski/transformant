@@ -43,7 +43,7 @@ namespace Calc {
      */
     inline int secondsToBuffer( float seconds, float sampleRate )
     {
-        return ( int )( seconds * sampleRate );
+        return static_cast<int>( seconds * sampleRate );
     }
 
     /**
@@ -77,9 +77,9 @@ namespace Calc {
     {
         float resto = fmod( value, valueToRoundTo );
 
-        if ( resto <= ( valueToRoundTo / 2 ))
+        if ( resto <= ( valueToRoundTo / 2.f )) {
             return value - resto;
-
+        }
         return value + valueToRoundTo - resto;
     }
 
@@ -89,7 +89,7 @@ namespace Calc {
     inline float scale( float value, float maxValue, float maxCompareValue )
     {
         float ratio = maxCompareValue / maxValue;
-        return ( float ) ( std::min( maxValue, value ) * ratio );
+        return std::min( maxValue, value ) * ratio;
     }
 
     // cast a floating point value to a boolean true/false

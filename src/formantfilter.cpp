@@ -123,13 +123,17 @@ void FormantFilter::process( float* inBuffer, int bufferSize )
 
         // calculate the phase for the formant synthesis and carrier
 
-        fp  = 12 * powf( 2.0, 4 - 4 * _tempVowel );   // sweep
+        fp  = 12 * powf( 2.f, 4 - 4 * _tempVowel );   // sweep
         // fp *= ( 1.0 + 0.01 * sinf( tmp * 0.0015 )); // optional vibrato (sinf value determines speed)
         ufp = 1.0 / fp;
 
         phaseAcc = fp * _halfSampleRateFrac;
         _phase  += phaseAcc;
         _phase  -= 2.f * ( _phase > 1.f );
+
+        // without synthesis the output gets audibly thinner at higher _vowel values
+
+        bool attenuateOutput = !APPLY_SYNTHESIS_SIGNAL && _tempVowel > 0.25f;
 
         // calculate the coefficients
 
@@ -146,8 +150,13 @@ void FormantFilter::process( float* inBuffer, int bufferSize )
             float formant = APPLY_SYNTHESIS_SIGNAL ? getFormant( _phase, FORMANT_WIDTH_SCALE[ j ] * ufp ) : 1.0;
             float carrier = getCarrier( f->value * ufp, _phase );
 
-            // the fp/fn coefficients stand for a -3dB/oct spectral envelope
-            out += a->value * ( fp / f->value ) * in * formant * carrier;
+            if ( !attenuateOutput ) {
+                // the fp/fn coefficients stand for a -3dB/oct spectral envelope
+                out += a->value * ( fp / f->value ) * in * formant * carrier;
+            } else {
+                float fpReference = 192.0f; // or 100.f or any fixed frequency of you rliking
+                out += a->value * ( fpReference / f->value ) * in * formant * carrier;
+            }
         }
 
         // catch denormals and write to output
@@ -173,7 +182,9 @@ void FormantFilter::cacheLFO()
 
 float FormantFilter::generateFormant( float phase, const float width )
 {
-    int hmax   = static_cast<int>( 10 * width ) > FORMANT_TABLE_SIZE / 2 ? FORMANT_TABLE_SIZE / 2 : static_cast<int>( 10 * width );
+    int hmax = static_cast<int>( 10 * width ) > FORMANT_TABLE_SIZE / 2 ? FORMANT_TABLE_SIZE / 2 : static_cast<int>( 10 * width );
+    if ( hmax < 1 ) hmax = 1;
+
     float jupe = 0.15f;
 
     float a = 0.5f;
@@ -183,6 +194,7 @@ float FormantFilter::generateFormant( float phase, const float width )
     for ( size_t h = 1; h < hmax; h++ ) {
         phi     += VST::PI * phase;
         hann     = 0.5f + 0.5f * fast_cos( h * ( 1.f / hmax ));
+        // hann = 0.5f + 0.5f * std::cos( h * ( M_PI / hmax ));
         gaussian = 0.85f * exp( -h * h / ( width * width ));
         harmonic = cosf( phi );
         a += hann * ( gaussian + jupe ) * harmonic;

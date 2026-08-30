@@ -325,27 +325,29 @@ tresult PLUGIN_API PluginController::setParamNormalized( ParamID tag, ParamValue
 //------------------------------------------------------------------------
 tresult PLUGIN_API PluginController::getParamStringByValue( ParamID tag, ParamValue valueNormalized, String128 string )
 {
+    char text[ 32 ];
+
     switch ( tag )
     {
-        // these controls are floating point values in 0 - 1 range, we can
-        // simply read the normalized value which is in the same range
+        // the controls are in normalised 0 - 1 range but can be expressed as percentages
 
         case kVowelLId:
         case kVowelRId:
-        case kVowelSyncId:
         case kLFOVowelLDepthId:
         case kLFOVowelRDepthId:
-        case kDistortionTypeId:
         case kDriveId:
+        case kDryWetMixId:
+        {
+            snprintf( text, sizeof( text ), "%.2d %%", static_cast<int>( valueNormalized * 100.f ));
+            Steinberg::UString( string, 128 ).fromAscii( text );
+            return kResultTrue;
+        }
+
+        case kVowelSyncId:
+        case kDistortionTypeId:
         case kDistortionChainId:
         {
-            char text[32];
-
             switch ( tag ) {
-                default:
-                    snprintf( text, sizeof( text ), "%.2f", static_cast<float>( valueNormalized ));
-                    break;
-
                 case kVowelSyncId:
                     snprintf( text, sizeof( text ), "%s", ( valueNormalized == 0 ) ? "Off": "On" );
                     break;
@@ -363,13 +365,11 @@ tresult PLUGIN_API PluginController::getParamStringByValue( ParamID tag, ParamVa
             return kResultTrue;
         }
 
-        // vowel LFO setting is also floating point but in a custom range
-        // request the plain value from the normalized value
+        // vowel LFO's use a custom range to define their frequency in Hz
 
         case kLFOVowelLId:
         case kLFOVowelRId:
         {
-            char text[32];
             if ( valueNormalized == 0 ) {
                 snprintf( text, sizeof( text ), "%s", "Off" );
             } else {
@@ -380,12 +380,6 @@ tresult PLUGIN_API PluginController::getParamStringByValue( ParamID tag, ParamVa
             return kResultTrue;
         }
 
-        case kDryWetMixId:
-            char text[32];
-            snprintf( text, sizeof( text ), "%.2d %%", ( int ) ( valueNormalized * 100.f ));
-            Steinberg::UString( string, 128 ).fromAscii( text );
-            return kResultTrue;
-
         // everything else
         default:
             return EditControllerEx1::getParamStringByValue( tag, valueNormalized, string );
@@ -395,21 +389,27 @@ tresult PLUGIN_API PluginController::getParamStringByValue( ParamID tag, ParamVa
 //------------------------------------------------------------------------
 tresult PLUGIN_API PluginController::getParamValueByString( ParamID tag, TChar* string, ParamValue& valueNormalized )
 {
-    /* example, but better to use a custom Parameter as seen in RangeParameter
-    switch (tag)
+    switch ( tag )
     {
-        case kAttackId:
+        // entry in 0 - 100 percentage range should be normalised to 0 - 1 range
+        case kVowelLId:
+        case kVowelRId:
+        case kLFOVowelLDepthId:
+        case kLFOVowelRDepthId:
+        case kDriveId:
+        case kDryWetMixId:
         {
-            Steinberg::UString wrapper(( TChar* )string, -1 ); // don't know buffer size here!
+            Steinberg::UString wrapper(( TChar* ) string, -1 );
             double tmp = 0.0;
             if ( wrapper.scanFloat( tmp ))
             {
-                valueNormalized = expf( logf( 10.f ) * static_cast<float>( tmp ) / 20.f );
+                tmp /= 100;
+                valueNormalized = fmax( 0.0, fmin( 1.0, tmp ));
                 return kResultTrue;
             }
             return kResultFalse;
         }
-    }*/
+    }
     return EditControllerEx1::getParamValueByString( tag, string, valueNormalized );
 }
 

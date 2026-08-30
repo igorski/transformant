@@ -373,7 +373,7 @@ tresult PLUGIN_API PluginController::getParamStringByValue( ParamID tag, ParamVa
             if ( valueNormalized == 0 ) {
                 snprintf( text, sizeof( text ), "%s", "Off" );
             } else {
-                snprintf( text, sizeof( text ), "%.2f", normalizedParamToPlain( tag, valueNormalized ));
+                snprintf( text, sizeof( text ), "%.2f Hz", normalizedParamToPlain( tag, valueNormalized ));
             }
             Steinberg::UString( string, 128 ).fromAscii( text );
 

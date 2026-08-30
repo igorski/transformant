@@ -28,6 +28,11 @@ void PluginProcess::process( SampleType** inBuffer, SampleType** outBuffer, int 
 
     ScopedNoDenormals noDenormals;
 
+    bool mixDry = _dryWetMix < 1.f;
+
+    SampleType dryMix = static_cast<SampleType>( 1.f - _dryWetMix );
+    SampleType wetMix = static_cast<SampleType>( _dryWetMix );
+
     // prepare the mix buffers and clone the incoming buffer contents into the pre-mix buffer
 
     prepareMixBuffers( inBuffer, numInChannels, bufferSize );
@@ -68,7 +73,8 @@ void PluginProcess::process( SampleType** inBuffer, SampleType** outBuffer, int 
             }
         }
 
-        float maxBoost = bitCrusher.isActive() && bitCrusher.getBits() <= 2 ? 0.5f : 4.0f; 
+        float maxBoost = bitCrusher.isActive() && bitCrusher.getBits() <= 2 ? 0.5f : 4.0f;
+        float inSample;
 
         // apply make-up gain to keep volume balanced between non-bit processed scratch buffer pre mix buffer
         _makeUpGainProcessors[ c ].apply( _scratchBuffer, channelMixBuffer, bufferSize, maxBoost );
@@ -79,11 +85,17 @@ void PluginProcess::process( SampleType** inBuffer, SampleType** outBuffer, int 
 
             // before writing to the out buffer we take a snapshot of the current in sample
             // value as VST2 in Ableton Live supplies the same buffer for in and out!
-            // in case we want to offer a wet/dry balance
-            // inSample = channelInBuffer[ i ];
+            
+            inSample = channelInBuffer[ i ];
 
             // wet mix (e.g. the effected signal)
-            channelOutBuffer[ i ] = static_cast<SampleType>( channelMixBuffer[ i ]);
+            channelOutBuffer[ i ] = static_cast<SampleType>( channelMixBuffer[ i ] ) * wetMix;
+
+            // dry mix (e.g. mix in the input signal)
+
+            if ( mixDry ) {
+                channelOutBuffer[ i ] += ( inSample * dryMix );
+            }
         }
     }
     // limit the output signal as it can get quite hot
@@ -93,20 +105,12 @@ void PluginProcess::process( SampleType** inBuffer, SampleType** outBuffer, int 
 template <typename SampleType>
 void PluginProcess::prepareMixBuffers( SampleType** inBuffer, int numInChannels, int bufferSize )
 {
-    // if the pre mix buffer wasn't created yet or the buffer size has changed
-    // delete existing buffer and create new one to match properties
-
-    if ( _mixBuffer == nullptr || _mixBuffer->bufferSize != bufferSize ) {
-        delete _mixBuffer;
-        _mixBuffer = new AudioBuffer( numInChannels, bufferSize );
-    }
-
     // clone the in buffer contents
 
     for ( int c = 0; c < numInChannels; ++c ) {
 
         SampleType* inChannelBuffer = inBuffer[ c ];
-        auto channelMixBuffer       = _mixBuffer->getBufferForChannel( c );
+        auto channelMixBuffer = _mixBuffer->getBufferForChannel( c );
 
         for ( int i = 0; i < bufferSize; ++i ) {
             // clone into the pre mix buffer for pre-processing

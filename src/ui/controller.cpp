@@ -29,6 +29,7 @@
 #include "pluginterfaces/base/ustring.h"
 #include "pluginterfaces/vst/ivstmidicontrollers.h"
 
+#include "base/source/fstreamer.h"
 #include "base/source/fstring.h"
 
 #include "vstgui/uidescription/delegationcontroller.h"
@@ -134,6 +135,13 @@ tresult PLUGIN_API PluginController::initialize( FUnknown* context )
         USTRING( "Distortion pre/post" ), 0, 1, 0, ParameterInfo::kCanAutomate, kDistortionChainId, unitId
     );
 
+    RangeParameter* dryWetMixParam = new RangeParameter(
+        USTRING( "Dry/wet mix" ), kDryWetMixId, USTRING( "%" ),
+        0.f, 1.f, 1.f,
+        0, ParameterInfo::kCanAutomate, unitId
+    );
+    parameters.addParameter( dryWetMixParam );
+
     // initialization
 
     String str( "TRANSFORMANT" );
@@ -152,73 +160,67 @@ tresult PLUGIN_API PluginController::terminate()
 tresult PLUGIN_API PluginController::setComponentState( IBStream* state )
 {
     // we receive the current state of the component (processor part)
-    if ( state )
-    {
-        float savedVowelL = 1.f;
-        if ( state->read( &savedVowelL, sizeof( float )) != kResultOk )
-            return kResultFalse;
+    if ( !state ) {
+        return kResultFalse;
+    }
+    
+    IBStreamer streamer( state, kLittleEndian );
+    
+    float savedVowelL = 1.f;
+    if ( streamer.readFloat( savedVowelL ) == false )
+        return kResultFalse;
+    setParamNormalized( kVowelLId, savedVowelL );
 
-        float savedVowelR = 1.f;
-        if ( state->read( &savedVowelR, sizeof( float )) != kResultOk )
-            return kResultFalse;
+    float savedVowelR = 1.f;
+    if ( streamer.readFloat( savedVowelR ) == false )
+        return kResultFalse;
+    setParamNormalized( kVowelRId, savedVowelR );
 
-        float savedVowelSync = 1.f;
-        if ( state->read( &savedVowelSync, sizeof( float )) != kResultOk )
-            return kResultFalse;
+    float savedVowelSync = 1.f;
+    if ( streamer.readFloat( savedVowelSync ) == false )
+        return kResultFalse;
+    setParamNormalized( kVowelSyncId, savedVowelSync );
 
-        float savedLFOVowelL = Igorski::VST::MIN_LFO_RATE();
-        if ( state->read( &savedLFOVowelL, sizeof( float )) != kResultOk )
-            return kResultFalse;
+    float savedLFOVowelL = Igorski::VST::MIN_LFO_RATE();
+    if ( streamer.readFloat( savedLFOVowelL ) == false )
+        return kResultFalse;
+    setParamNormalized( kLFOVowelLId, savedLFOVowelL );
 
-        float savedLFOVowelR = Igorski::VST::MIN_LFO_RATE();
-        if ( state->read( &savedLFOVowelR, sizeof( float )) != kResultOk )
-            return kResultFalse;
+    float savedLFOVowelR = Igorski::VST::MIN_LFO_RATE();
+    if ( streamer.readFloat( savedLFOVowelR ) == false )
+        return kResultFalse;
+    setParamNormalized( kLFOVowelRId, savedLFOVowelR );
 
-        float savedLFOVowelLDepth = 1.f;
-        if ( state->read( &savedLFOVowelLDepth, sizeof( float )) != kResultOk )
-            return kResultFalse;
+    float savedLFOVowelLDepth = 1.f;
+    if ( streamer.readFloat( savedLFOVowelLDepth ) == false )
+        return kResultFalse;
+    setParamNormalized( kLFOVowelLDepthId, savedLFOVowelLDepth );
 
-        float savedLFOVowelRDepth = 1.f;
-        if ( state->read( &savedLFOVowelRDepth, sizeof( float )) != kResultOk )
-            return kResultFalse;
+    float savedLFOVowelRDepth = 1.f;
+    if ( streamer.readFloat( savedLFOVowelRDepth ) == false )
+        return kResultFalse;
+    setParamNormalized( kLFOVowelRDepthId, savedLFOVowelRDepth );
 
-        float savedDistortionType = 1.f;
-        if ( state->read( &savedDistortionType, sizeof( float )) != kResultOk )
-            return kResultFalse;
+    float savedDistortionType = 1.f;
+    if ( streamer.readFloat( savedDistortionType ) == false )
+        return kResultFalse;
+    setParamNormalized( kDistortionTypeId, savedDistortionType );
 
-        float savedDrive = 1.f;
-        if ( state->read( &savedDrive, sizeof( float )) != kResultOk )
-            return kResultFalse;
+    float savedDrive = 1.f;
+    if ( streamer.readFloat( savedDrive ) == false )
+        return kResultFalse;
+    setParamNormalized( kDriveId, savedDrive );
 
-        float savedDistortionChain = 0.f;
-        if ( state->read( &savedDistortionChain, sizeof( float )) != kResultOk )
-            return kResultFalse;
+    float savedDistortionChain = 0.f;
+    if ( streamer.readFloat( savedDistortionChain ) == false )
+        return kResultFalse;
+    setParamNormalized( kDistortionChainId, savedDistortionChain );
 
-#if BYTEORDER == kBigEndian
-    SWAP32( savedVowelL )
-    SWAP32( savedVowelR )
-    SWAP32( savedVowelSync )
-    SWAP32( savedLFOVowelL )
-    SWAP32( savedLFOVowelR )
-    SWAP32( savedLFOVowelLDepth )
-    SWAP32( savedLFOVowelRDepth )
-    SWAP32( savedDistortionType )
-    SWAP32( savedDrive )
-    SWAP32( savedDistortionChain )
-#endif
+    // the following properties are allowed to fail (no return) as these were added in later versions
 
-        setParamNormalized( kVowelLId,          savedVowelL );
-        setParamNormalized( kVowelRId,          savedVowelR );
-        setParamNormalized( kVowelSyncId,       savedVowelSync );
-        setParamNormalized( kLFOVowelLId,       savedLFOVowelL );
-        setParamNormalized( kLFOVowelRId,       savedLFOVowelR );
-        setParamNormalized( kLFOVowelLDepthId,  savedLFOVowelLDepth );
-        setParamNormalized( kLFOVowelRDepthId,  savedLFOVowelRDepth );
-        setParamNormalized( kDistortionTypeId,  savedDistortionType );
-        setParamNormalized( kDriveId,           savedDrive );
-        setParamNormalized( kDistortionChainId, savedDistortionChain );
-
-        state->seek( sizeof ( float ), IBStream::kIBSeekCur );
+    float savedDryWetMix = 1.f; // added in 1.1.0
+    if ( streamer.readFloat( savedDryWetMix ) != false ) {
+        setParamNormalized( kDryWetMixId, savedDryWetMix );
     }
     return kResultOk;
 }
@@ -367,6 +369,12 @@ tresult PLUGIN_API PluginController::getParamStringByValue( ParamID tag, ParamVa
 
             return kResultTrue;
         }
+
+        case kDryWetMixId:
+            char text[32];
+            snprintf( text, sizeof( text ), "%.2d %%", ( int ) ( valueNormalized * 100.f ));
+            Steinberg::UString( string, 128 ).fromAscii( text );
+            return kResultTrue;
 
         // everything else
         default:

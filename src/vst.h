@@ -96,6 +96,7 @@ class Transformant : public AudioEffect
         float fDistortionType;
         float fDrive;
         float fDistortionChain;
+        float fDryWetMix;
 
         float outputGainOld; // for visualizing output gain in DAW
 

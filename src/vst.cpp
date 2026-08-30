@@ -33,6 +33,8 @@
 #include "pluginterfaces/vst/ivstparameterchanges.h"
 #include "pluginterfaces/vst/vstpresetkeys.h"
 
+#include "base/source/fstreamer.h"
+
 #include <stdio.h>
 
 namespace Igorski {
@@ -51,6 +53,7 @@ Transformant::Transformant()
 , fDistortionType( 0.f )
 , fDrive( 0.f )
 , fDistortionChain( 0.f )
+, fDryWetMix( 1.f )
 , pluginProcess( nullptr )
 // , outputGainOld( 0.f )
 , currentProcessMode( -1 ) // -1 means not initialized
@@ -178,6 +181,10 @@ tresult PLUGIN_API Transformant::process( ProcessData& data )
                     case kDistortionChainId:
                         fDistortionChain = static_cast<float>( value );
                         break;
+
+                    case kDryWetMixId:
+                        fDryWetMix = static_cast<float>( value );
+                        break;
                 }
                 syncModel();
             }
@@ -268,58 +275,53 @@ tresult PLUGIN_API Transformant::setState( IBStream* state )
 {
     // called when we load a preset, the model has to be reloaded
 
+    IBStreamer streamer( state, kLittleEndian );
+
     float savedVowelL = 0.f;
-    if ( state->read( &savedVowelL, sizeof ( float )) != kResultOk )
+    if ( streamer.readFloat( savedVowelL ) == false )
         return kResultFalse;
 
     float savedVowelR = 0.f;
-    if ( state->read( &savedVowelR, sizeof ( float )) != kResultOk )
+    if ( streamer.readFloat( savedVowelR ) == false )
         return kResultFalse;
 
     float savedVowelSync = 0.f;
-    if ( state->read( &savedVowelSync, sizeof ( float )) != kResultOk )
+    if ( streamer.readFloat( savedVowelSync ) == false )
         return kResultFalse;
 
     float savedLFOVowelL = 0.f;
-    if ( state->read( &savedLFOVowelL, sizeof ( float )) != kResultOk )
+    if ( streamer.readFloat( savedLFOVowelL ) == false )
         return kResultFalse;
 
     float savedLFOVowelR = 0.f;
-    if ( state->read( &savedLFOVowelR, sizeof ( float )) != kResultOk )
+    if ( streamer.readFloat( savedLFOVowelR ) == false )
         return kResultFalse;
 
     float savedLFOVowelLDepth = 0.f;
-    if ( state->read( &savedLFOVowelLDepth, sizeof ( float )) != kResultOk )
+    if ( streamer.readFloat( savedLFOVowelLDepth ) == false )
         return kResultFalse;
 
     float savedLFOVowelRDepth = 0.f;
-    if ( state->read( &savedLFOVowelRDepth, sizeof ( float )) != kResultOk )
+    if ( streamer.readFloat( savedLFOVowelRDepth ) == false )
         return kResultFalse;
 
     float savedDistortionType = 0.f;
-    if ( state->read( &savedDistortionType, sizeof ( float )) != kResultOk )
+    if ( streamer.readFloat( savedDistortionType ) == false )
         return kResultFalse;
 
     float savedDrive = 0.f;
-    if ( state->read( &savedDrive, sizeof ( float )) != kResultOk )
+    if ( streamer.readFloat( savedDrive ) == false )
         return kResultFalse;
 
     float savedDistortionChain = 0.f;
-    if ( state->read( &savedDistortionChain, sizeof ( float )) != kResultOk )
+    if ( streamer.readFloat( savedDistortionChain ) == false )
         return kResultFalse;
 
-#if BYTEORDER == kBigEndian
-    SWAP32( savedVowelL )
-    SWAP32( savedVowelR )
-    SWAP32( savedVowelSync )
-    SWAP32( savedLFOVowelL )
-    SWAP32( savedLFOVowelR )
-    SWAP32( savedLFOVowelLDepth )
-    SWAP32( savedLFOVowelRDepth )
-    SWAP32( savedDistortionType )
-    SWAP32( savedDrive )
-    SWAP32( savedDistortionChain )
-#endif
+    // may fail as this was only added in version 1.1.0
+    float savedDryWetMix = 1.f;
+    if ( streamer.readFloat( savedDryWetMix ) != false ) {
+        fDryWetMix = savedDryWetMix;
+    }
 
     fVowelL          = savedVowelL;
     fVowelR          = savedVowelR;
@@ -370,42 +372,21 @@ tresult PLUGIN_API Transformant::setState( IBStream* state )
 //------------------------------------------------------------------------
 tresult PLUGIN_API Transformant::getState( IBStream* state )
 {
-    // here we need to save the model
+    // here we save the model values
 
-    float toSaveVowelL          = fVowelL;
-    float toSaveVowelR          = fVowelR;
-    float toSaveVowelSync       = fVowelSync;
-    float toSaveLFOVowelL       = fLFOVowelL;
-    float toSaveLFOVowelR       = fLFOVowelR;
-    float toSaveLFOVowelLDepth  = fLFOVowelLDepth;
-    float toSaveLFOVowelRDepth  = fLFOVowelRDepth;
-    float toSaveDistortionType  = fDistortionType;
-    float toSaveDrive           = fDrive;
-    float toSaveDistortionChain = fDistortionChain;
+    IBStreamer streamer( state, kLittleEndian );
 
-#if BYTEORDER == kBigEndian
-    SWAP32( toSaveVowelL );
-    SWAP32( toSaveVowelR );
-    SWAP32( toSaveVowelSync );
-    SWAP32( toSaveLFOVowelL );
-    SWAP32( toSaveLFOVowelR );
-    SWAP32( toSaveLFOVowelLDepth );
-    SWAP32( toSaveLFOVowelRDepth );
-    SWAP32( toSaveDistortionType );
-    SWAP32( toSaveDrive );
-    SWAP32( toSaveDriveDepth );
-#endif
-
-    state->write( &toSaveVowelL         , sizeof( float ));
-    state->write( &toSaveVowelR         , sizeof( float ));
-    state->write( &toSaveVowelSync      , sizeof( float ));
-    state->write( &toSaveLFOVowelL      , sizeof( float ));
-    state->write( &toSaveLFOVowelR      , sizeof( float ));
-    state->write( &toSaveLFOVowelLDepth , sizeof( float ));
-    state->write( &toSaveLFOVowelRDepth , sizeof( float ));
-    state->write( &toSaveDistortionType , sizeof( float ));
-    state->write( &toSaveDrive          , sizeof( float ));
-    state->write( &toSaveDistortionChain, sizeof( float ));
+    streamer.writeFloat( fVowelL );
+    streamer.writeFloat( fVowelR );
+    streamer.writeFloat( fVowelSync );
+    streamer.writeFloat( fLFOVowelL );
+    streamer.writeFloat( fLFOVowelR );
+    streamer.writeFloat( fLFOVowelLDepth );
+    streamer.writeFloat( fLFOVowelRDepth );
+    streamer.writeFloat( fDistortionType );
+    streamer.writeFloat( fDrive );
+    streamer.writeFloat( fDistortionChain );
+    streamer.writeFloat( fDryWetMix );
 
     return kResultOk;
 }
@@ -522,6 +503,7 @@ tresult PLUGIN_API Transformant::notify( IMessage* message )
 
 void Transformant::syncModel()
 {
+    pluginProcess->setDryWetMix( fDryWetMix );
     pluginProcess->distortionPostMix     = Calc::toBool( fDistortionChain );
     pluginProcess->distortionTypeCrusher = Calc::toBool( fDistortionType );
     pluginProcess->bitCrusher.setAmount( fDrive );

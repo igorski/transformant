@@ -30,7 +30,7 @@ PluginProcess::PluginProcess( int amountOfChannels, float sampleRate, int maxBuf
     _amountOfChannels = amountOfChannels;
     _makeUpGainProcessors.resize( amountOfChannels );
 
-    _mixBuffer = nullptr; // will be lazily created in the process function
+    _mixBuffer = nullptr;
     _scratchBuffer = nullptr;
 
     setHostProperties( sampleRate, maxBufferSize );
@@ -38,12 +38,10 @@ PluginProcess::PluginProcess( int amountOfChannels, float sampleRate, int maxBuf
 
 PluginProcess::~PluginProcess() {
     delete _mixBuffer;
-
-    if ( _scratchBuffer != nullptr ) {
-        delete[] _scratchBuffer;
-        _scratchBuffer = nullptr;
-    }
+    delete[] _scratchBuffer;
 }
+
+/* public methods */
 
 void PluginProcess::setHostProperties( float sampleRate, int maxBufferSize ) {
     bool hadSampleRateChange = _sampleRate != sampleRate;
@@ -60,11 +58,22 @@ void PluginProcess::setHostProperties( float sampleRate, int maxBufferSize ) {
 
     if ( _hostBufferSize < maxBufferSize ) {
         _hostBufferSize = maxBufferSize;
+
+        if ( _mixBuffer != nullptr ) {
+            delete _mixBuffer;
+        }
+        _mixBuffer = new AudioBuffer( _amountOfChannels, _hostBufferSize );
+
         if ( _scratchBuffer != nullptr ) {
             delete[] _scratchBuffer;
         }
         _scratchBuffer = new float[ _hostBufferSize ];
     }
+}
+
+void PluginProcess::setDryWetMix( float value )
+{
+    _dryWetMix = value;
 }
 
 }

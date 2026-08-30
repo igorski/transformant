@@ -43,6 +43,7 @@ class PluginProcess {
         ~PluginProcess();
 
         void setHostProperties( float sampleRate, int maxBufferSize );
+        void setDryWetMix( float value );
 
         // apply effect to incoming sampleBuffer contents
 
@@ -92,12 +93,13 @@ class PluginProcess {
 
     private:
         std::vector<AutoMakeUpGain> _makeUpGainProcessors;
-        AudioBuffer* _mixBuffer;  // buffer used for the sample process mixing
+        AudioBuffer* _mixBuffer = nullptr; // buffer used for the effect processing
         float* _scratchBuffer = nullptr; // used for make-up gain processing (reused per channel)
         
         int _amountOfChannels = 0;
         int _hostBufferSize = 0;
         float _sampleRate;
+        float _dryWetMix = 1.f;
 
         // ensures the pre- and post mix buffers match the appropriate amount of channels
         // and buffer size. this also clones the contents of given in buffer into the pre-mix buffer

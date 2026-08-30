@@ -99,6 +99,7 @@ class Transformant : public AudioEffect
         float fDryWetMix;
 
         float outputGainOld; // for visualizing output gain in DAW
+        bool _bypass = false;
 
         int32 currentProcessMode;
 

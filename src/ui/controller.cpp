@@ -142,6 +142,11 @@ tresult PLUGIN_API PluginController::initialize( FUnknown* context )
     );
     parameters.addParameter( dryWetMixParam );
 
+    // Bypass
+    parameters.addParameter(
+        STR16( "Bypass" ), nullptr, 1, 0, ParameterInfo::kCanAutomate | ParameterInfo::kIsBypass, kBypassId
+    );
+
     // initialization
 
     String str( "TRANSFORMANT" );
@@ -221,6 +226,11 @@ tresult PLUGIN_API PluginController::setComponentState( IBStream* state )
     float savedDryWetMix = 1.f; // added in 1.1.0
     if ( streamer.readFloat( savedDryWetMix ) != false ) {
         setParamNormalized( kDryWetMixId, savedDryWetMix );
+    }
+
+    int32 savedBypass = 0; // added in version 1.1.0
+    if ( streamer.readInt32( savedBypass ) != false ) {
+        setParamNormalized( kBypassId, savedBypass ? 1 : 0 );
     }
     return kResultOk;
 }

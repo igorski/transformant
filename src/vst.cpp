@@ -185,6 +185,9 @@ tresult PLUGIN_API Transformant::process( ProcessData& data )
                     case kDryWetMixId:
                         fDryWetMix = static_cast<float>( value );
                         break;
+
+                    case kBypassId:
+                        _bypass = static_cast<float>( value ) >= 0.5f;
                 }
                 syncModel();
             }
@@ -218,24 +221,37 @@ tresult PLUGIN_API Transformant::process( ProcessData& data )
     bool isSilentInput  = data.inputs[ 0 ].silenceFlags != 0;
     bool isSilentOutput = false;
 
-    if ( isDoublePrecision ) {
-        // 64-bit samples, e.g. Reaper64
-        pluginProcess->process<double>(
-            ( double** ) in, ( double** ) out, numInChannels, numOutChannels,
-            data.numSamples, sampleFramesSize
-        );
-        if ( isSilentInput ) {
-            isSilentOutput = pluginProcess->isBufferSilent(( double** ) out, numOutChannels, data.numSamples );
+    if ( _bypass )
+    {
+        // bypass mode, ensure output equals input
+
+        for ( int32 i = 0; i < numInChannels; i++ ) {
+            if ( in[ i ] != out[ i ]) {
+                memcpy( out[ i ], in[ i ], sampleFramesSize );
+            }
         }
+        isSilentOutput = isSilentInput;
     }
     else {
-        // 32-bit samples, e.g. Ableton Live, Bitwig Studio... (oddly enough also when 64-bit?)
-        pluginProcess->process<float>(
-            ( float** ) in, ( float** ) out, numInChannels, numOutChannels,
-            data.numSamples, sampleFramesSize
-        );
-        if ( isSilentInput ) {
-            isSilentOutput = pluginProcess->isBufferSilent(( float** ) out, numOutChannels, data.numSamples );
+        if ( isDoublePrecision ) {
+            // 64-bit samples, e.g. Reaper64
+            pluginProcess->process<double>(
+                ( double** ) in, ( double** ) out, numInChannels, numOutChannels,
+                data.numSamples, sampleFramesSize
+            );
+            if ( isSilentInput ) {
+                isSilentOutput = pluginProcess->isBufferSilent(( double** ) out, numOutChannels, data.numSamples );
+            }
+        }
+        else {
+            // 32-bit samples, e.g. Ableton Live, Bitwig Studio... (oddly enough also when 64-bit?)
+            pluginProcess->process<float>(
+                ( float** ) in, ( float** ) out, numInChannels, numOutChannels,
+                data.numSamples, sampleFramesSize
+            );
+            if ( isSilentInput ) {
+                isSilentOutput = pluginProcess->isBufferSilent(( float** ) out, numOutChannels, data.numSamples );
+            }
         }
     }
 
@@ -323,6 +339,12 @@ tresult PLUGIN_API Transformant::setState( IBStream* state )
         fDryWetMix = savedDryWetMix;
     }
 
+    // may fail as this was only added in version 1.1.0
+    int32 savedBypass = 0;
+    if ( streamer.readInt32( savedBypass ) != false ) {
+        _bypass = savedBypass > 0;
+    }
+
     fVowelL          = savedVowelL;
     fVowelR          = savedVowelR;
     fVowelSync       = savedVowelSync;
@@ -387,6 +409,7 @@ tresult PLUGIN_API Transformant::getState( IBStream* state )
     streamer.writeFloat( fDrive );
     streamer.writeFloat( fDistortionChain );
     streamer.writeFloat( fDryWetMix );
+    streamer.writeInt32( _bypass ? 1 : 0 );
 
     return kResultOk;
 }

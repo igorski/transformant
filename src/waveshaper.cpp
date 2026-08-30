@@ -54,7 +54,7 @@ float WaveShaper::getAmount()
 void WaveShaper::setAmount( float value )
 {
     _amount     = value;
-    _multiplier = 2.0f * _amount / ( 1.0f - fmin(0.99999f, _amount));
+    _multiplier = 2.0f * _amount / ( 1.0f - fmin( 0.99999f, _amount ));
 }
 
 float WaveShaper::getLevel()

@@ -1,7 +1,7 @@
 /**
  * The MIT License (MIT)
  *
- * Copyright (c) 2020 Igor Zinken - https://www.igorski.nl
+ * Copyright (c) 2020-2026 Igor Zinken - https://www.igorski.nl
  *
  * Permission is hereby granted, free of charge, to any person obtaining a copy of
  * this software and associated documentation files (the "Software"), to deal in
@@ -41,6 +41,8 @@ class PluginProcess {
         PluginProcess( int amountOfChannels, float sampleRate );
         ~PluginProcess();
 
+        void setHostProperties( float sampleRate, int maxBufferSize );
+
         // apply effect to incoming sampleBuffer contents
 
         template <typename SampleType>
@@ -52,7 +54,7 @@ class PluginProcess {
         // that if the first channel is empty, all are.
 
         inline bool isBufferSilent( float** buffer, int numChannels, int bufferSize ) {
-            float* channelBuffer = buffer[ 0 ];
+            auto channelBuffer = buffer[ 0 ];
             for ( int32 i = 0; i < bufferSize; ++i ) {
                 if ( channelBuffer[ i ] != 0.f ) {
                     return false;
@@ -62,7 +64,7 @@ class PluginProcess {
         };
 
         inline bool isBufferSilent( double** buffer, int numChannels, int bufferSize ) {
-            double* channelBuffer = buffer[ 0 ];
+            auto channelBuffer = buffer[ 0 ];
             for ( int32 i = 0; i < bufferSize; ++i ) {
                 if ( channelBuffer[ i ] != 0.0 ) {
                     return false;
@@ -71,11 +73,11 @@ class PluginProcess {
             return true;
         };
 
-        BitCrusher* bitCrusher;
-        WaveShaper* waveShaper;
-        Limiter* limiter;
-        FormantFilter* formantFilterL;
-        FormantFilter* formantFilterR;
+        BitCrusher bitCrusher;
+        WaveShaper waveShaper;
+        Limiter limiter;
+        FormantFilter formantFilterL;
+        FormantFilter formantFilterR;
 
         // whether effects are applied onto the input delay signal or onto
         // the delayed signal itself (false = on input, true = on delay)
@@ -84,7 +86,7 @@ class PluginProcess {
         bool distortionTypeCrusher = false;
 
         inline bool hasLFO() {
-            return formantFilterL->hasLFO || formantFilterR->hasLFO;
+            return formantFilterL.hasLFO || formantFilterR.hasLFO;
         }
 
     private:

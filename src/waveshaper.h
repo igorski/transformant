@@ -27,7 +27,7 @@ namespace Igorski {
 class WaveShaper
 {
     public:
-        WaveShaper( float amount, float level );
+        WaveShaper( float amount = 0.f, float level = 1.f );
 
         float getAmount();
         void setAmount( float value ); // range between -1 and +1

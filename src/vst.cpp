@@ -59,7 +59,7 @@ Transformant::Transformant()
     setControllerClass( VST::ControllerUID );
 
     // should be created on setupProcessing, this however doesn't fire for Audio Unit using auval?
-    pluginProcess = new PluginProcess( 2, 44100.f );
+    pluginProcess = new PluginProcess( 2, VST::DEFAULT_SAMPLE_RATE );
 }
 
 //------------------------------------------------------------------------
@@ -140,43 +140,43 @@ tresult PLUGIN_API Transformant::process( ProcessData& data )
                 switch ( paramQueue->getParameterId())
                 {
                     case kVowelLId:
-                        fVowelL = ( float ) value;
+                        fVowelL = static_cast<float>( value );
                         break;
 
                     case kVowelRId:
-                        fVowelR = ( float ) value;
+                        fVowelR = static_cast<float>( value );
                         break;
 
                     case kVowelSyncId:
-                        fVowelSync = ( float ) value;
+                        fVowelSync = static_cast<float>( value );
                         break;
 
                     case kLFOVowelLId:
-                        fLFOVowelL = ( float ) value;
+                        fLFOVowelL = static_cast<float>( value );
                         break;
 
                     case kLFOVowelRId:
-                        fLFOVowelR = ( float ) value;
+                        fLFOVowelR = static_cast<float>( value );
                         break;
 
                     case kLFOVowelLDepthId:
-                        fLFOVowelLDepth = ( float ) value;
+                        fLFOVowelLDepth = static_cast<float>( value );
                         break;
 
                     case kLFOVowelRDepthId:
-                        fLFOVowelRDepth = ( float ) value;
+                        fLFOVowelRDepth = static_cast<float>( value );
                         break;
 
                     case kDistortionTypeId:
-                        fDistortionType = ( float ) value;
+                        fDistortionType = static_cast<float>( value );
                         break;
 
                     case kDriveId:
-                        fDrive = ( float ) value;
+                        fDrive = static_cast<float>( value );
                         break;
 
                     case kDistortionChainId:
-                        fDistortionChain = ( float ) value;
+                        fDistortionChain = static_cast<float>( value );
                         break;
                 }
                 syncModel();
@@ -418,12 +418,7 @@ tresult PLUGIN_API Transformant::setupProcessing( ProcessSetup& newSetup )
     // here we keep a trace of the processing mode (offline,...) for example.
     currentProcessMode = newSetup.processMode;
 
-    // spotted to fire multiple times...
-
-    if ( pluginProcess != nullptr )
-        delete pluginProcess;
-
-    pluginProcess = new PluginProcess( 2, newSetup.sampleRate );
+    pluginProcess->setHostProperties( newSetup.sampleRate, newSetup.maxSamplesPerBlock );
 
     syncModel();
 
@@ -529,20 +524,20 @@ void Transformant::syncModel()
 {
     pluginProcess->distortionPostMix     = Calc::toBool( fDistortionChain );
     pluginProcess->distortionTypeCrusher = Calc::toBool( fDistortionType );
-    pluginProcess->bitCrusher->setAmount( fDrive );
-    pluginProcess->waveShaper->setAmount( fDrive );
+    pluginProcess->bitCrusher.setAmount( fDrive );
+    pluginProcess->waveShaper.setAmount( fDrive );
 
-    pluginProcess->formantFilterL->setVowel( fVowelL );
-    pluginProcess->formantFilterL->setLFO( fLFOVowelL, fLFOVowelLDepth );
+    pluginProcess->formantFilterL.setVowel( fVowelL );
+    pluginProcess->formantFilterL.setLFO( fLFOVowelL, fLFOVowelLDepth );
 
     // when vowel sync is on, both channels have the same vowel and LFO settings
 
     if ( Calc::toBool( fVowelSync )) {
-        pluginProcess->formantFilterR->setVowel( fVowelL );
-        pluginProcess->formantFilterR->setLFO( fLFOVowelL, fLFOVowelLDepth );
+        pluginProcess->formantFilterR.setVowel( fVowelL );
+        pluginProcess->formantFilterR.setLFO( fLFOVowelL, fLFOVowelLDepth );
     } else {
-        pluginProcess->formantFilterR->setVowel( fVowelR );
-        pluginProcess->formantFilterR->setLFO( fLFOVowelR, fLFOVowelRDepth );
+        pluginProcess->formantFilterR.setVowel( fVowelR );
+        pluginProcess->formantFilterR.setLFO( fLFOVowelR, fLFOVowelRDepth );
     }
 }
 

@@ -38,31 +38,31 @@ void PluginProcess::process( SampleType** inBuffer, SampleType** outBuffer, int 
         SampleType* channelOutBuffer = outBuffer[ c ];
         auto channelMixBuffer        = _mixBuffer->getBufferForChannel( c );
 
-        // pre formant filter bit crusher processing
+        // pre formant filter distortion processing
 
         if ( !distortionPostMix ) {
             if ( distortionTypeCrusher ) {
-                bitCrusher->process( channelMixBuffer, bufferSize );
+                bitCrusher.process( channelMixBuffer, bufferSize );
             } else {
-                waveShaper->process( channelMixBuffer, bufferSize );
+                waveShaper.process( channelMixBuffer, bufferSize );
             }
         }
 
         // formant filter
 
         if ( c % 2 == 0 ) {
-            formantFilterL->process( channelMixBuffer, bufferSize );
+            formantFilterL.process( channelMixBuffer, bufferSize );
         } else {
-           formantFilterR->process( channelMixBuffer, bufferSize );
+           formantFilterR.process( channelMixBuffer, bufferSize );
         }
 
-        // post formant filter bit crusher processing
+        // post formant filter distortion processing
 
         if ( distortionPostMix ) {
             if ( distortionTypeCrusher ) {
-                bitCrusher->process( channelMixBuffer, bufferSize );
+                bitCrusher.process( channelMixBuffer, bufferSize );
             } else {
-                waveShaper->process( channelMixBuffer, bufferSize );
+                waveShaper.process( channelMixBuffer, bufferSize );
             }
         }
 
@@ -77,11 +77,11 @@ void PluginProcess::process( SampleType** inBuffer, SampleType** outBuffer, int 
             //inSample = channelInBuffer[ i ];
 
             // wet mix (e.g. the effected signal)
-            channelOutBuffer[ i ] = ( SampleType ) channelMixBuffer[ i ];
+            channelOutBuffer[ i ] = static_cast<SampleType>( channelMixBuffer[ i ]);
         }
     }
     // limit the output signal as it can get quite hot
-    limiter->process<SampleType>( outBuffer, bufferSize, numOutChannels );
+    limiter.process<SampleType>( outBuffer, bufferSize, numOutChannels );
 }
 
 template <typename SampleType>
@@ -101,7 +101,7 @@ void PluginProcess::prepareMixBuffers( SampleType** inBuffer, int numInChannels,
 
     for ( int c = 0; c < numInChannels; ++c ) {
 
-        SampleType* inChannelBuffer = ( SampleType* ) inBuffer[ c ];
+        SampleType* inChannelBuffer = inBuffer[ c ];
         auto channelMixBuffer       = ( double* ) _mixBuffer->getBufferForChannel( c );
 
         for ( int i = 0; i < bufferSize; ++i ) {

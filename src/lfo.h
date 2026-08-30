@@ -29,9 +29,10 @@ namespace Igorski {
 class LFO {
 
     public:
-        LFO( float sampleRate );
+        LFO( float sampleRate = VST::DEFAULT_SAMPLE_RATE );
         ~LFO();
 
+        void setSampleRate( float sampleRate );
         float getRate();
         void setRate( float value );
 
@@ -49,8 +50,8 @@ class LFO {
         inline float peek()
         {
             // the wave table offset to read from
-            float SR_OVER_LENGTH = _sampleRate / ( float ) TABLE_SIZE;
-            int readOffset = ( _accumulator == 0.f ) ? 0 : ( int ) ( _accumulator / SR_OVER_LENGTH );
+            float SR_OVER_LENGTH = _sampleRate / static_cast<float>( TABLE_SIZE );
+            int readOffset = ( _accumulator == 0.f ) ? 0 : static_cast<int>( _accumulator / SR_OVER_LENGTH );
 
             // increment the accumulators read offset
             _accumulator += _rate;

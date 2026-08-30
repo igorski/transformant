@@ -40,8 +40,7 @@ FormantFilter::FormantFilter( float aVowel, float sampleRate )
         }
     }
 
-    _sampleRate         = sampleRate;
-    _halfSampleRateFrac = 1.f / ( _sampleRate * 0.5f );
+    setSampleRate( sampleRate );
 
     setVowel( aVowel );
     cacheDynamicsProcessing();
@@ -50,16 +49,23 @@ FormantFilter::FormantFilter( float aVowel, float sampleRate )
     // when we want the audible oscillation of vowels to stop, the LFO
     // depth is merely at 0
 
-    lfo = new LFO( _sampleRate );
     setLFO( 0.f, 0.f );
 }
 
 FormantFilter::~FormantFilter()
 {
-    delete lfo;
+    // nowt...
 }
 
 /* public methods */
+
+void FormantFilter::setSampleRate( float sampleRate )
+{
+    _sampleRate = sampleRate;
+    _halfSampleRateFrac = 1.f / ( _sampleRate * 0.5f );
+
+    lfo.setSampleRate( _sampleRate );
+}
 
 float FormantFilter::getVowel()
 {
@@ -87,7 +93,7 @@ void FormantFilter::setLFO( float LFORatePercentage, float LFODepth )
 
     hasLFO = isLFOenabled;
 
-    lfo->setRate(
+    lfo.setRate(
         VST::MIN_LFO_RATE() + (
             LFORatePercentage * ( VST::MAX_LFO_RATE() - VST::MIN_LFO_RATE() )
         )
@@ -111,7 +117,7 @@ void FormantFilter::process( double* inBuffer, int bufferSize )
 
         // sweep the LFO
 
-        lfoValue   = lfo->peek() * .5f  + .5f; // make waveform unipolar
+        lfoValue   = lfo.peek() * .5f  + .5f; // make waveform unipolar
         _tempVowel = std::min( _lfoMax, _lfoMin + _lfoRange * lfoValue ); // relative to LFO depth
 
         cacheCoeffOffset(); // ensure the appropriate coeff is used for the new _tempVowel value

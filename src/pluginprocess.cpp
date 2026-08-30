@@ -1,7 +1,7 @@
 /**
  * The MIT License (MIT)
  *
- * Copyright (c) 2020 Igor Zinken - https://www.igorski.nl
+ * Copyright (c) 2020-2026 Igor Zinken - https://www.igorski.nl
  *
  * Permission is hereby granted, free of charge, to any person obtaining a copy of
  * this software and associated documentation files (the "Software"), to deal in
@@ -28,13 +28,7 @@ namespace Igorski {
 
 PluginProcess::PluginProcess( int amountOfChannels, float sampleRate ) {
     _amountOfChannels = amountOfChannels;
-    _sampleRate       = sampleRate;
-
-    bitCrusher     = new BitCrusher( 8, 1.f, .5f );
-    waveShaper     = new WaveShaper( 0.f, 1.f );
-    limiter        = new Limiter( 10.f, 500.f, .95f );
-    formantFilterL = new FormantFilter( 0.f, _sampleRate );
-    formantFilterR = new FormantFilter( 0.f, _sampleRate );
+    _sampleRate = sampleRate;
 
     // will be lazily created in the process function
     _mixBuffer = nullptr;
@@ -42,11 +36,17 @@ PluginProcess::PluginProcess( int amountOfChannels, float sampleRate ) {
 
 PluginProcess::~PluginProcess() {
     delete _mixBuffer;
-    delete bitCrusher;
-    delete waveShaper;
-    delete limiter;
-    delete formantFilterL;
-    delete formantFilterR;
+}
+
+void PluginProcess::setHostProperties( float sampleRate, int _maxBufferSize ) {
+    bool hadSampleRateChange = _sampleRate != sampleRate;
+
+    _sampleRate = sampleRate;
+
+    if ( hadSampleRateChange ) {
+        formantFilterL.setSampleRate( _sampleRate );
+        formantFilterR.setSampleRate( _sampleRate );
+    }
 }
 
 }

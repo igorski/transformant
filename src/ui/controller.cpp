@@ -1,7 +1,7 @@
 /**
  * The MIT License (MIT)
  *
- * Copyright (c) 2020-2024 Igor Zinken - https://www.igorski.nl
+ * Copyright (c) 2020-2026 Igor Zinken - https://www.igorski.nl
  *
  * Permission is hereby granted, free of charge, to any person obtaining a copy of
  * this software and associated documentation files (the "Software"), to deal in
@@ -331,19 +331,19 @@ tresult PLUGIN_API PluginController::getParamStringByValue( ParamID tag, ParamVa
 
             switch ( tag ) {
                 default:
-                    sprintf( text, "%.2f", ( float ) valueNormalized );
+                    snprintf( text, sizeof( text ), "%.2f", static_cast<float>( valueNormalized ));
                     break;
 
                 case kVowelSyncId:
-                    sprintf( text, "%s", ( valueNormalized == 0 ) ? "Off": "On" );
+                    snprintf( text, sizeof( text ), "%s", ( valueNormalized == 0 ) ? "Off": "On" );
                     break;
 
                 case kDistortionTypeId:
-                    sprintf( text, "%s", ( valueNormalized == 0 ) ? "Waveshaper": "Bitcrusher" );
+                    snprintf( text, sizeof( text ), "%s", ( valueNormalized == 0 ) ? "Waveshaper": "Bitcrusher" );
                     break;
 
                 case kDistortionChainId:
-                    sprintf( text, "%s", ( valueNormalized == 0 ) ? "Pre-formant mix" : "Post-formant mix" );
+                    snprintf( text, sizeof( text ), "%s", ( valueNormalized == 0 ) ? "Pre-formant mix" : "Post-formant mix" );
                     break;
             }
             Steinberg::UString( string, 128 ).fromAscii( text );
@@ -358,10 +358,11 @@ tresult PLUGIN_API PluginController::getParamStringByValue( ParamID tag, ParamVa
         case kLFOVowelRId:
         {
             char text[32];
-            if (valueNormalized == 0 )
-                sprintf( text, "%s", "Off" );
-            else
-                sprintf( text, "%.2f", normalizedParamToPlain( tag, valueNormalized ));
+            if ( valueNormalized == 0 ) {
+                snprintf( text, sizeof( text ), "%s", "Off" );
+            } else {
+                snprintf( text, sizeof( text ), "%.2f", normalizedParamToPlain( tag, valueNormalized ));
+            }
             Steinberg::UString( string, 128 ).fromAscii( text );
 
             return kResultTrue;
@@ -381,11 +382,11 @@ tresult PLUGIN_API PluginController::getParamValueByString( ParamID tag, TChar* 
     {
         case kAttackId:
         {
-            Steinberg::UString wrapper ((TChar*)string, -1); // don't know buffer size here!
+            Steinberg::UString wrapper(( TChar* )string, -1 ); // don't know buffer size here!
             double tmp = 0.0;
-            if (wrapper.scanFloat (tmp))
+            if ( wrapper.scanFloat( tmp ))
             {
-                valueNormalized = expf (logf (10.f) * (float)tmp / 20.f);
+                valueNormalized = expf( logf( 10.f ) * static_cast<float>( tmp ) / 20.f );
                 return kResultTrue;
             }
             return kResultFalse;

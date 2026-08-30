@@ -25,8 +25,9 @@
 #ifndef __FORMANTFILTER_H_INCLUDED__
 #define __FORMANTFILTER_H_INCLUDED__
 
-#include "lfo.h"
 #include "calc.h"
+#include "global.h"
+#include "lfo.h"
 #include <math.h>
 
 namespace Igorski {
@@ -34,7 +35,7 @@ class FormantFilter
 {
     static const int VOWEL_AMOUNT       = 4;
     static const int COEFF_AMOUNT       = 9;
-    static const int FORMANT_TABLE_SIZE = (256+1); // The last entry of the table equals the first (to avoid a modulo)
+    static const int FORMANT_TABLE_SIZE = ( 256 + 1 ); // The last entry of the table equals the first (to avoid a modulo)
     static const int MAX_FORMANT_WIDTH  = 64;
     static constexpr double ATTENUATOR  = 0.0005;
 
@@ -57,15 +58,16 @@ class FormantFilter
     static const bool APPLY_SYNTHESIS_SIGNAL = false;
 
     public:
-        FormantFilter( float aVowel, float sampleRate );
+        FormantFilter( float aVowel = 0.f, float sampleRate = VST::DEFAULT_SAMPLE_RATE );
         ~FormantFilter();
 
+        void setSampleRate( float sampleRate );
         void setVowel( float aVowel );
         float getVowel();
         void setLFO( float LFORatePercentage, float LFODepth );
         void process( double* inBuffer, int bufferSize );
 
-        LFO* lfo;
+        LFO lfo;
         bool hasLFO;
 
     private:

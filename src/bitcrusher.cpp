@@ -67,7 +67,7 @@ void BitCrusher::process( double* inBuffer, int bufferSize )
 void BitCrusher::setAmount( float value )
 {
     // invert the range 0 == max bits (no distortion), 1 == min bits (severely distorted)
-    _amount = abs(value - 1.f);
+    _amount = abs( value - 1.f );
 
     calcBits();
 }

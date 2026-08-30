@@ -32,8 +32,7 @@
 class Limiter
 {
     public:
-        Limiter();
-        Limiter( float attackMs, float releaseMs, float thresholdDb );
+        Limiter( float attackMs = 10.f, float releaseMs = 500.f, float thresholdDb = 0.95f );
         ~Limiter();
 
         template <typename SampleType>

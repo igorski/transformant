@@ -23,13 +23,14 @@
 #ifndef __PLUGIN_PROCESS__H_INCLUDED__
 #define __PLUGIN_PROCESS__H_INCLUDED__
 
-#include "global.h"
 #include "audiobuffer.h"
+#include "automakeupgain.h"
 #include "bitcrusher.h"
-#include "waveshaper.h"
 #include "formantfilter.h"
+#include "global.h"
 #include "limiter.h"
 #include "snd.h"
+#include "waveshaper.h"
 #include <vector>
 
 using namespace Steinberg;
@@ -38,7 +39,7 @@ namespace Igorski {
 class PluginProcess {
 
     public:
-        PluginProcess( int amountOfChannels, float sampleRate );
+        PluginProcess( int amountOfChannels, float sampleRate, int maxBufferSize );
         ~PluginProcess();
 
         void setHostProperties( float sampleRate, int maxBufferSize );
@@ -90,9 +91,12 @@ class PluginProcess {
         }
 
     private:
+        std::vector<AutoMakeUpGain> _makeUpGainProcessors;
         AudioBuffer* _mixBuffer;  // buffer used for the sample process mixing
-
-        int   _amountOfChannels;
+        float* _scratchBuffer = nullptr; // used for make-up gain processing (reused per channel)
+        
+        int _amountOfChannels = 0;
+        int _hostBufferSize = 0;
         float _sampleRate;
 
         // ensures the pre- and post mix buffers match the appropriate amount of channels

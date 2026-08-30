@@ -47,7 +47,7 @@ BitCrusher::~BitCrusher()
 void BitCrusher::process( float* inBuffer, int bufferSize )
 {
     // sound should not be crushed ? do nothing
-    if ( _bits == 16 ) {
+    if ( !isActive() ) {
         return;
     }
 

@@ -59,7 +59,7 @@ Transformant::Transformant()
     setControllerClass( VST::ControllerUID );
 
     // should be created on setupProcessing, this however doesn't fire for Audio Unit using auval?
-    pluginProcess = new PluginProcess( 2, VST::DEFAULT_SAMPLE_RATE );
+    pluginProcess = new PluginProcess( 2, VST::DEFAULT_SAMPLE_RATE, VST::DEFAULT_BUFFER_SIZE );
 }
 
 //------------------------------------------------------------------------

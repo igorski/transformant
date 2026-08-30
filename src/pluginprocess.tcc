@@ -38,6 +38,8 @@ void PluginProcess::process( SampleType** inBuffer, SampleType** outBuffer, int 
         SampleType* channelOutBuffer = outBuffer[ c ];
         auto channelMixBuffer        = _mixBuffer->getBufferForChannel( c );
 
+        std::memcpy( _scratchBuffer, channelMixBuffer, bufferSize * sizeof( float ));
+        
         // pre formant filter distortion processing
 
         if ( !distortionPostMix ) {
@@ -65,6 +67,11 @@ void PluginProcess::process( SampleType** inBuffer, SampleType** outBuffer, int 
                 waveShaper.process( channelMixBuffer, bufferSize );
             }
         }
+
+        float maxBoost = bitCrusher.isActive() && bitCrusher.getBits() <= 2 ? 0.5f : 4.0f; 
+
+        // apply make-up gain to keep volume balanced between non-bit processed scratch buffer pre mix buffer
+        _makeUpGainProcessors[ c ].apply( _scratchBuffer, channelMixBuffer, bufferSize, maxBoost );
 
         // write the effected mix buffers into the output buffer
 

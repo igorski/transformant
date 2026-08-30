@@ -121,6 +121,8 @@ set(vst_sources
     src/global.h
     src/audiobuffer.h
     src/audiobuffer.cpp
+    src/automakeupgain.h
+    src/automakeupgain.cpp
     src/bitcrusher.h
     src/bitcrusher.cpp
     src/formantfilter.h
@@ -129,6 +131,7 @@ set(vst_sources
     src/lfo.cpp
     src/limiter.h
     src/limiter.cpp
+    src/linearsmoothing.h
     src/paramids.h
     src/pluginprocess.h
     src/pluginprocess.cpp

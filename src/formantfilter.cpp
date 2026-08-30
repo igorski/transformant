@@ -29,7 +29,7 @@ namespace Igorski {
 
 /* constructor / destructor */
 
-FormantFilter::FormantFilter( float aVowel, float sampleRate )
+FormantFilter::FormantFilter( float vowel, float sampleRate )
 {
     float coeff = 2.f / ( FORMANT_TABLE_SIZE - 1.f );
 
@@ -42,8 +42,7 @@ FormantFilter::FormantFilter( float aVowel, float sampleRate )
 
     setSampleRate( sampleRate );
 
-    setVowel( aVowel );
-    cacheDynamicsProcessing();
+    setVowel( vowel );
 
     // note: LFO is always "on" as its used by the formant synthesis
     // when we want the audible oscillation of vowels to stop, the LFO
@@ -72,9 +71,9 @@ float FormantFilter::getVowel()
     return _vowel;
 }
 
-void FormantFilter::setVowel( float aVowel )
+void FormantFilter::setVowel( float vowel )
 {
-    _vowel = aVowel;
+    _vowel = vowel;
 
     float tempRatio = _tempVowel / std::max( 0.000000001f, _vowel );
 
@@ -151,13 +150,11 @@ void FormantFilter::process( float* inBuffer, int bufferSize )
             out += a->value * ( fp / f->value ) * in * formant * carrier;
         }
 
-        // catch denormals
+        // catch denormals and write to output
 
         undenormaliseFloat( out );
 
-        // compress signal and write to output
-
-        inBuffer[ i ] = compress( out );
+        inBuffer[ i ] = out;
     }
 }
 
@@ -230,54 +227,6 @@ float FormantFilter::getCarrier( const float position, const float phase )
 
     // return interpolation between the two carriers
     return carrier1 + harmF * ( carrier2 - carrier1 );
-}
-
-void FormantFilter::cacheDynamicsProcessing()
-{
-    _fullDynamicsProcessing = false;
-
-    _dThreshold = pow( 10.f, ( 2.f * DYNAMICS_THRESHOLD - 2.f ));
-    _dRatio     = 2.5f * DYNAMICS_RATIO - 0.5f;
-
-    if ( _dRatio > 1.f ) {
-        _dRatio = 1.f + 16.f * ( _dRatio - 1.f ) * ( _dRatio - 1.f );
-        _fullDynamicsProcessing = true;
-    }
-    if ( _dRatio < 0.f ) {
-        _dRatio = 0.6f * _dRatio;
-        _fullDynamicsProcessing = true;
-    }
-    _dTrim    = pow( 10.f, ( 2.f * DYNAMICS_LEVEL ));
-    _dAttack  = pow( 10.f, ( -0.002f - 2.f * DYNAMICS_ATTACK ));
-    _dRelease = pow( 10.f, ( -2.f - 3.f * DYNAMICS_RELEASE ));
-    
-    // limiter
-    
-    if ( DYNAMICS_LIMITER_DYNAMICS_THRESHOLD > 0.98f ) {
-        _dLimThreshold = 0.f;
-    }
-    else {
-        _dLimThreshold = 0.99f * pow( 10.f, static_cast<int>( 30.f * DYNAMICS_LIMITER_DYNAMICS_THRESHOLD - 20.f ) / 20.f );
-        _fullDynamicsProcessing = true;
-    }
-    
-    // expander
-    
-    if ( DYNAMICS_GATE_DYNAMICS_THRESHOLD < 0.02f ) {
-        _dExpThreshold = 0.f;
-    }
-    else {
-        _dExpThreshold = pow( 10.f, ( 3.f * DYNAMICS_GATE_DYNAMICS_THRESHOLD - 3.f ));
-        _fullDynamicsProcessing = true;
-    }
-    _dExpRatio   = 1.f - pow( 10.f, ( -2.f - 3.3f * DYNAMICS_GATE_DECAY ));
-    _dGateAttack = pow( 10.f, ( -0.002f - 3.f * DYNAMICS_GATE_DYNAMICS_ATTACK ));
-    
-    if ( _dRatio < 0.0f && _dThreshold < 0.1f ) {
-        _dRatio *= _dThreshold * 15.f;
-    }
-    _dDry   = 1.0f - DYNAMICS_MIX;
-    _dTrim *= DYNAMICS_MIX;
 }
 
 }

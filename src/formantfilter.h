@@ -39,30 +39,17 @@ class FormantFilter
     static const int MAX_FORMANT_WIDTH  = 64;
     static constexpr float ATTENUATOR  = 0.0005f;
 
-    // hard coded values for dynamics processing, in -1 to +1 range
-
-    static constexpr float DYNAMICS_THRESHOLD                  = 0.10f;
-    static constexpr float DYNAMICS_RATIO                      = 0.50f;
-    static constexpr float DYNAMICS_LEVEL                      = 0.65f;
-    static constexpr float DYNAMICS_ATTACK                     = 0.18f;
-    static constexpr float DYNAMICS_RELEASE                    = 0.55f;
-    static constexpr float DYNAMICS_LIMITER_DYNAMICS_THRESHOLD = 0.99f;
-    static constexpr float DYNAMICS_GATE_DYNAMICS_THRESHOLD    = 0.02f;
-    static constexpr float DYNAMICS_GATE_DYNAMICS_ATTACK       = 0.10f;
-    static constexpr float DYNAMICS_GATE_DECAY                 = 0.50f;
-    static constexpr float DYNAMICS_MIX                        = 1.00f;
-
     // whether to apply the formant synthesis to the signal
     // otherwise the input is applied to the carrier directly
 
     static const bool APPLY_SYNTHESIS_SIGNAL = false;
 
     public:
-        FormantFilter( float aVowel = 0.f, float sampleRate = VST::DEFAULT_SAMPLE_RATE );
+        FormantFilter( float vowel = 0.f, float sampleRate = VST::DEFAULT_SAMPLE_RATE );
         ~FormantFilter();
 
         void setSampleRate( float sampleRate );
-        void setVowel( float aVowel );
+        void setVowel( float vowel );
         float getVowel();
         void setLFO( float LFORatePercentage, float LFODepth );
         void process( float* inBuffer, int bufferSize );
@@ -71,7 +58,6 @@ class FormantFilter
         bool hasLFO;
 
     private:
-
         float _sampleRate;
         float _halfSampleRateFrac;
         float _vowel;
@@ -127,79 +113,6 @@ class FormantFilter
             float x2 = x * x;
             return 1.f + x2 * ( -4.f + 2.f * x2 );
         }
-
-        // dynamics processing (compression and limiting to keep vowel level constant)
-
-        inline float compress( float sample )
-        {
-            float a, b, i, j, g, out;
-            float e   = _dEnv;
-            float e2  = _dEnv2;
-            float ge  = _dGainEnv;
-            float re  = ( 1.f - _dRelease );
-            float lth = _dLimThreshold;
-
-            if ( _fullDynamicsProcessing ) {
-
-                // apply compression, gating and limiting
-
-                if ( lth == 0.f ) {
-                    lth = 1000.f;
-                }
-                a = sample;
-                i = ( a < 0.f ) ? -a : a;
-
-                e  = ( i > e ) ? e + _dAttack * ( i - e ) : e * re;
-                e2 = ( i > e ) ? i : e2 * re; // ir;
-
-                g = ( e > _dThreshold ) ? _dTrim / ( 1.f + _dRatio * (( e / _dThreshold ) - 1.f )) : _dTrim;
-
-                if ( g < 0.f ) {
-                    g = 0.f;
-                }
-                if ( g * e2 > lth ) {
-                    g = lth / e2; // limiting
-                }
-                ge  = ( e > _dExpThreshold ) ? ge + _dGateAttack - _dGateAttack * ge : ge * _dExpRatio; // gating
-                out = a * ( g * ge + _dDry );
-            }
-            else {
-                // compression only
-                a = sample;
-                i = ( a < 0.f ) ? -a : a;
-
-                e = ( i > e )  ? e + _dAttack * ( i - e ) : e * re; // envelope
-                g = ( e > _dThreshold ) ? _dTrim / ( 1.f + _dRatio * (( e / _dThreshold ) - 1.f )) : _dTrim; // gain
-
-                out = a * ( g + _dDry ); // VCA
-            }
-
-            // catch denormals
-
-            _dEnv     = ( e  < 1.0e-10 ) ? 0.f : e;
-            _dEnv2    = ( e2 < 1.0e-10 ) ? 0.f : e2;
-            _dGainEnv = ( ge < 1.0e-10 ) ? 0.f : ge;
-
-            return out;
-        }
-
-        void cacheDynamicsProcessing();
-
-        float _dThreshold;
-        float _dRatio;
-        float _dAttack;
-        float _dRelease;
-        float _dTrim;
-        float _dLimThreshold;
-        float _dExpThreshold;
-        float _dExpRatio;
-        float _dDry;
-        float _dEnv;
-        float _dEnv2;
-        float _dGainEnv;
-        float _dGateAttack;
-        bool _fullDynamicsProcessing;
-
 };
 }
 

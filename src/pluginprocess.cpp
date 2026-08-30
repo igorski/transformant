@@ -26,26 +26,44 @@
 
 namespace Igorski {
 
-PluginProcess::PluginProcess( int amountOfChannels, float sampleRate ) {
+PluginProcess::PluginProcess( int amountOfChannels, float sampleRate, int maxBufferSize ) {
     _amountOfChannels = amountOfChannels;
-    _sampleRate = sampleRate;
+    _makeUpGainProcessors.resize( amountOfChannels );
 
-    // will be lazily created in the process function
-    _mixBuffer = nullptr;
+    _mixBuffer = nullptr; // will be lazily created in the process function
+    _scratchBuffer = nullptr;
+
+    setHostProperties( sampleRate, maxBufferSize );
 }
 
 PluginProcess::~PluginProcess() {
     delete _mixBuffer;
+
+    if ( _scratchBuffer != nullptr ) {
+        delete[] _scratchBuffer;
+        _scratchBuffer = nullptr;
+    }
 }
 
-void PluginProcess::setHostProperties( float sampleRate, int _maxBufferSize ) {
+void PluginProcess::setHostProperties( float sampleRate, int maxBufferSize ) {
     bool hadSampleRateChange = _sampleRate != sampleRate;
 
     _sampleRate = sampleRate;
 
     if ( hadSampleRateChange ) {
+        for ( int c = 0; c < _amountOfChannels; ++c ) {
+            _makeUpGainProcessors.at( c ).prepare( _sampleRate );
+        }
         formantFilterL.setSampleRate( _sampleRate );
         formantFilterR.setSampleRate( _sampleRate );
+    }
+
+    if ( _hostBufferSize < maxBufferSize ) {
+        _hostBufferSize = maxBufferSize;
+        if ( _scratchBuffer != nullptr ) {
+            delete[] _scratchBuffer;
+        }
+        _scratchBuffer = new float[ _hostBufferSize ];
     }
 }
 

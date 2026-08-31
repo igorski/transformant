@@ -44,6 +44,8 @@ namespace VST {
     static const float PI     = 3.141592653589793f;
     static const float TWO_PI = PI * 2.f;
 
+    static const float MAX_THRESHOLD = 60.f; // below 0, so applied negatively
+
     // maximum and minimum rate of oscillation in Hz
     // also see plugin.uidesc to update the controls to match
 

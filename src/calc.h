@@ -55,6 +55,12 @@ namespace Calc {
         return secondsToBuffer( milliseconds / 1000.f, sampleRate );
     }
 
+    inline float millisecondsToCoeff( float milliseconds, float sampleRate )
+    {
+        float timeInSeconds = milliseconds / 1000.f;
+        return std::exp( -1.0f / ( timeInSeconds * sampleRate ));
+    }
+
     // convenience method to ensure given value is within the 0.f - +1.f range
 
     inline float cap( float value )
@@ -81,6 +87,13 @@ namespace Calc {
             return value - resto;
         }
         return value + valueToRoundTo - resto;
+    }
+
+    // inverts a 0 - 1 normalized min-to-max value to have 0 be the max and 1 the min
+
+    inline float inverseNormalize( float value )
+    {
+        return ( 1.f - value ) / 1.f;
     }
 
     // convenience method to scale given value and its expected maxValue against

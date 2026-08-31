@@ -64,6 +64,17 @@ void FormantFilter::setSampleRate( float sampleRate )
     _halfSampleRateFrac = 1.f / ( _sampleRate * 0.5f );
 
     lfo.setSampleRate( _sampleRate );
+
+    _attackCoeff  = Calc::millisecondsToCoeff( 20.f, _sampleRate ); // 10 to 50 ms
+    _releaseCoeff = Calc::millisecondsToCoeff( 200.f, _sampleRate ); // 100 to 300 ms
+}
+
+void FormantFilter::setThreshold( float normalisedValue )
+{
+    _normalisedThreshold = normalisedValue;
+
+    float dbValue = ( normalisedValue * VST::MAX_THRESHOLD ) - VST::MAX_THRESHOLD;
+    _threshold = std::pow( 10.f, dbValue / 20.f ); // convert dB to linear amplitude
 }
 
 float FormantFilter::getVowel()
@@ -109,11 +120,30 @@ void FormantFilter::process( float* inBuffer, int bufferSize )
     float lfoValue;
     float in, out, fp, ufp, phaseAcc, formant, carrier;
 
+    bool useEnvelopeFollower = _normalisedThreshold > 0.f;
+    
     for ( size_t i = 0; i < bufferSize; ++i )
     {
         in  = inBuffer[ i ];
-        out = 0.0;
+        out = 0.f;
 
+        // calculate envelope to determine the mix level of the formant effect over the input
+
+        float absIn = fabs( in );
+
+        if ( absIn > _envelope ) {
+            _envelope = _attackCoeff * _envelope + ( 1.f - _attackCoeff ) * absIn;
+        } else {
+            _envelope = _releaseCoeff * _envelope + ( 1.f - _releaseCoeff ) * absIn;
+        }
+
+        float filterMix = useEnvelopeFollower ? 0.f : 1.f;
+        if ( useEnvelopeFollower && _envelope > _threshold ) {
+            float overThreshold = _envelope - _threshold;
+            float transitionRange = 0.05f; // soft knee to prevent pops between filtered and unfiltered content
+            filterMix = std::min( 1.f, overThreshold / transitionRange );
+        }
+    
         // sweep the LFO
 
         lfoValue   = lfo.peek() * .5f  + .5f; // make waveform unipolar
@@ -163,7 +193,7 @@ void FormantFilter::process( float* inBuffer, int bufferSize )
 
         undenormaliseFloat( out );
 
-        inBuffer[ i ] = out;
+        inBuffer[ i ] = useEnvelopeFollower ? ( filterMix * out ) + (( 1.f - filterMix ) * in ) : out;
     }
 }
 

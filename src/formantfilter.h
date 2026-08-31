@@ -49,6 +49,7 @@ class FormantFilter
         ~FormantFilter();
 
         void setSampleRate( float sampleRate );
+        void setThreshold( float normalisedValue );
         void setVowel( float vowel );
         float getVowel();
         void setLFO( float LFORatePercentage, float LFODepth );
@@ -67,6 +68,11 @@ class FormantFilter
         float _lfoRange;
         float _lfoMax;
         float _lfoMin;
+        float _normalisedThreshold = 0.f;
+        float _threshold = 0.f;
+        float _envelope = 0.f;
+        float _attackCoeff;
+        float _releaseCoeff;
 
         void cacheLFO();
         inline void cacheCoeffOffset()

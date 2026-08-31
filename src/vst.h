@@ -86,6 +86,7 @@ class Transformant : public AudioEffect
         // our model values, these are all 0 - 1 range
         // (normalized) RangeParameter values
 
+        float fThreshold;
         float fVowelL;
         float fVowelR;
         float fVowelSync;

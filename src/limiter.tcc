@@ -28,7 +28,7 @@ void Limiter::process( SampleType** outputBuffer, int bufferSize, int numOutChan
 {
 //    if ( gain > 0.9999f && outputBuffer->isSilent )
 //    {
-//        // don't process if input is silent
+//        // don't process when input is silent
 //        return;
 //    }
 
@@ -40,7 +40,7 @@ void Limiter::process( SampleType** outputBuffer, int bufferSize, int numOutChan
     re = rel;
     tr = trim;
 
-    bool hasRight = ( numOutChannels > 1 );
+    bool hasRight = numOutChannels > 1;
 
     SampleType* leftBuffer  = outputBuffer[ 0 ];
     SampleType* rightBuffer = hasRight ? outputBuffer[ 1 ] : 0;
@@ -54,7 +54,7 @@ void Limiter::process( SampleType** outputBuffer, int bufferSize, int numOutChan
             ol  = leftBuffer[ i ];
             or_ = hasRight ? rightBuffer[ i ] : 0;
 
-            lev = ( SampleType ) ( 1.f / ( 1.f + th * fabs( ol + or_ )));
+            lev = static_cast<SampleType>( 1.f / ( 1.f + th * fabs( ol + or_ )));
 
             if ( g > lev ) {
                 g = g - at * ( g - lev );
@@ -76,14 +76,14 @@ void Limiter::process( SampleType** outputBuffer, int bufferSize, int numOutChan
             ol  = leftBuffer[ i ];
             or_ = hasRight ? rightBuffer[ i ] : 0;
 
-            lev = ( SampleType ) ( 0.5 * g * fabs( ol + or_ ));
+            lev = static_cast<SampleType>( 0.5 * g * fabs( ol + or_ ));
 
             if ( lev > th ) {
                 g = g - ( at * ( lev - th ));
             }
             else {
                 // below threshold
-                g = g + ( SampleType )( re * ( 1.f - g ));
+                g = g + static_cast<SampleType>( re * ( 1.f - g ));
             }
 
             leftBuffer[ i ] = ( ol * tr * g );

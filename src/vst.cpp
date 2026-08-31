@@ -43,7 +43,8 @@ namespace Igorski {
 // Transformant Implementation
 //------------------------------------------------------------------------
 Transformant::Transformant()
-: fVowelL( 0.f )
+: fThreshold( 0.5f )
+, fVowelL( 0.f )
 , fVowelR( 0.f )
 , fVowelSync( 1.f )
 , fLFOVowelL( 0.f )
@@ -182,12 +183,17 @@ tresult PLUGIN_API Transformant::process( ProcessData& data )
                         fDistortionChain = static_cast<float>( value );
                         break;
 
+                    case kBypassId:
+                        _bypass = static_cast<float>( value ) >= 0.5f;
+                        break;
+                        
                     case kDryWetMixId:
                         fDryWetMix = static_cast<float>( value );
                         break;
 
-                    case kBypassId:
-                        _bypass = static_cast<float>( value ) >= 0.5f;
+                    case kThresholdId:
+                        fThreshold = static_cast<float>( value );
+                        break;
                 }
                 syncModel();
             }
@@ -345,6 +351,12 @@ tresult PLUGIN_API Transformant::setState( IBStream* state )
         _bypass = savedBypass > 0;
     }
 
+    // may fail as this was only added in version 1.1.0
+    float savedThreshold = 0.f;
+    if ( streamer.readFloat( savedThreshold ) != false ) {
+        fThreshold = savedThreshold;
+    }
+
     fVowelL          = savedVowelL;
     fVowelR          = savedVowelR;
     fVowelSync       = savedVowelSync;
@@ -410,6 +422,7 @@ tresult PLUGIN_API Transformant::getState( IBStream* state )
     streamer.writeFloat( fDistortionChain );
     streamer.writeFloat( fDryWetMix );
     streamer.writeInt32( _bypass ? 1 : 0 );
+    streamer.writeFloat( fThreshold );
 
     return kResultOk;
 }
@@ -531,6 +544,9 @@ void Transformant::syncModel()
     pluginProcess->distortionTypeCrusher = Calc::toBool( fDistortionType );
     pluginProcess->bitCrusher.setAmount( fDrive );
     pluginProcess->waveShaper.setAmount( fDrive );
+
+    pluginProcess->formantFilterL.setThreshold( fThreshold );
+    pluginProcess->formantFilterR.setThreshold( fThreshold );
 
     pluginProcess->formantFilterL.setVowel( fVowelL );
     pluginProcess->formantFilterL.setLFO( fLFOVowelL, fLFOVowelLDepth );

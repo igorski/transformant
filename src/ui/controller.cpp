@@ -20,6 +20,7 @@
  * IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM, OUT OF OR IN
  * CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
  */
+#include "../calc.h"
 #include "../global.h"
 #include "controller.h"
 #include "uimessagecontroller.h"
@@ -76,6 +77,13 @@ tresult PLUGIN_API PluginController::initialize( FUnknown* context )
     int32 unitId = 1;
 
     // Formant filter controls
+
+    RangeParameter* thresholdParam = new RangeParameter(
+        USTRING( "Threshold" ), kThresholdId, USTRING( "%" ),
+        0.f, 1.f, 0.5f,
+        0, ParameterInfo::kCanAutomate, unitId
+    );
+    parameters.addParameter( thresholdParam );
 
     parameters.addParameter( new RangeParameter(
         USTRING( "Vowel L" ), kVowelLId, USTRING( "0 - 1" ),
@@ -232,6 +240,11 @@ tresult PLUGIN_API PluginController::setComponentState( IBStream* state )
     if ( streamer.readInt32( savedBypass ) != false ) {
         setParamNormalized( kBypassId, savedBypass ? 1 : 0 );
     }
+
+    float savedThreshold = 0.f; // added in 1.1.0
+    if ( streamer.readFloat( savedThreshold ) != false ) {
+        setParamNormalized( kThresholdId, savedThreshold );
+    }
     return kResultOk;
 }
 
@@ -329,7 +342,7 @@ tresult PLUGIN_API PluginController::getParamStringByValue( ParamID tag, ParamVa
 
     switch ( tag )
     {
-        // the controls are in normalised 0 - 1 range but can be expressed as percentages
+        // these controls are in normalised 0 - 1 range but can be expressed as percentages
 
         case kVowelLId:
         case kVowelRId:
@@ -362,6 +375,15 @@ tresult PLUGIN_API PluginController::getParamStringByValue( ParamID tag, ParamVa
             }
             Steinberg::UString( string, 128 ).fromAscii( text );
 
+            return kResultTrue;
+        }
+
+        // threshold defines a 0 - 60 dB range
+
+        case kThresholdId:
+        {
+            snprintf( text, sizeof( text ), "-%.2d dB", static_cast<int>( Igorski::Calc::inverseNormalize( valueNormalized ) * Igorski::VST::MAX_THRESHOLD ));
+            Steinberg::UString( string, 128 ).fromAscii( text );
             return kResultTrue;
         }
 
@@ -405,6 +427,19 @@ tresult PLUGIN_API PluginController::getParamValueByString( ParamID tag, TChar* 
             {
                 tmp /= 100;
                 valueNormalized = fmax( 0.0, fmin( 1.0, tmp ));
+                return kResultTrue;
+            }
+            return kResultFalse;
+        }
+        case kThresholdId:
+        {
+            Steinberg::UString wrapper(( TChar* ) string, -1 );
+            double tmp = 0.0;
+            if ( wrapper.scanFloat( tmp ))
+            {
+                tmp = fabs( tmp );
+                tmp /= Igorski::VST::MAX_THRESHOLD;
+                valueNormalized = Igorski::Calc::inverseNormalize( fmax( 0.0, fmin( 1.0, tmp )));
                 return kResultTrue;
             }
             return kResultFalse;

@@ -46,7 +46,7 @@ class LinearSmoothing {
             return currentValue;
         }
 
-        // fast-forward the values by provided amonut of samples
+        // fast-forward the values by provided amount of samples
         void skip( int numSamples ) {
             if ( stepsRemaining > 0 ) {
                 if ( numSamples >= stepsRemaining ) {

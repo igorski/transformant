@@ -63,6 +63,7 @@ void FormantFilter::setSampleRate( float sampleRate )
     _sampleRate = sampleRate;
     _halfSampleRateFrac = 1.f / ( _sampleRate * 0.5f );
 
+    _smoothedVowel.reset( sampleRate, 0.01 );
     lfo.setSampleRate( _sampleRate );
 
     _attackCoeff  = Calc::millisecondsToCoeff( 20.f, _sampleRate ); // 10 to 50 ms
@@ -151,11 +152,16 @@ void FormantFilter::process( float* inBuffer, int bufferSize )
 
         cacheCoeffOffset(); // ensure the appropriate coeff is used for the new _tempVowel value
 
+        // apply linear smoothing to the vowel movement to prevent crackles
+
+        _smoothedVowel.setTargetValue( _tempVowel );
+        float smoothedVowel = _smoothedVowel.getNextValue();
+        
         // calculate the phase for the formant synthesis and carrier
 
-        fp  = 12 * powf( 2.f, 4 - 4 * _tempVowel );   // sweep
-        // fp *= ( 1.0 + 0.01 * sinf( tmp * 0.0015 )); // optional vibrato (sinf value determines speed)
-        ufp = 1.0 / fp;
+        fp  = 12 * powf( 2.f, 4 - 4 * smoothedVowel );   // sweep
+        // fp *= ( 1.f + 0.01 * sinf( tmp * 0.0015 )); // optional vibrato (sinf value determines speed)
+        ufp = 1.f / fp;
 
         phaseAcc = fp * _halfSampleRateFrac;
         _phase  += phaseAcc;
@@ -163,7 +169,7 @@ void FormantFilter::process( float* inBuffer, int bufferSize )
 
         // without synthesis the output gets audibly thinner at higher _vowel values
 
-        bool attenuateOutput = !APPLY_SYNTHESIS_SIGNAL && _tempVowel > 0.25f;
+        bool attenuateOutput = !APPLY_SYNTHESIS_SIGNAL && smoothedVowel > 0.25f;
 
         // calculate the coefficients
 
@@ -177,7 +183,7 @@ void FormantFilter::process( float* inBuffer, int bufferSize )
 
             // apply formant onto the input signal
 
-            float formant = APPLY_SYNTHESIS_SIGNAL ? getFormant( _phase, FORMANT_WIDTH_SCALE[ j ] * ufp ) : 1.0;
+            float formant = APPLY_SYNTHESIS_SIGNAL ? getFormant( _phase, FORMANT_WIDTH_SCALE[ j ] * ufp ) : 1.f;
             float carrier = getCarrier( f->value * ufp, _phase );
 
             if ( !attenuateOutput ) {

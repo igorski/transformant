@@ -28,6 +28,7 @@
 #include "calc.h"
 #include "global.h"
 #include "lfo.h"
+#include "linearsmoothing.h"
 #include <math.h>
 
 namespace Igorski {
@@ -59,6 +60,8 @@ class FormantFilter
         bool hasLFO;
 
     private:
+        LinearSmoothing _smoothedVowel;
+
         float _sampleRate;
         float _halfSampleRateFrac;
         float _vowel;

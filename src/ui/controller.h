@@ -1,7 +1,7 @@
 /**
  * The MIT License (MIT)
  *
- * Copyright (c) 2020-2023 Igor Zinken - https://www.igorski.nl
+ * Copyright (c) 2020-2026 Igor Zinken - https://www.igorski.nl
  *
  * Permission is hereby granted, free of charge, to any person obtaining a copy of
  * this software and associated documentation files (the "Software"), to deal in
@@ -63,7 +63,7 @@ class PluginController : public EditControllerEx1, public IMidiMapping, public V
                                                   String128 string ) SMTG_OVERRIDE;
         tresult PLUGIN_API getParamValueByString( ParamID tag, TChar* string,
                                                   ParamValue& valueNormalized ) SMTG_OVERRIDE;
-
+       
         //---from ComponentBase-----
         tresult receiveText( const char* text ) SMTG_OVERRIDE;
 

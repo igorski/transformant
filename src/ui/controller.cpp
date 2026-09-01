@@ -78,12 +78,11 @@ tresult PLUGIN_API PluginController::initialize( FUnknown* context )
 
     // Formant filter controls
 
-    RangeParameter* thresholdParam = new RangeParameter(
+    parameters.addParameter( new RangeParameter(
         USTRING( "Threshold" ), kThresholdId, USTRING( "%" ),
-        0.f, 1.f, 0.5f,
+        0.f, 1.f, 0.25f,
         0, ParameterInfo::kCanAutomate, unitId
-    );
-    parameters.addParameter( thresholdParam );
+    ));
 
     parameters.addParameter( new RangeParameter(
         USTRING( "Vowel L" ), kVowelLId, USTRING( "0 - 1" ),
@@ -143,12 +142,11 @@ tresult PLUGIN_API PluginController::initialize( FUnknown* context )
         USTRING( "Distortion pre/post" ), 0, 1, 0, ParameterInfo::kCanAutomate, kDistortionChainId, unitId
     );
 
-    RangeParameter* dryWetMixParam = new RangeParameter(
+    parameters.addParameter( new RangeParameter(
         USTRING( "Dry/wet mix" ), kDryWetMixId, USTRING( "%" ),
-        0.f, 1.f, 1.f,
+        0.f, 1.f, 0.75f,
         0, ParameterInfo::kCanAutomate, unitId
-    );
-    parameters.addParameter( dryWetMixParam );
+    ));
 
     // Bypass
     parameters.addParameter(
@@ -229,22 +227,25 @@ tresult PLUGIN_API PluginController::setComponentState( IBStream* state )
         return kResultFalse;
     setParamNormalized( kDistortionChainId, savedDistortionChain );
 
-    // the following properties are allowed to fail (no return) as these were added in later versions
+    // --- the following are allowed to fail their read
+    // as these properties were only added in version 1.1.0
 
-    float savedDryWetMix = 1.f; // added in 1.1.0
-    if ( streamer.readFloat( savedDryWetMix ) != false ) {
-        setParamNormalized( kDryWetMixId, savedDryWetMix );
-    }
-
-    int32 savedBypass = 0; // added in version 1.1.0
+    int32 savedBypass = 0;
     if ( streamer.readInt32( savedBypass ) != false ) {
         setParamNormalized( kBypassId, savedBypass ? 1 : 0 );
     }
 
-    float savedThreshold = 0.f; // added in 1.1.0
+    float savedDryWetMix = 1.f;
+    if ( streamer.readFloat( savedDryWetMix ) != false ) {
+        setParamNormalized( kDryWetMixId, savedDryWetMix );
+    }
+
+    float savedThreshold = 0.f;
     if ( streamer.readFloat( savedThreshold ) != false ) {
         setParamNormalized( kThresholdId, savedThreshold );
     }
+    // --- E.O. version 1.1.0 properties
+    
     return kResultOk;
 }
 
@@ -378,11 +379,11 @@ tresult PLUGIN_API PluginController::getParamStringByValue( ParamID tag, ParamVa
             return kResultTrue;
         }
 
-        // threshold defines a 0 - 60 dB range
+        // threshold defines a 0 to -60 dB range
 
         case kThresholdId:
         {
-            snprintf( text, sizeof( text ), "-%.2d dB", static_cast<int>( Igorski::Calc::inverseNormalize( valueNormalized ) * Igorski::VST::MAX_THRESHOLD ));
+            snprintf( text, sizeof( text ), valueNormalized == 1.f ? "0 dB" : "-%.2d dB", static_cast<int>( Igorski::Calc::inverseNormalize( valueNormalized ) * Igorski::VST::MAX_THRESHOLD ));
             Steinberg::UString( string, 128 ).fromAscii( text );
             return kResultTrue;
         }

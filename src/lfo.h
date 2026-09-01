@@ -41,6 +41,7 @@ class LFO {
 
         float getAccumulator();
         void setAccumulator( float offset );
+        void reset();
 
         /**
          * retrieve a value from the wave table for the current

@@ -43,7 +43,7 @@ namespace Igorski {
 // Transformant Implementation
 //------------------------------------------------------------------------
 Transformant::Transformant()
-: fThreshold( 0.5f )
+: fThreshold( 0.25f )
 , fVowelL( 0.f )
 , fVowelR( 0.f )
 , fVowelSync( 1.f )
@@ -54,7 +54,7 @@ Transformant::Transformant()
 , fDistortionType( 0.f )
 , fDrive( 0.f )
 , fDistortionChain( 0.f )
-, fDryWetMix( 1.f )
+, fDryWetMix( 0.75f )
 , pluginProcess( nullptr )
 // , outputGainOld( 0.f )
 , currentProcessMode( -1 ) // -1 means not initialized
@@ -200,6 +200,27 @@ tresult PLUGIN_API Transformant::process( ProcessData& data )
         }
     }
 
+    if ( data.processContext != nullptr )
+    {
+        bool wasPlaying = isPlaying;
+
+        // when host starts sequencer, ensure the LFO's are aligned / reset
+
+        isPlaying = data.processContext->state & ProcessContext::kPlaying;
+
+        if ( !wasPlaying && isPlaying ) {
+            pluginProcess->formantFilterL.lfo.reset();
+            pluginProcess->formantFilterR.lfo.reset();
+        }
+
+        // in case you want to do tempo synchronization with the host
+        /*
+        pluginProcess->setTempo(
+            data.processContext->tempo, data.processContext->timeSigNumerator, data.processContext->timeSigDenominator
+        );
+        */
+    }
+
     //---2) Read input events-------------
 //    IEventList* eventList = data.inputEvents;
 
@@ -339,23 +360,23 @@ tresult PLUGIN_API Transformant::setState( IBStream* state )
     if ( streamer.readFloat( savedDistortionChain ) == false )
         return kResultFalse;
 
-    // may fail as this was only added in version 1.1.0
-    float savedDryWetMix = 1.f;
-    if ( streamer.readFloat( savedDryWetMix ) != false ) {
-        fDryWetMix = savedDryWetMix;
-    }
-
-    // may fail as this was only added in version 1.1.0
+    // --- the following are allowed to fail their read
+    // as these properties were only added in version 1.1.0
     int32 savedBypass = 0;
     if ( streamer.readInt32( savedBypass ) != false ) {
         _bypass = savedBypass > 0;
     }
 
-    // may fail as this was only added in version 1.1.0
+    float savedDryWetMix = 1.f;
+    if ( streamer.readFloat( savedDryWetMix ) != false ) {
+        fDryWetMix = savedDryWetMix;
+    }
+
     float savedThreshold = 0.f;
     if ( streamer.readFloat( savedThreshold ) != false ) {
         fThreshold = savedThreshold;
     }
+    // --- E.O. version 1.1.0 properties
 
     fVowelL          = savedVowelL;
     fVowelR          = savedVowelR;
@@ -420,8 +441,8 @@ tresult PLUGIN_API Transformant::getState( IBStream* state )
     streamer.writeFloat( fDistortionType );
     streamer.writeFloat( fDrive );
     streamer.writeFloat( fDistortionChain );
-    streamer.writeFloat( fDryWetMix );
     streamer.writeInt32( _bypass ? 1 : 0 );
+    streamer.writeFloat( fDryWetMix );
     streamer.writeFloat( fThreshold );
 
     return kResultOk;

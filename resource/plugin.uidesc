@@ -3,146 +3,169 @@
     <fonts>
     </fonts>
     <colors>
-        <color name="Focus" rgba="#279bffff"/>
+        <color name="Focus" rgba="#279bffff" />
     </colors>
     <template
-        maxSize="400, 600" minSize="400, 600" size="400, 600" name="view" opacity="1" origin="0, 0"
+        maxSize="400, 799" minSize="400, 799" size="400, 799" name="view" opacity="1" origin="0, 0"
         background-color="~ BlackCColor" background-color-draw-style="filled and stroked" bitmap="background"
-        class="CViewContainer" mouse-enabled="true" transparent="false">
+        class="CViewContainer" mouse-enabled="true" transparent="false"
+    >
+        <!-- 1. ENTRY STAGE -->
+        <!-- threshold -->
+        <view
+            control-tag="Unit1::Threshold" class="CKnob" origin="164, 115" size="72, 72"
+            min-value="0" max-value="1" default-value="0.25"
+            angle-range="270" angle-start="135" autosize="right top"
+            background-offset="0, 0" circle-drawing="true" corona-color="#ec2b2c" corona-dash-dot="false"
+            corona-drawing="true" corona-from-center="false" corona-inset="5" corona-inverted="false"
+            corona-line-cap-butt="false" corona-outline="true" corona-outline-width-add="0"
+            handle-color="#ec2b2c" handle-line-width="7" handle-shadow-color="~ GreyCColor"
+            mouse-enabled="true" opacity="1" skip-handle-drawing="true" transparent="false"
+            value-inset="5" wants-focus="true" wheel-inc-value="0.1" zoom-factor="1.5"
+        />
 
-        <!-- VOWEL -->
-
+        <!-- 2. VOWEL CONTROL -->
         <!-- vowel left -->
-        <view control-tag="Unit1::VowelL" class="CKnob" origin="102, 148" size="72, 72"
-              angle-range="270" angle-start="135" autosize="right top"
-              background-offset="0, 0" circle-drawing="true" corona-color="#ec2b2c" corona-dash-dot="false"
-              corona-drawing="true" corona-from-center="false" corona-inset="5" corona-inverted="false"
-              corona-line-cap-butt="false" corona-outline="true" corona-outline-width-add="0" default-value="0.5"
-              handle-color="#ec2b2c" handle-line-width="7" handle-shadow-color="~ GreyCColor" max-value="1"
-              min-value="0" mouse-enabled="true" opacity="1" skip-handle-drawing="true" transparent="false"
-              value-inset="5" wants-focus="true" wheel-inc-value="0.1" zoom-factor="1.5"
+        <view
+            control-tag="Unit1::VowelL" class="CKnob" origin="102, 248" size="72, 72"
+            min-value="0" max-value="1" default-value="0.5"
+            angle-range="270" angle-start="135" autosize="right top"
+            background-offset="0, 0" circle-drawing="true" corona-color="#ec2b2c" corona-dash-dot="false"
+            corona-drawing="true" corona-from-center="false" corona-inset="5" corona-inverted="false"
+            corona-line-cap-butt="false" corona-outline="true" corona-outline-width-add="0"
+            handle-color="#ec2b2c" handle-line-width="7" handle-shadow-color="~ GreyCColor"
+            mouse-enabled="true" opacity="1" skip-handle-drawing="true" transparent="false"
+            value-inset="5" wants-focus="true" wheel-inc-value="0.1" zoom-factor="1.5"
         />
 
         <!-- vowel right -->
-        <view control-tag="Unit1::VowelR" class="CKnob" origin="218, 148" size="72, 72"
-              angle-range="270" angle-start="135" autosize="right top"
-              background-offset="0, 0" circle-drawing="true" corona-color="#ec2b2c" corona-dash-dot="false"
-              corona-drawing="true" corona-from-center="false" corona-inset="5" corona-inverted="false"
-              corona-line-cap-butt="false" corona-outline="true" corona-outline-width-add="0" default-value="0.5"
-              handle-color="#ec2b2c" handle-line-width="7" handle-shadow-color="~ GreyCColor" max-value="1"
-              min-value="0" mouse-enabled="true" opacity="1" skip-handle-drawing="true" transparent="false"
-              value-inset="5" wants-focus="true" wheel-inc-value="0.1" zoom-factor="1.5"
+        <view
+            control-tag="Unit1::VowelR" class="CKnob" origin="223, 248" size="72, 72"
+            min-value="0" max-value="1" default-value="0.5"
+            angle-range="270" angle-start="135" autosize="right top"
+            background-offset="0, 0" circle-drawing="true" corona-color="#ec2b2c" corona-dash-dot="false"
+            corona-drawing="true" corona-from-center="false" corona-inset="5" corona-inverted="false"
+            corona-line-cap-butt="false" corona-outline="true" corona-outline-width-add="0"
+            handle-color="#ec2b2c" handle-line-width="7" handle-shadow-color="~ GreyCColor"
+            mouse-enabled="true" opacity="1" skip-handle-drawing="true" transparent="false"
+            value-inset="5" wants-focus="true" wheel-inc-value="0.1" zoom-factor="1.5"
         />
 
         <!-- vowel sync -->
-        <view control-tag="Unit1::VowelSync" class="CCheckBox" origin="192, 248" size="25, 40" autosize-to-fit="false"
-              background-offset="0, 0" boxfill-color="~ BlackCColor"  autosize="bottom"
-              boxframe-color="~ BlackCColor" checkmark-color="#ec2b2c"
-              default-value="0" draw-crossbox="true" font="~ NormalFontSmall" font-color="#ec2b2c" frame-width="1"
-              max-value="1" min-value="0" mouse-enabled="true" opacity="1" round-rect-radius="0"
-              title="" transparent="false" wants-focus="true" wheel-inc-value="0.1"
+        <view
+            control-tag="Unit1::VowelSync" class="CCheckBox" origin="194, 348" size="25, 40" autosize-to-fit="false"
+            min-value="0" max-value="1" default-value="0"
+            background-offset="0, 0" boxfill-color="~ BlackCColor"  autosize="bottom"
+            boxframe-color="~ BlackCColor" checkmark-color="#ec2b2c"
+            draw-crossbox="true" font="~ NormalFontSmall" font-color="#ec2b2c" frame-width="1"
+            mouse-enabled="true" opacity="1" round-rect-radius="0"
+            title="" transparent="false" wants-focus="true" wheel-inc-value="0.1"
         />
 
-        <!-- LFO -->
-
-        <!-- LFO left speed -->
-        <view control-tag="Unit1::LFOVowelL" class="CKnob" origin="34, 288" size="72, 72"
-              angle-range="270" angle-start="135" autosize="right top"
-              background-offset="0, 0" circle-drawing="true" corona-color="#ec2b2c" corona-dash-dot="false"
-              corona-drawing="true" corona-from-center="false" corona-inset="5" corona-inverted="false"
-              corona-line-cap-butt="false" corona-outline="true" corona-outline-width-add="0" default-value="0.5"
-              handle-color="#ec2b2c" handle-line-width="7" handle-shadow-color="~ GreyCColor" max-value="1"
-              min-value="0" mouse-enabled="true" opacity="1" skip-handle-drawing="true" transparent="false"
-              value-inset="5" wants-focus="true" wheel-inc-value="0.1" zoom-factor="1.5"
+        <!-- 3. LFO's -->
+        <!-- Left LFO speed -->
+        <view
+            control-tag="Unit1::LFOVowelL" class="CKnob" origin="34, 388" size="72, 72"
+            min-value="0" max-value="1" default-value="0.5"
+            angle-range="270" angle-start="135" autosize="right top"
+            background-offset="0, 0" circle-drawing="true" corona-color="#ec2b2c" corona-dash-dot="false"
+            corona-drawing="true" corona-from-center="false" corona-inset="5" corona-inverted="false"
+            corona-line-cap-butt="false" corona-outline="true" corona-outline-width-add="0"
+            handle-color="#ec2b2c" handle-line-width="7" handle-shadow-color="~ GreyCColor"
+            mouse-enabled="true" opacity="1" skip-handle-drawing="true" transparent="false"
+            value-inset="5" wants-focus="true" wheel-inc-value="0.1" zoom-factor="1.5"
         />
 
-        <!-- LFO left depth -->
-        <view control-tag="Unit1::LFOVowelLDepth" class="CKnob" origin="114, 348" size="72, 72"
-              angle-range="270" angle-start="135" autosize="right top"
-              background-offset="0, 0" circle-drawing="true" corona-color="#ec2b2c" corona-dash-dot="false"
-              corona-drawing="true" corona-from-center="false" corona-inset="5" corona-inverted="false"
-              corona-line-cap-butt="false" corona-outline="true" corona-outline-width-add="0" default-value="0.5"
-              handle-color="#ec2b2c" handle-line-width="7" handle-shadow-color="~ GreyCColor" max-value="1"
-              min-value="0" mouse-enabled="true" opacity="1" skip-handle-drawing="true" transparent="false"
-              value-inset="5" wants-focus="true" wheel-inc-value="0.1" zoom-factor="1.5"
+        <!-- Left LFO depth -->
+        <view
+            control-tag="Unit1::LFOVowelLDepth" class="CKnob" origin="114, 448" size="72, 72"
+            min-value="0" max-value="1" default-value="0.5"
+            angle-range="270" angle-start="135" autosize="right top"
+            background-offset="0, 0" circle-drawing="true" corona-color="#ec2b2c" corona-dash-dot="false"
+            corona-drawing="true" corona-from-center="false" corona-inset="5" corona-inverted="false"
+            corona-line-cap-butt="false" corona-outline="true" corona-outline-width-add="0"
+            handle-color="#ec2b2c" handle-line-width="7" handle-shadow-color="~ GreyCColor"
+            mouse-enabled="true" opacity="1" skip-handle-drawing="true" transparent="false"
+            value-inset="5" wants-focus="true" wheel-inc-value="0.1" zoom-factor="1.5"
         />
 
-        <!-- LFO right speed -->
-        <view control-tag="Unit1::LFOVowelR" class="CKnob" origin="294, 288" size="72, 72"
-              angle-range="270" angle-start="135" autosize="right top"
-              background-offset="0, 0" circle-drawing="true" corona-color="#ec2b2c" corona-dash-dot="false"
-              corona-drawing="true" corona-from-center="false" corona-inset="5" corona-inverted="false"
-              corona-line-cap-butt="false" corona-outline="true" corona-outline-width-add="0" default-value="0.5"
-              handle-color="#ec2b2c" handle-line-width="7" handle-shadow-color="~ GreyCColor" max-value="1"
-              min-value="0" mouse-enabled="true" opacity="1" skip-handle-drawing="true" transparent="false"
-              value-inset="5" wants-focus="true" wheel-inc-value="0.1" zoom-factor="1.5"
+        <!-- Right LFO speed -->
+        <view
+            control-tag="Unit1::LFOVowelR" class="CKnob" origin="294, 388" size="72, 72"
+            min-value="0" max-value="1" default-value="0.5"
+            angle-range="270" angle-start="135" autosize="right top"
+            background-offset="0, 0" circle-drawing="true" corona-color="#ec2b2c" corona-dash-dot="false"
+            corona-drawing="true" corona-from-center="false" corona-inset="5" corona-inverted="false"
+            corona-line-cap-butt="false" corona-outline="true" corona-outline-width-add="0"
+            handle-color="#ec2b2c" handle-line-width="7" handle-shadow-color="~ GreyCColor"
+            mouse-enabled="true" opacity="1" skip-handle-drawing="true" transparent="false"
+            value-inset="5" wants-focus="true" wheel-inc-value="0.1" zoom-factor="1.5"
         />
 
-        <!-- LFO right depth -->
-        <view control-tag="Unit1::LFOVowelRDepth" class="CKnob" origin="212, 348" size="72, 72"
-              angle-range="270" angle-start="135" autosize="right top"
-              background-offset="0, 0" circle-drawing="true" corona-color="#ec2b2c" corona-dash-dot="false"
-              corona-drawing="true" corona-from-center="false" corona-inset="5" corona-inverted="false"
-              corona-line-cap-butt="false" corona-outline="true" corona-outline-width-add="0" default-value="0.5"
-              handle-color="#ec2b2c" handle-line-width="7" handle-shadow-color="~ GreyCColor" max-value="1"
-              min-value="0" mouse-enabled="true" opacity="1" skip-handle-drawing="true" transparent="false"
-              value-inset="5" wants-focus="true" wheel-inc-value="0.1" zoom-factor="1.5"
+        <!-- Right LFO depth -->
+        <view
+            control-tag="Unit1::LFOVowelRDepth" class="CKnob" origin="212, 448" size="72, 72"
+            min-value="0" max-value="1" default-value="0.5"
+            angle-range="270" angle-start="135" autosize="right top"
+            background-offset="0, 0" circle-drawing="true" corona-color="#ec2b2c" corona-dash-dot="false"
+            corona-drawing="true" corona-from-center="false" corona-inset="5" corona-inverted="false"
+            corona-line-cap-butt="false" corona-outline="true" corona-outline-width-add="0"
+            handle-color="#ec2b2c" handle-line-width="7" handle-shadow-color="~ GreyCColor"
+            mouse-enabled="true" opacity="1" skip-handle-drawing="true" transparent="false"
+            value-inset="5" wants-focus="true" wheel-inc-value="0.1" zoom-factor="1.5"
         />
 
-        <!-- DISTORTION -->
-
+        <!-- 4. DISTORTION -->
         <!-- drive -->
-        <view control-tag="Unit1::Drive" class="CKnob" origin="165, 458" size="72, 72"
-              angle-range="270" angle-start="135" autosize="right top"
-              background-offset="0, 0" circle-drawing="true" corona-color="#ec2b2c" corona-dash-dot="false"
-              corona-drawing="true" corona-from-center="false" corona-inset="5" corona-inverted="false"
-              corona-line-cap-butt="false" corona-outline="true" corona-outline-width-add="0" default-value="0.5"
-              handle-color="#ec2b2c" handle-line-width="7" handle-shadow-color="~ GreyCColor" max-value="1"
-              min-value="0" mouse-enabled="true" opacity="1" skip-handle-drawing="true" transparent="false"
-              value-inset="5" wants-focus="true" wheel-inc-value="0.1" zoom-factor="1.5"
+        <view
+            control-tag="Unit1::Drive" class="CKnob" origin="164, 558" size="72, 72"
+            min-value="0" max-value="1" default-value="0.5"
+            angle-range="270" angle-start="135" autosize="right top"
+            background-offset="0, 0" circle-drawing="true" corona-color="#ec2b2c" corona-dash-dot="false"
+            corona-drawing="true" corona-from-center="false" corona-inset="5" corona-inverted="false"
+            corona-line-cap-butt="false" corona-outline="true" corona-outline-width-add="0"
+            handle-color="#ec2b2c" handle-line-width="7" handle-shadow-color="~ GreyCColor"
+            mouse-enabled="true" opacity="1" skip-handle-drawing="true" transparent="false"
+            value-inset="5" wants-focus="true" wheel-inc-value="0.1" zoom-factor="1.5"
         />
 
         <!-- distortion type -->
-        <view control-tag="Unit1::DistortionType" class="CCheckBox" origin="138, 525" size="25, 38" autosize-to-fit="false"
-              background-offset="0, 0" boxfill-color="~ BlackCColor"  autosize="bottom"
-              boxframe-color="~ BlackCColor" checkmark-color="#ec2b2c"
-              default-value="0" draw-crossbox="true" font="~ NormalFontSmall" font-color="#ec2b2c" frame-width="1"
-              max-value="1" min-value="0" mouse-enabled="true" opacity="1" round-rect-radius="0"
-              title="" transparent="false" wants-focus="true" wheel-inc-value="0.1"
+        <view
+            control-tag="Unit1::DistortionType" class="CCheckBox" origin="138, 625" size="25, 38" autosize-to-fit="false"
+            min-value="0" max-value="1" default-value="0"
+            background-offset="0, 0" boxfill-color="~ BlackCColor"  autosize="bottom"
+            boxframe-color="~ BlackCColor" checkmark-color="#ec2b2c"
+            draw-crossbox="true" font="~ NormalFontSmall" font-color="#ec2b2c" frame-width="1"
+            mouse-enabled="true" opacity="1" round-rect-radius="0"
+            title="" transparent="false" wants-focus="true" wheel-inc-value="0.1"
         />
 
         <!-- distortion pre/post mix -->
-        <view control-tag="Unit1::DistortionChain" class="CCheckBox" origin="252, 525" size="25, 38" autosize-to-fit="false"
-              background-offset="0, 0" boxfill-color="~ BlackCColor"  autosize="bottom"
-              boxframe-color="~ BlackCColor" checkmark-color="#ec2b2c"
-              default-value="0" draw-crossbox="true" font="~ NormalFontSmall" font-color="#ec2b2c" frame-width="1"
-              max-value="1" min-value="0" mouse-enabled="true" opacity="1" round-rect-radius="0"
-              title="" transparent="false" wants-focus="true" wheel-inc-value="0.1"
+        <view
+            control-tag="Unit1::DistortionChain" class="CCheckBox" origin="252, 625" size="25, 38" autosize-to-fit="false"
+            min-value="0" max-value="1" default-value="0"
+            background-offset="0, 0" boxfill-color="~ BlackCColor"  autosize="bottom"
+            boxframe-color="~ BlackCColor" checkmark-color="#ec2b2c"
+            draw-crossbox="true" font="~ NormalFontSmall" font-color="#ec2b2c" frame-width="1"
+            mouse-enabled="true" opacity="1" round-rect-radius="0"
+            title="" transparent="false" wants-focus="true" wheel-inc-value="0.1"
         />
 
+        <!-- 5. OUTPUT STAGE -->
         <!-- dry/wet mix -->
-        <view control-tag="Unit1::DryWetMix" class="CSlider" origin="200, 520" size="134, 21"
-              min-value="0.f" max-value="1.f" default-value="1.f"
-              background-offset="0, 0" bitmap="slider_background"
-              bitmap-offset="0, 0" draw-back="false" draw-back-color="~ WhiteCColor" draw-frame="false"
-              draw-frame-color="~ WhiteCColor" draw-value="false" draw-value-color="~ WhiteCColor" draw-value-from-center="false"
-              draw-value-inverted="false" handle-bitmap="slider_handle" handle-offset="0, 0"
-              mode="free click" mouse-enabled="true" opacity="1" orientation="horizontal" reverse-orientation="false"
-              transparent="true" transparent-handle="true" wheel-inc-value="0.1" zoom-factor="10"
+        <view
+            control-tag="Unit1::DryWetMix" class="CKnob" origin="164, 670" size="72, 72"
+            min-value="0" max-value="1" default-value="0.75"
+            angle-range="270" angle-start="135" autosize="right top"
+            background-offset="0, 0" circle-drawing="true" corona-color="#ec2b2c" corona-dash-dot="false"
+            corona-drawing="true" corona-from-center="false" corona-inset="5" corona-inverted="false"
+            corona-line-cap-butt="false" corona-outline="true" corona-outline-width-add="0"
+            handle-color="#ec2b2c" handle-line-width="7" handle-shadow-color="~ GreyCColor"
+            mouse-enabled="true" opacity="1" skip-handle-drawing="true" transparent="false"
+            value-inset="5" wants-focus="true" wheel-inc-value="0.1" zoom-factor="1.5"
         />
 
-        <!-- threshold -->
-        <view control-tag="Unit1::Threshold" class="CSlider" origin="250, 520" size="134, 21"
-              min-value="0.f" max-value="1.f" default-value="0.5f"
-              background-offset="0, 0" bitmap="slider_background"
-              bitmap-offset="0, 0" draw-back="false" draw-back-color="~ WhiteCColor" draw-frame="false"
-              draw-frame-color="~ WhiteCColor" draw-value="false" draw-value-color="~ WhiteCColor" draw-value-from-center="false"
-              draw-value-inverted="false" handle-bitmap="slider_handle" handle-offset="0, 0"
-              mode="free click" mouse-enabled="true" opacity="1" orientation="horizontal" reverse-orientation="false"
-              transparent="true" transparent-handle="true" wheel-inc-value="0.1" zoom-factor="10"
-        />
-
-         <view class="CView" size="36, 8" origin="323, 561" bitmap="version" />
+         <view class="CView" size="36, 8" origin="323, 760" bitmap="version" />
 
     </template>
     <variables/>

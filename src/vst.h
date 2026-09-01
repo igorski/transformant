@@ -103,6 +103,7 @@ class Transformant : public AudioEffect
         bool _bypass = false;
 
         int32 currentProcessMode;
+        bool isPlaying = false;
 
         Igorski::PluginProcess* pluginProcess;
 

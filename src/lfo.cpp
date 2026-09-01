@@ -62,4 +62,9 @@ float LFO::getAccumulator()
     return _accumulator;
 }
 
+void LFO::reset()
+{
+    _accumulator = 0.f;
+}
+
 }

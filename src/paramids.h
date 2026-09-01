@@ -37,9 +37,9 @@ enum
     kDistortionTypeId,     // distortion type
     kDriveId,              // distortion drive amount
     kDistortionChainId,    // distortion pre/post formant mix
-    kBypassId,             // bypass process (added in version 1.1.0)
-    kDryWetMixId,          // dry/wet mix (added in version 1.1.0)
-    kThresholdId,          // formant threshold (added in version 1.1.0)
+    kBypassId,             // added in 1.1.0: bypass process
+    kDryWetMixId,          // added in 1.1.0: dry/wet mix
+    kThresholdId,          // added in 1.1.0: formant threshold
     
     kVuPPMId,  // for the VU value return to host
 };

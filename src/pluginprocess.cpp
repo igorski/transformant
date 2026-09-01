@@ -31,14 +31,14 @@ PluginProcess::PluginProcess( int amountOfChannels, float sampleRate, int maxBuf
     _makeUpGainProcessors.resize( amountOfChannels );
 
     _mixBuffer = nullptr;
-    _scratchBuffer = nullptr;
+    _preBuffer = nullptr;
 
     setHostProperties( sampleRate, maxBufferSize );
 }
 
 PluginProcess::~PluginProcess() {
     delete _mixBuffer;
-    delete[] _scratchBuffer;
+    delete[] _preBuffer;
 }
 
 /* public methods */
@@ -64,10 +64,8 @@ void PluginProcess::setHostProperties( float sampleRate, int maxBufferSize ) {
         }
         _mixBuffer = new AudioBuffer( _amountOfChannels, _hostBufferSize );
 
-        if ( _scratchBuffer != nullptr ) {
-            delete[] _scratchBuffer;
-        }
-        _scratchBuffer = new float[ _hostBufferSize ];
+        delete[] _preBuffer;
+        _preBuffer = new float[ _hostBufferSize ];
     }
 }
 

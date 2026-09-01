@@ -93,8 +93,8 @@ class PluginProcess {
 
     private:
         std::vector<AutoMakeUpGain> _makeUpGainProcessors;
-        AudioBuffer* _mixBuffer = nullptr; // buffer used for the effect processing
-        float* _scratchBuffer = nullptr; // used for make-up gain processing (reused per channel)
+        AudioBuffer* _mixBuffer = nullptr; // buffer used during the effects processing
+        float* _preBuffer = nullptr; // used during make-up gain processing (is reused per channel)
         
         int _amountOfChannels = 0;
         int _hostBufferSize = 0;

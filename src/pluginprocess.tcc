@@ -43,7 +43,7 @@ void PluginProcess::process( SampleType** inBuffer, SampleType** outBuffer, int 
         SampleType* channelOutBuffer = outBuffer[ c ];
         auto channelMixBuffer        = _mixBuffer->getBufferForChannel( c );
 
-        std::memcpy( _scratchBuffer, channelMixBuffer, bufferSize * sizeof( float ));
+        std::memcpy( _preBuffer, channelMixBuffer, bufferSize * sizeof( float ));
         
         // pre formant filter distortion processing
 
@@ -77,7 +77,7 @@ void PluginProcess::process( SampleType** inBuffer, SampleType** outBuffer, int 
         float inSample;
 
         // apply make-up gain to keep volume balanced between non-bit processed scratch buffer pre mix buffer
-        _makeUpGainProcessors[ c ].apply( _scratchBuffer, channelMixBuffer, bufferSize, maxBoost );
+        _makeUpGainProcessors[ c ].apply( _preBuffer, channelMixBuffer, bufferSize, maxBoost );
 
         // write the effected mix buffers into the output buffer
 

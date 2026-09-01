@@ -1,7 +1,7 @@
 /**
  * The MIT License (MIT)
  *
- * Copyright (c) 2013-2020 Igor Zinken - https://www.igorski.nl
+ * Copyright (c) 2026 Igor Zinken - https://www.igorski.nl
  *
  * Permission is hereby granted, free of charge, to any person obtaining a copy of
  * this software and associated documentation files (the "Software"), to deal in
@@ -20,39 +20,33 @@
  * IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM, OUT OF OR IN
  * CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
  */
-#ifndef __BITCRUSHER_H_INCLUDED__
-#define __BITCRUSHER_H_INCLUDED__
+#ifndef __AUTO_MAKEUP_GAIN_H_INCLUDED__
+#define __AUTO_MAKEUP_GAIN_H_INCLUDED__
 
-#include "lfo.h"
+#include "linearsmoothing.h"
 
 namespace Igorski {
-class BitCrusher {
+class AutoMakeUpGain
+{
+    // values are in seconds
+
+    static constexpr double WINDOW_SIZE    = 0.02;
+    static constexpr double GAIN_SMOOTHING = 0.01;
 
     public:
-        BitCrusher( float amount = 8.f, float inputMix = 1.f, float outputMix = 0.5f );
-        ~BitCrusher();
+        void prepare( float sampleRate );
 
-        void process( float* inBuffer, int bufferSize );
-
-        void setAmount( float value ); // range between -1 to +1
-        void setInputMix( float value );
-        void setOutputMix( float value );
-
-        inline bool isActive() {
-            return _bits < 16;
-        }
-
-        inline int getBits() {
-            return _bits;
-        }
+        /**
+         * Apply makeup gain to make the differences between
+         * provided pre- and post buffer states smaller
+         */
+        void apply( float* pre, float* post, int bufferSize, float maxBoost );
 
     private:
-        int _bits; // we scale the amount to integers in the 1-16 range
-        float _amount;
-        float _inputMix;
-        float _outputMix;
+        int rmsWindowSize = 0;
+        LinearSmoothing smoother;
 
-        void calcBits();
+        float computeRMS( const float* data, int numSamples );
 };
 }
 

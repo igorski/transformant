@@ -1,7 +1,7 @@
 /**
  * The MIT License (MIT)
  *
- * Copyright (c) 2020 Igor Zinken - https://www.igorski.nl
+ * Copyright (c) 2020-2026 Igor Zinken - https://www.igorski.nl
  *
  * Permission is hereby granted, free of charge, to any person obtaining a copy of
  * this software and associated documentation files (the "Software"), to deal in
@@ -28,6 +28,11 @@ void PluginProcess::process( SampleType** inBuffer, SampleType** outBuffer, int 
 
     ScopedNoDenormals noDenormals;
 
+    bool mixDry = _dryWetMix < 1.f;
+
+    SampleType dryMix = static_cast<SampleType>( 1.f - _dryWetMix );
+    SampleType wetMix = static_cast<SampleType>( _dryWetMix );
+
     // prepare the mix buffers and clone the incoming buffer contents into the pre-mix buffer
 
     prepareMixBuffers( inBuffer, numInChannels, bufferSize );
@@ -38,75 +43,78 @@ void PluginProcess::process( SampleType** inBuffer, SampleType** outBuffer, int 
         SampleType* channelOutBuffer = outBuffer[ c ];
         auto channelMixBuffer        = _mixBuffer->getBufferForChannel( c );
 
-        // pre formant filter bit crusher processing
+        std::memcpy( _preBuffer, channelMixBuffer, bufferSize * sizeof( float ));
+        
+        // pre formant filter distortion processing
 
         if ( !distortionPostMix ) {
             if ( distortionTypeCrusher ) {
-                bitCrusher->process( channelMixBuffer, bufferSize );
+                bitCrusher.process( channelMixBuffer, bufferSize );
             } else {
-                waveShaper->process( channelMixBuffer, bufferSize );
+                waveShaper.process( channelMixBuffer, bufferSize );
             }
         }
 
         // formant filter
 
         if ( c % 2 == 0 ) {
-            formantFilterL->process( channelMixBuffer, bufferSize );
+            formantFilterL.process( channelMixBuffer, bufferSize );
         } else {
-           formantFilterR->process( channelMixBuffer, bufferSize );
+           formantFilterR.process( channelMixBuffer, bufferSize );
         }
 
-        // post formant filter bit crusher processing
+        // post formant filter distortion processing
 
         if ( distortionPostMix ) {
             if ( distortionTypeCrusher ) {
-                bitCrusher->process( channelMixBuffer, bufferSize );
+                bitCrusher.process( channelMixBuffer, bufferSize );
             } else {
-                waveShaper->process( channelMixBuffer, bufferSize );
+                waveShaper.process( channelMixBuffer, bufferSize );
             }
         }
 
+        float maxBoost = bitCrusher.isActive() && bitCrusher.getBits() <= 2 ? 0.5f : 4.0f;
+        float inSample;
+
+        // apply make-up gain to keep volume balanced between non-bit processed scratch buffer pre mix buffer
+        _makeUpGainProcessors[ c ].apply( _preBuffer, channelMixBuffer, bufferSize, maxBoost );
+
         // write the effected mix buffers into the output buffer
-        // note here we convert the double values to whatever SampleType is
 
         for ( size_t i = 0; i < bufferSize; ++i ) {
 
             // before writing to the out buffer we take a snapshot of the current in sample
             // value as VST2 in Ableton Live supplies the same buffer for in and out!
-            // in case we want to offer a wet/dry balance
-            //inSample = channelInBuffer[ i ];
+            
+            inSample = channelInBuffer[ i ];
 
             // wet mix (e.g. the effected signal)
-            channelOutBuffer[ i ] = ( SampleType ) channelMixBuffer[ i ];
+            channelOutBuffer[ i ] = static_cast<SampleType>( channelMixBuffer[ i ] ) * wetMix;
+
+            // dry mix (e.g. mix in the input signal)
+
+            if ( mixDry ) {
+                channelOutBuffer[ i ] += ( inSample * dryMix );
+            }
         }
     }
     // limit the output signal as it can get quite hot
-    limiter->process<SampleType>( outBuffer, bufferSize, numOutChannels );
+    limiter.process<SampleType>( outBuffer, bufferSize, numOutChannels );
 }
 
 template <typename SampleType>
 void PluginProcess::prepareMixBuffers( SampleType** inBuffer, int numInChannels, int bufferSize )
 {
-    // if the pre mix buffer wasn't created yet or the buffer size has changed
-    // delete existing buffer and create new one to match properties
-
-    if ( _mixBuffer == nullptr || _mixBuffer->bufferSize != bufferSize ) {
-        delete _mixBuffer;
-        _mixBuffer = new AudioBuffer( numInChannels, bufferSize );
-    }
-
     // clone the in buffer contents
-    // note the clone is always cast to double as it is
-    // used for internal processing (see PluginProcess::process)
 
     for ( int c = 0; c < numInChannels; ++c ) {
 
-        SampleType* inChannelBuffer = ( SampleType* ) inBuffer[ c ];
-        auto channelMixBuffer       = ( double* ) _mixBuffer->getBufferForChannel( c );
+        SampleType* inChannelBuffer = inBuffer[ c ];
+        auto channelMixBuffer = _mixBuffer->getBufferForChannel( c );
 
         for ( int i = 0; i < bufferSize; ++i ) {
             // clone into the pre mix buffer for pre-processing
-            channelMixBuffer[ i ] = ( double ) inChannelBuffer[ i ];
+            channelMixBuffer[ i ] = static_cast<float>( inChannelBuffer[ i ] );
         }
     }
 }

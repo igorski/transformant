@@ -35,12 +35,16 @@ WaveShaper::WaveShaper( float amount, float level )
 
 /* public methods */
 
-void WaveShaper::process( double* inBuffer, int bufferSize )
+void WaveShaper::process( float* inBuffer, int bufferSize )
 {
-    for ( int j = 0; j < bufferSize; ++j )
+    if ( _amount == 0.f ) {
+        return;
+    }
+
+    for ( int i = 0; i < bufferSize; ++i )
     {
-        double input = inBuffer[ j ];
-        inBuffer[ j ] =  (( 1.0 + _multiplier ) * input / ( 1.0 + _multiplier * std::abs( input ))) * _level;
+        float input = inBuffer[ i ];
+        inBuffer[ i ] = (( 1.f + _multiplier ) * input / ( 1.f + _multiplier * std::abs( input ))) * _level;
     }
 }
 
@@ -53,8 +57,8 @@ float WaveShaper::getAmount()
 
 void WaveShaper::setAmount( float value )
 {
-    _amount     = value;
-    _multiplier = 2.0f * _amount / ( 1.0f - fmin(0.99999f, _amount));
+    _amount     = fmin( 0.995f, value );
+    _multiplier = 2.0f * _amount / ( 1.f - fmin( 0.99999f, _amount ));
 }
 
 float WaveShaper::getLevel()

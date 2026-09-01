@@ -1,7 +1,7 @@
 /**
  * The MIT License (MIT)
  *
- * Copyright (c) 2020 Igor Zinken - https://www.igorski.nl
+ * Copyright (c) 2020-2026 Igor Zinken - https://www.igorski.nl
  *
  * Adapted from public source code by Paul Sernine, based on work by Thierry Rochebois
  *
@@ -29,52 +29,69 @@ namespace Igorski {
 
 /* constructor / destructor */
 
-FormantFilter::FormantFilter( float aVowel, float sampleRate )
+FormantFilter::FormantFilter( float vowel, float sampleRate )
 {
-    double coeff = 2.0 / ( FORMANT_TABLE_SIZE - 1 );
+    float coeff = 2.f / ( FORMANT_TABLE_SIZE - 1.f );
 
     for ( size_t i = 0; i < MAX_FORMANT_WIDTH; i++ )
     {
         for ( size_t j = 0; j < FORMANT_TABLE_SIZE; j++ ) {
-            FORMANT_TABLE[ j + i * FORMANT_TABLE_SIZE ] = generateFormant( -1 + j * coeff, double( i ));
+            FORMANT_TABLE[ j + i * FORMANT_TABLE_SIZE ] = generateFormant( -1 + j * coeff, static_cast<float>( i ));
         }
     }
 
-    _sampleRate         = sampleRate;
-    _halfSampleRateFrac = 1.f / ( _sampleRate * 0.5f );
+    setSampleRate( sampleRate );
 
-    setVowel( aVowel );
-    cacheDynamicsProcessing();
+    setVowel( vowel );
 
     // note: LFO is always "on" as its used by the formant synthesis
     // when we want the audible oscillation of vowels to stop, the LFO
     // depth is merely at 0
 
-    lfo = new LFO( _sampleRate );
     setLFO( 0.f, 0.f );
 }
 
 FormantFilter::~FormantFilter()
 {
-    delete lfo;
+    // nowt...
 }
 
 /* public methods */
 
-float FormantFilter::getVowel()
+void FormantFilter::setSampleRate( float sampleRate )
 {
-    return ( float ) _vowel;
+    _sampleRate = sampleRate;
+    _halfSampleRateFrac = 1.f / ( _sampleRate * 0.5f );
+
+    _smoothedVowel.reset( sampleRate, 0.01 );
+    lfo.setSampleRate( _sampleRate );
+
+    _attackCoeff  = Calc::millisecondsToCoeff( 20.f, _sampleRate ); // 10 to 50 ms
+    _releaseCoeff = Calc::millisecondsToCoeff( 200.f, _sampleRate ); // 100 to 300 ms
 }
 
-void FormantFilter::setVowel( float aVowel )
+void FormantFilter::setThreshold( float normalisedValue )
 {
-    _vowel = ( double ) aVowel;
+    _normalisedThreshold = normalisedValue;
 
-    double tempRatio = _tempVowel / std::max( 0.000000001, _vowel );
+    float dbValue = ( normalisedValue * VST::MAX_THRESHOLD ) - VST::MAX_THRESHOLD;
+    _threshold = std::pow( 10.f, dbValue / 20.f ); // convert dB to linear amplitude
+}
+
+float FormantFilter::getVowel()
+{
+    return _vowel;
+}
+
+void FormantFilter::setVowel( float vowel )
+{
+    _vowel = vowel;
+
+    float tempRatio = _tempVowel / std::max( 0.000000001f, _vowel );
 
     // in case FormantFilter is attached to oscillator, keep relative offset
     // of currently moving vowel in place
-    _tempVowel = ( hasLFO ) ? _vowel * tempRatio : _vowel;
+    _tempVowel = hasLFO ? _vowel * tempRatio : _vowel;
 
     cacheCoeffOffset();
     cacheLFO();
@@ -87,7 +104,7 @@ void FormantFilter::setLFO( float LFORatePercentage, float LFODepth )
 
     hasLFO = isLFOenabled;
 
-    lfo->setRate(
+    lfo.setRate(
         VST::MIN_LFO_RATE() + (
             LFORatePercentage * ( VST::MAX_LFO_RATE() - VST::MIN_LFO_RATE() )
         )
@@ -99,32 +116,60 @@ void FormantFilter::setLFO( float LFORatePercentage, float LFODepth )
     }
 }
 
-void FormantFilter::process( double* inBuffer, int bufferSize )
+void FormantFilter::process( float* inBuffer, int bufferSize )
 {
     float lfoValue;
-    double in, out, fp, ufp, phaseAcc, formant, carrier;
+    float in, out, fp, ufp, phaseAcc, formant, carrier;
 
+    bool useEnvelopeFollower = _normalisedThreshold > 0.f;
+    
     for ( size_t i = 0; i < bufferSize; ++i )
     {
         in  = inBuffer[ i ];
-        out = 0.0;
+        out = 0.f;
 
+        // calculate envelope to determine the mix level of the formant effect over the input
+
+        float absIn = fabs( in );
+
+        if ( absIn > _envelope ) {
+            _envelope = _attackCoeff * _envelope + ( 1.f - _attackCoeff ) * absIn;
+        } else {
+            _envelope = _releaseCoeff * _envelope + ( 1.f - _releaseCoeff ) * absIn;
+        }
+
+        float filterMix = useEnvelopeFollower ? 0.f : 1.f;
+        if ( useEnvelopeFollower && _envelope > _threshold ) {
+            float overThreshold = _envelope - _threshold;
+            float transitionRange = 0.05f; // soft knee to prevent pops between filtered and unfiltered content
+            filterMix = std::min( 1.f, overThreshold / transitionRange );
+        }
+    
         // sweep the LFO
 
-        lfoValue   = lfo->peek() * .5f  + .5f; // make waveform unipolar
+        lfoValue   = lfo.peek() * .5f  + .5f; // make waveform unipolar
         _tempVowel = std::min( _lfoMax, _lfoMin + _lfoRange * lfoValue ); // relative to LFO depth
 
         cacheCoeffOffset(); // ensure the appropriate coeff is used for the new _tempVowel value
 
+        // apply linear smoothing to the vowel movement to prevent crackles
+
+        _smoothedVowel.setTargetValue( _tempVowel );
+        float smoothedVowel = _smoothedVowel.getNextValue();
+        
         // calculate the phase for the formant synthesis and carrier
 
-        fp  = 12 * powf( 2.0, 4 - 4 * _tempVowel );   // sweep
-        // fp *= ( 1.0 + 0.01 * sinf( tmp * 0.0015 )); // optional vibrato (sinf value determines speed)
-        ufp = 1.0 / fp;
+        fp  = 12 * powf( 2.f, 4 - 4 * smoothedVowel );   // sweep
+        // fp *= ( 1.f + 0.01 * sinf( tmp * 0.0015 )); // optional vibrato (sinf value determines speed)
+        ufp = 1.f / fp;
 
         phaseAcc = fp * _halfSampleRateFrac;
         _phase  += phaseAcc;
-        _phase  -= 2 * ( _phase > 1 );
+        _phase  -= 2.f * ( _phase > 1.f );
+
+        // without synthesis the output gets audibly thinner at higher _vowel values
+
+        bool amplifyOutput = !APPLY_SYNTHESIS_SIGNAL && smoothedVowel > 0.25f;
 
         // calculate the coefficients
 
@@ -138,20 +183,23 @@ void FormantFilter::process( double* inBuffer, int bufferSize )
 
             // apply formant onto the input signal
 
-            double formant = APPLY_SYNTHESIS_SIGNAL ? getFormant( _phase, FORMANT_WIDTH_SCALE[ j ] * ufp ) : 1.0;
-            double carrier = getCarrier( f->value * ufp, _phase );
+            float formant = APPLY_SYNTHESIS_SIGNAL ? getFormant( _phase, FORMANT_WIDTH_SCALE[ j ] * ufp ) : 1.f;
+            float carrier = getCarrier( f->value * ufp, _phase );
 
-            // the fp/fn coefficients stand for a -3dB/oct spectral envelope
-            out += a->value * ( fp / f->value ) * in * formant * carrier;
+            if ( !amplifyOutput ) {
+                // the fp/fn coefficients stand for a -3dB/oct spectral envelope
+                out += a->value * ( fp / f->value ) * in * formant * carrier;
+            } else {
+                float fpReference = 192.0f; // or 100.f or any fixed frequency of your liking
+                out += a->value * ( fpReference / f->value ) * in * formant * carrier;
+            }
         }
 
-        // catch denormals
+        // catch denormals and write to output
 
-        undenormaliseDouble( out );
+        undenormaliseFloat( out );
 
-        // compress signal and write to output
-
-        inBuffer[ i ] = compress( out );
+        inBuffer[ i ] = useEnvelopeFollower ? ( filterMix * out ) + (( 1.f - filterMix ) * in ) : out;
     }
 }
 
@@ -163,23 +211,26 @@ void FormantFilter::cacheLFO()
     // the LFO moving to feed the carrier signal. The LFO won't
     // change the active vowel coefficient in this mode.
 
-    _lfoRange = _vowel * ( hasLFO ? _lfoDepth : 0 );
-    _lfoMax   = std::min( 1., _vowel + _lfoRange / 2. );
-    _lfoMin   = std::max( 0., _vowel - _lfoRange / 2. );
+    _lfoRange = _vowel * ( hasLFO ? _lfoDepth : 0.f );
+    _lfoMax   = std::min( 1.f, _vowel + _lfoRange / 2.f );
+    _lfoMin   = std::max( 0.f, _vowel - _lfoRange / 2.f );
 }
 
-double FormantFilter::generateFormant( double phase, const double width )
+float FormantFilter::generateFormant( float phase, const float width )
 {
-    int hmax    = int( 10 * width ) > FORMANT_TABLE_SIZE / 2 ? FORMANT_TABLE_SIZE / 2 : int( 10 * width );
-    double jupe = 0.15f;
+    int hmax = static_cast<int>( 10 * width ) > FORMANT_TABLE_SIZE / 2 ? FORMANT_TABLE_SIZE / 2 : static_cast<int>( 10 * width );
+    if ( hmax < 1 ) hmax = 1;
 
-    double a = 0.5f;
-    double phi = 0.0f;
-    double hann, gaussian, harmonic;
+    float jupe = 0.15f;
+
+    float a = 0.5f;
+    float phi = 0.0f;
+    float hann, gaussian, harmonic;
 
     for ( size_t h = 1; h < hmax; h++ ) {
         phi     += VST::PI * phase;
-        hann     = 0.5f + 0.5f * fast_cos( h * ( 1.0 / hmax ));
+        hann     = 0.5f + 0.5f * fast_cos( h * ( 1.f / hmax ));
+        // hann = 0.5f + 0.5f * std::cos( h * ( M_PI / hmax ));
         gaussian = 0.85f * exp( -h * h / ( width * width ));
         harmonic = cosf( phi );
         a += hann * ( gaussian + jupe ) * harmonic;
@@ -187,91 +238,43 @@ double FormantFilter::generateFormant( double phase, const double width )
     return a;
 }
 
-double FormantFilter::getFormant( double phase, double width )
+float FormantFilter::getFormant( float phase, float width )
 {
     width = ( width < 0 ) ? 0 : width > MAX_FORMANT_WIDTH - 2 ? MAX_FORMANT_WIDTH - 2 : width;
-    double P = ( FORMANT_TABLE_SIZE - 1 ) * ( phase + 1 ) * 0.5f; // normalize phase
+    float P = ( FORMANT_TABLE_SIZE - 1 ) * ( phase + 1 ) * 0.5f; // normalize phase
 
     // calculate the integer and fractional parts of the phase and width
 
-    int phaseI    = ( int ) P;
-    double phaseF = P - phaseI;
+    int phaseI    = static_cast<int>( P );
+    float phaseF = P - phaseI;
 
-    int widthI    = ( int ) width;
-    double widthF = width - widthI;
+    int widthI    = static_cast<int>( width );
+    float widthF = width - widthI;
 
     int i00 = phaseI + FORMANT_TABLE_SIZE * widthI;
     int i10 = i00 + FORMANT_TABLE_SIZE;
 
     // bilinear interpolation of formant values
-    return ( 1 - widthF ) *
+    return ( 1.f - widthF ) *
            ( FORMANT_TABLE[ i00 ] + phaseF * ( FORMANT_TABLE[ i00 + 1 ] - FORMANT_TABLE[ i00 ])) +
              widthF * ( FORMANT_TABLE[ i10 ] + phaseF * ( FORMANT_TABLE[ i10 + 1 ] - FORMANT_TABLE[ i10 ]));
 }
 
-double FormantFilter::getCarrier( const double position, const double phase )
+float FormantFilter::getCarrier( const float position, const float phase )
 {
-    double harmI = floor( position ); // integer and
-    double harmF = position - harmI;  // fractional part of harmonic number
+    float harmI = floor( position ); // integer and
+    float harmF = position - harmI;  // fractional part of harmonic number
 
     // keep within -1 to +1 range
-    double phi1 = fmodf( phase *  harmI        + 1 + 1000, 2.0 ) - 1.0;
-    double phi2 = fmodf( phase * ( harmI + 1 ) + 1 + 1000, 2.0 ) - 1.0;
+    float phi1 = fmodf( phase *  harmI        + 1 + 1000, 2.f ) - 1.f;
+    float phi2 = fmodf( phase * ( harmI + 1 ) + 1 + 1000, 2.f ) - 1.f;
 
     // calculate the two carriers
-    double carrier1 = fast_cos( phi1 );
-    double carrier2 = fast_cos( phi2 );
+    float carrier1 = fast_cos( phi1 );
+    float carrier2 = fast_cos( phi2 );
 
     // return interpolation between the two carriers
     return carrier1 + harmF * ( carrier2 - carrier1 );
-}
-
-void FormantFilter::cacheDynamicsProcessing()
-{
-    _fullDynamicsProcessing = false;
-
-    _dThreshold = pow( 10.0, ( 2.0 * DYNAMICS_THRESHOLD - 2.0 ));
-    _dRatio     = 2.5 * DYNAMICS_RATIO - 0.5;
-
-    if ( _dRatio > 1.0 ) {
-        _dRatio = 1.f + 16.f * ( _dRatio - 1.f ) * ( _dRatio - 1.f );
-        _fullDynamicsProcessing = true;
-    }
-    if ( _dRatio < 0.0 ) {
-        _dRatio = 0.6f * _dRatio;
-        _fullDynamicsProcessing = true;
-    }
-    _dTrim    = pow( 10.0,( 2.0 * DYNAMICS_LEVEL ));
-    _dAttack  = pow( 10.0,( -0.002 - 2.0 * DYNAMICS_ATTACK ));
-    _dRelease = pow( 10.0,( -2.0 - 3.0 * DYNAMICS_RELEASE ));
-    
-    // limiter
-    
-    if ( DYNAMICS_LIMITER_DYNAMICS_THRESHOLD > 0.98 ) {
-        _dLimThreshold = 0.f;
-    }
-    else {
-        _dLimThreshold = 0.99 * pow( 10.0, int( 30.0 * DYNAMICS_LIMITER_DYNAMICS_THRESHOLD - 20.0 ) / 20.f );
-        _fullDynamicsProcessing = true;
-    }
-    
-    // expander
-    
-    if ( DYNAMICS_GATE_DYNAMICS_THRESHOLD < 0.02 ) {
-        _dExpThreshold = 0.f;
-    }
-    else {
-        _dExpThreshold = pow( 10.f, ( 3.0 * DYNAMICS_GATE_DYNAMICS_THRESHOLD - 3.0 ));
-        _fullDynamicsProcessing = true;
-    }
-    _dExpRatio   = 1.0 - pow( 10.f, ( -2.0 - 3.3 * DYNAMICS_GATE_DECAY ));
-    _dGateAttack = pow( 10.0, (-0.002 - 3.0 * DYNAMICS_GATE_DYNAMICS_ATTACK ));
-    
-    if ( _dRatio < 0.0f && _dThreshold < 0.1f ) {
-        _dRatio *= _dThreshold * 15.f;
-    }
-    _dDry   = 1.0f - DYNAMICS_MIX;
-    _dTrim *= DYNAMICS_MIX;
 }
 
 }

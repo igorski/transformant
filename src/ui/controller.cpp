@@ -1,7 +1,7 @@
 /**
  * The MIT License (MIT)
  *
- * Copyright (c) 2020-2024 Igor Zinken - https://www.igorski.nl
+ * Copyright (c) 2020-2026 Igor Zinken - https://www.igorski.nl
  *
  * Permission is hereby granted, free of charge, to any person obtaining a copy of
  * this software and associated documentation files (the "Software"), to deal in
@@ -20,6 +20,7 @@
  * IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM, OUT OF OR IN
  * CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
  */
+#include "../calc.h"
 #include "../global.h"
 #include "controller.h"
 #include "uimessagecontroller.h"
@@ -29,6 +30,7 @@
 #include "pluginterfaces/base/ustring.h"
 #include "pluginterfaces/vst/ivstmidicontrollers.h"
 
+#include "base/source/fstreamer.h"
 #include "base/source/fstring.h"
 
 #include "vstgui/uidescription/delegationcontroller.h"
@@ -75,6 +77,12 @@ tresult PLUGIN_API PluginController::initialize( FUnknown* context )
     int32 unitId = 1;
 
     // Formant filter controls
+
+    parameters.addParameter( new RangeParameter(
+        USTRING( "Threshold" ), kThresholdId, USTRING( "%" ),
+        0.f, 1.f, 0.25f,
+        0, ParameterInfo::kCanAutomate, unitId
+    ));
 
     parameters.addParameter( new RangeParameter(
         USTRING( "Vowel L" ), kVowelLId, USTRING( "0 - 1" ),
@@ -134,6 +142,17 @@ tresult PLUGIN_API PluginController::initialize( FUnknown* context )
         USTRING( "Distortion pre/post" ), 0, 1, 0, ParameterInfo::kCanAutomate, kDistortionChainId, unitId
     );
 
+    parameters.addParameter( new RangeParameter(
+        USTRING( "Dry/wet mix" ), kDryWetMixId, USTRING( "%" ),
+        0.f, 1.f, 0.75f,
+        0, ParameterInfo::kCanAutomate, unitId
+    ));
+
+    // Bypass
+    parameters.addParameter(
+        STR16( "Bypass" ), nullptr, 1, 0, ParameterInfo::kCanAutomate | ParameterInfo::kIsBypass, kBypassId
+    );
+
     // initialization
 
     String str( "TRANSFORMANT" );
@@ -152,74 +171,81 @@ tresult PLUGIN_API PluginController::terminate()
 tresult PLUGIN_API PluginController::setComponentState( IBStream* state )
 {
     // we receive the current state of the component (processor part)
-    if ( state )
-    {
-        float savedVowelL = 1.f;
-        if ( state->read( &savedVowelL, sizeof( float )) != kResultOk )
-            return kResultFalse;
-
-        float savedVowelR = 1.f;
-        if ( state->read( &savedVowelR, sizeof( float )) != kResultOk )
-            return kResultFalse;
-
-        float savedVowelSync = 1.f;
-        if ( state->read( &savedVowelSync, sizeof( float )) != kResultOk )
-            return kResultFalse;
-
-        float savedLFOVowelL = Igorski::VST::MIN_LFO_RATE();
-        if ( state->read( &savedLFOVowelL, sizeof( float )) != kResultOk )
-            return kResultFalse;
-
-        float savedLFOVowelR = Igorski::VST::MIN_LFO_RATE();
-        if ( state->read( &savedLFOVowelR, sizeof( float )) != kResultOk )
-            return kResultFalse;
-
-        float savedLFOVowelLDepth = 1.f;
-        if ( state->read( &savedLFOVowelLDepth, sizeof( float )) != kResultOk )
-            return kResultFalse;
-
-        float savedLFOVowelRDepth = 1.f;
-        if ( state->read( &savedLFOVowelRDepth, sizeof( float )) != kResultOk )
-            return kResultFalse;
-
-        float savedDistortionType = 1.f;
-        if ( state->read( &savedDistortionType, sizeof( float )) != kResultOk )
-            return kResultFalse;
-
-        float savedDrive = 1.f;
-        if ( state->read( &savedDrive, sizeof( float )) != kResultOk )
-            return kResultFalse;
-
-        float savedDistortionChain = 0.f;
-        if ( state->read( &savedDistortionChain, sizeof( float )) != kResultOk )
-            return kResultFalse;
-
-#if BYTEORDER == kBigEndian
-    SWAP32( savedVowelL )
-    SWAP32( savedVowelR )
-    SWAP32( savedVowelSync )
-    SWAP32( savedLFOVowelL )
-    SWAP32( savedLFOVowelR )
-    SWAP32( savedLFOVowelLDepth )
-    SWAP32( savedLFOVowelRDepth )
-    SWAP32( savedDistortionType )
-    SWAP32( savedDrive )
-    SWAP32( savedDistortionChain )
-#endif
-
-        setParamNormalized( kVowelLId,          savedVowelL );
-        setParamNormalized( kVowelRId,          savedVowelR );
-        setParamNormalized( kVowelSyncId,       savedVowelSync );
-        setParamNormalized( kLFOVowelLId,       savedLFOVowelL );
-        setParamNormalized( kLFOVowelRId,       savedLFOVowelR );
-        setParamNormalized( kLFOVowelLDepthId,  savedLFOVowelLDepth );
-        setParamNormalized( kLFOVowelRDepthId,  savedLFOVowelRDepth );
-        setParamNormalized( kDistortionTypeId,  savedDistortionType );
-        setParamNormalized( kDriveId,           savedDrive );
-        setParamNormalized( kDistortionChainId, savedDistortionChain );
-
-        state->seek( sizeof ( float ), IBStream::kIBSeekCur );
+    if ( !state ) {
+        return kResultFalse;
     }
+    
+    IBStreamer streamer( state, kLittleEndian );
+    
+    float savedVowelL = 1.f;
+    if ( streamer.readFloat( savedVowelL ) == false )
+        return kResultFalse;
+    setParamNormalized( kVowelLId, savedVowelL );
+
+    float savedVowelR = 1.f;
+    if ( streamer.readFloat( savedVowelR ) == false )
+        return kResultFalse;
+    setParamNormalized( kVowelRId, savedVowelR );
+
+    float savedVowelSync = 1.f;
+    if ( streamer.readFloat( savedVowelSync ) == false )
+        return kResultFalse;
+    setParamNormalized( kVowelSyncId, savedVowelSync );
+
+    float savedLFOVowelL = Igorski::VST::MIN_LFO_RATE();
+    if ( streamer.readFloat( savedLFOVowelL ) == false )
+        return kResultFalse;
+    setParamNormalized( kLFOVowelLId, savedLFOVowelL );
+
+    float savedLFOVowelR = Igorski::VST::MIN_LFO_RATE();
+    if ( streamer.readFloat( savedLFOVowelR ) == false )
+        return kResultFalse;
+    setParamNormalized( kLFOVowelRId, savedLFOVowelR );
+
+    float savedLFOVowelLDepth = 1.f;
+    if ( streamer.readFloat( savedLFOVowelLDepth ) == false )
+        return kResultFalse;
+    setParamNormalized( kLFOVowelLDepthId, savedLFOVowelLDepth );
+
+    float savedLFOVowelRDepth = 1.f;
+    if ( streamer.readFloat( savedLFOVowelRDepth ) == false )
+        return kResultFalse;
+    setParamNormalized( kLFOVowelRDepthId, savedLFOVowelRDepth );
+
+    float savedDistortionType = 1.f;
+    if ( streamer.readFloat( savedDistortionType ) == false )
+        return kResultFalse;
+    setParamNormalized( kDistortionTypeId, savedDistortionType );
+
+    float savedDrive = 1.f;
+    if ( streamer.readFloat( savedDrive ) == false )
+        return kResultFalse;
+    setParamNormalized( kDriveId, savedDrive );
+
+    float savedDistortionChain = 0.f;
+    if ( streamer.readFloat( savedDistortionChain ) == false )
+        return kResultFalse;
+    setParamNormalized( kDistortionChainId, savedDistortionChain );
+
+    // --- the following are allowed to fail their read
+    // as these properties were only added in version 1.1.0
+
+    int32 savedBypass = 0;
+    if ( streamer.readInt32( savedBypass ) != false ) {
+        setParamNormalized( kBypassId, savedBypass ? 1 : 0 );
+    }
+
+    float savedDryWetMix = 1.f;
+    if ( streamer.readFloat( savedDryWetMix ) != false ) {
+        setParamNormalized( kDryWetMixId, savedDryWetMix );
+    }
+
+    float savedThreshold = 0.f;
+    if ( streamer.readFloat( savedThreshold ) != false ) {
+        setParamNormalized( kThresholdId, savedThreshold );
+    }
+    // --- E.O. version 1.1.0 properties
+    
     return kResultOk;
 }
 
@@ -313,37 +339,39 @@ tresult PLUGIN_API PluginController::setParamNormalized( ParamID tag, ParamValue
 //------------------------------------------------------------------------
 tresult PLUGIN_API PluginController::getParamStringByValue( ParamID tag, ParamValue valueNormalized, String128 string )
 {
+    char text[ 32 ];
+
     switch ( tag )
     {
-        // these controls are floating point values in 0 - 1 range, we can
-        // simply read the normalized value which is in the same range
+        // these controls are in normalised 0 - 1 range but can be expressed as percentages
 
         case kVowelLId:
         case kVowelRId:
-        case kVowelSyncId:
         case kLFOVowelLDepthId:
         case kLFOVowelRDepthId:
-        case kDistortionTypeId:
         case kDriveId:
+        case kDryWetMixId:
+        {
+            snprintf( text, sizeof( text ), "%.2d %%", static_cast<int>( valueNormalized * 100.f ));
+            Steinberg::UString( string, 128 ).fromAscii( text );
+            return kResultTrue;
+        }
+
+        case kVowelSyncId:
+        case kDistortionTypeId:
         case kDistortionChainId:
         {
-            char text[32];
-
             switch ( tag ) {
-                default:
-                    sprintf( text, "%.2f", ( float ) valueNormalized );
-                    break;
-
                 case kVowelSyncId:
-                    sprintf( text, "%s", ( valueNormalized == 0 ) ? "Off": "On" );
+                    snprintf( text, sizeof( text ), "%s", ( valueNormalized == 0 ) ? "Off": "On" );
                     break;
 
                 case kDistortionTypeId:
-                    sprintf( text, "%s", ( valueNormalized == 0 ) ? "Waveshaper": "Bitcrusher" );
+                    snprintf( text, sizeof( text ), "%s", ( valueNormalized == 0 ) ? "Waveshaper": "Bitcrusher" );
                     break;
 
                 case kDistortionChainId:
-                    sprintf( text, "%s", ( valueNormalized == 0 ) ? "Pre-formant mix" : "Post-formant mix" );
+                    snprintf( text, sizeof( text ), "%s", ( valueNormalized == 0 ) ? "Pre-formant mix" : "Post-formant mix" );
                     break;
             }
             Steinberg::UString( string, 128 ).fromAscii( text );
@@ -351,17 +379,25 @@ tresult PLUGIN_API PluginController::getParamStringByValue( ParamID tag, ParamVa
             return kResultTrue;
         }
 
-        // vowel LFO setting is also floating point but in a custom range
-        // request the plain value from the normalized value
+        // threshold defines a 0 to -60 dB range
+
+        case kThresholdId:
+        {
+            snprintf( text, sizeof( text ), valueNormalized == 1.f ? "0 dB" : "-%.2d dB", static_cast<int>( Igorski::Calc::inverseNormalize( valueNormalized ) * Igorski::VST::MAX_THRESHOLD ));
+            Steinberg::UString( string, 128 ).fromAscii( text );
+            return kResultTrue;
+        }
+
+        // vowel LFO's use a custom range to define their frequency in Hz
 
         case kLFOVowelLId:
         case kLFOVowelRId:
         {
-            char text[32];
-            if (valueNormalized == 0 )
-                sprintf( text, "%s", "Off" );
-            else
-                sprintf( text, "%.2f", normalizedParamToPlain( tag, valueNormalized ));
+            if ( valueNormalized == 0 ) {
+                snprintf( text, sizeof( text ), "%s", "Off" );
+            } else {
+                snprintf( text, sizeof( text ), "%.2f Hz", normalizedParamToPlain( tag, valueNormalized ));
+            }
             Steinberg::UString( string, 128 ).fromAscii( text );
 
             return kResultTrue;
@@ -376,21 +412,40 @@ tresult PLUGIN_API PluginController::getParamStringByValue( ParamID tag, ParamVa
 //------------------------------------------------------------------------
 tresult PLUGIN_API PluginController::getParamValueByString( ParamID tag, TChar* string, ParamValue& valueNormalized )
 {
-    /* example, but better to use a custom Parameter as seen in RangeParameter
-    switch (tag)
+    switch ( tag )
     {
-        case kAttackId:
+        // entry in 0 - 100 percentage range should be normalised to 0 - 1 range
+        case kVowelLId:
+        case kVowelRId:
+        case kLFOVowelLDepthId:
+        case kLFOVowelRDepthId:
+        case kDriveId:
+        case kDryWetMixId:
         {
-            Steinberg::UString wrapper ((TChar*)string, -1); // don't know buffer size here!
+            Steinberg::UString wrapper(( TChar* ) string, -1 );
             double tmp = 0.0;
-            if (wrapper.scanFloat (tmp))
+            if ( wrapper.scanFloat( tmp ))
             {
-                valueNormalized = expf (logf (10.f) * (float)tmp / 20.f);
+                tmp /= 100;
+                valueNormalized = fmax( 0.0, fmin( 1.0, tmp ));
                 return kResultTrue;
             }
             return kResultFalse;
         }
-    }*/
+        case kThresholdId:
+        {
+            Steinberg::UString wrapper(( TChar* ) string, -1 );
+            double tmp = 0.0;
+            if ( wrapper.scanFloat( tmp ))
+            {
+                tmp = fabs( tmp );
+                tmp /= Igorski::VST::MAX_THRESHOLD;
+                valueNormalized = Igorski::Calc::inverseNormalize( fmax( 0.0, fmin( 1.0, tmp )));
+                return kResultTrue;
+            }
+            return kResultFalse;
+        }
+    }
     return EditControllerEx1::getParamValueByString( tag, string, valueNormalized );
 }
 

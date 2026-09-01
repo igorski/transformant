@@ -41,7 +41,7 @@ class AudioBuffer
         int bufferSize;
         bool loopeable;
 
-        double* getBufferForChannel( int aChannelNum );
+        float* getBufferForChannel( int aChannelNum );
         int mergeBuffers( AudioBuffer* aBuffer, int aReadOffset, int aWriteOffset, float aMixVolume );
         void silenceBuffers();
         void adjustBufferVolumes( float volume );
@@ -49,7 +49,7 @@ class AudioBuffer
         AudioBuffer* clone();
 
     protected:
-        std::vector<double*>* _buffers;
+        std::vector<float*>* _buffers;
 };
 
 #endif

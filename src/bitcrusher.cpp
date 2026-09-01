@@ -44,10 +44,10 @@ BitCrusher::~BitCrusher()
 
 /* public methods */
 
-void BitCrusher::process( double* inBuffer, int bufferSize )
+void BitCrusher::process( float* inBuffer, int bufferSize )
 {
     // sound should not be crushed ? do nothing
-    if ( _bits == 16 ) {
+    if ( !isActive() ) {
         return;
     }
 
@@ -55,8 +55,8 @@ void BitCrusher::process( double* inBuffer, int bufferSize )
 
     for ( int i = 0; i < bufferSize; ++i )
     {
-        short input = ( short ) (( inBuffer[ i ] * _inputMix ) * SHRT_MAX );
-        short prevent_offset = ( short )( -1 >> bitsPlusOne );
+        short input = static_cast<short>(( inBuffer[ i ] * _inputMix ) * SHRT_MAX );
+        short prevent_offset = static_cast<short>( -1 >> bitsPlusOne );
         input &= ( -1 << ( 16 - _bits ));
         inBuffer[ i ] = (( input + prevent_offset ) * _outputMix ) / SHRT_MAX;
     }
@@ -67,7 +67,7 @@ void BitCrusher::process( double* inBuffer, int bufferSize )
 void BitCrusher::setAmount( float value )
 {
     // invert the range 0 == max bits (no distortion), 1 == min bits (severely distorted)
-    _amount = abs(value - 1.f);
+    _amount = abs( value - 1.f );
 
     calcBits();
 }
@@ -87,7 +87,7 @@ void BitCrusher::setOutputMix( float value )
 void BitCrusher::calcBits()
 {
     // scale float to 1 - 16 bit range
-    _bits = ( int ) floor( Calc::scale( _amount, 1, 15 )) + 1;
+    _bits = static_cast<int>( floor( Calc::scale( _amount, 1, 15 ))) + 1;
 }
 
 }

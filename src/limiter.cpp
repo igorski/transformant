@@ -29,14 +29,17 @@
 
 // constructors / destructor
 
-Limiter::Limiter()
-{
-    init( 0.15, 0.50, 0.60 );
-}
-
 Limiter::Limiter( float attackMs, float releaseMs, float thresholdDb )
 {
-    init( attackMs, releaseMs, thresholdDb );
+    pAttack  = attackMs;
+    pRelease = releaseMs;
+    pTresh   = thresholdDb;
+    pTrim    = 0.6f;
+    pKnee    = 0.4f;
+
+    gain = 1.f;
+
+    recalculate();
 }
 
 Limiter::~Limiter()
@@ -48,19 +51,19 @@ Limiter::~Limiter()
 
 void Limiter::setAttack( float attackMs )
 {
-    pAttack = ( float ) attackMs;
+    pAttack = attackMs;
     recalculate();
 }
 
 void Limiter::setRelease( float releaseMs )
 {
-    pRelease = ( float ) releaseMs;
+    pRelease = releaseMs;
     recalculate();
 }
 
 void Limiter::setThreshold( float thresholdDb )
 {
-    pTresh = ( float ) thresholdDb;
+    pTresh = thresholdDb;
     recalculate();
 }
 
@@ -71,30 +74,17 @@ float Limiter::getLinearGR()
 
 /* protected methods */
 
-void Limiter::init( float attackMs, float releaseMs, float thresholdDb )
-{
-    pAttack  = ( float ) attackMs;
-    pRelease = ( float ) releaseMs;
-    pTresh   = ( float ) thresholdDb;
-    pTrim    = ( float ) 0.60;
-    pKnee    = ( float ) 0.40;
-
-    gain = 1.f;
-
-    recalculate();
-}
-
 void Limiter::recalculate()
 {
-    if ( pKnee > 0.5 ) {
+    if ( pKnee > 0.5f ) {
         // soft knee
-        thresh = ( float ) pow( 10.0, 1.f - ( 2.0 * pTresh ));
+        thresh = pow( 10.f, 1.f - ( 2.f * pTresh ));
     }
     else {
         // hard knee
-        thresh = ( float ) pow( 10.0, ( 2.0 * pTresh ) - 2.0 );
+        thresh = pow( 10.f, ( 2.f * pTresh ) - 2.f );
     }
-    trim = ( float )( pow( 10.0, ( 2.0 * pTrim) - 1.f ));
-    att  = ( float )  pow( 10.0, -2.0 * pAttack );
-    rel  = ( float )  pow( 10.0, -2.0 - ( 3.0 * pRelease ));
+    trim = pow( 10.f, ( 2.f * pTrim) - 1.f );
+    att  = pow( 10.f, -2.f * pAttack );
+    rel  = pow( 10.f, -2.f - ( 3.f * pRelease ));
 }

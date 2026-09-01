@@ -38,8 +38,13 @@ namespace VST {
     static const FUID ProcessorUID( 0x9B87BC9B, 0x0D974BF4, 0x812B59EA, 0xAE2F10A2 );
     static const FUID ControllerUID( 0x73A7B7C0, 0x1AD743C1, 0xBFBFD9F4, 0x5F5A04E1 );
 
+    static const float DEFAULT_SAMPLE_RATE = 44100.f; // updated in vst.cpp#setupProcessing
+    static const int DEFAULT_BUFFER_SIZE = 2048; // updated in vst.cpp#setupProcessing
+
     static const float PI     = 3.141592653589793f;
     static const float TWO_PI = PI * 2.f;
+
+    static const float MAX_THRESHOLD = 60.f; // below 0, so applied negatively
 
     // maximum and minimum rate of oscillation in Hz
     // also see plugin.uidesc to update the controls to match

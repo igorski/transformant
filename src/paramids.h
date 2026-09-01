@@ -1,7 +1,7 @@
 /**
  * The MIT License (MIT)
  *
- * Copyright (c) 2020 Igor Zinken - https://www.igorski.nl
+ * Copyright (c) 2020-2026 Igor Zinken - https://www.igorski.nl
  *
  * Permission is hereby granted, free of charge, to any person obtaining a copy of
  * this software and associated documentation files (the "Software"), to deal in
@@ -36,8 +36,12 @@ enum
     kLFOVowelRDepthId,     // formant vowel R LFO depth
     kDistortionTypeId,     // distortion type
     kDriveId,              // distortion drive amount
-    kDistortionChainId,    // distortion pre/pos formant mix
-    kVuPPMId               // for the Vu value return to host
+    kDistortionChainId,    // distortion pre/post formant mix
+    kBypassId,             // added in 1.1.0: bypass process
+    kDryWetMixId,          // added in 1.1.0: dry/wet mix
+    kThresholdId,          // added in 1.1.0: formant threshold
+    
+    kVuPPMId,  // for the VU value return to host
 };
 
 #endif

@@ -33,6 +33,8 @@
 #include "pluginterfaces/vst/ivstparameterchanges.h"
 #include "pluginterfaces/vst/vstpresetkeys.h"
 
+#include "base/source/fstreamer.h"
+
 #include <stdio.h>
 
 namespace Igorski {
@@ -41,7 +43,8 @@ namespace Igorski {
 // Transformant Implementation
 //------------------------------------------------------------------------
 Transformant::Transformant()
-: fVowelL( 0.f )
+: fThreshold( 0.25f )
+, fVowelL( 0.f )
 , fVowelR( 0.f )
 , fVowelSync( 1.f )
 , fLFOVowelL( 0.f )
@@ -51,6 +54,7 @@ Transformant::Transformant()
 , fDistortionType( 0.f )
 , fDrive( 0.f )
 , fDistortionChain( 0.f )
+, fDryWetMix( 0.75f )
 , pluginProcess( nullptr )
 // , outputGainOld( 0.f )
 , currentProcessMode( -1 ) // -1 means not initialized
@@ -59,7 +63,7 @@ Transformant::Transformant()
     setControllerClass( VST::ControllerUID );
 
     // should be created on setupProcessing, this however doesn't fire for Audio Unit using auval?
-    pluginProcess = new PluginProcess( 2, 44100.f );
+    pluginProcess = new PluginProcess( 2, VST::DEFAULT_SAMPLE_RATE, VST::DEFAULT_BUFFER_SIZE );
 }
 
 //------------------------------------------------------------------------
@@ -140,48 +144,81 @@ tresult PLUGIN_API Transformant::process( ProcessData& data )
                 switch ( paramQueue->getParameterId())
                 {
                     case kVowelLId:
-                        fVowelL = ( float ) value;
+                        fVowelL = static_cast<float>( value );
                         break;
 
                     case kVowelRId:
-                        fVowelR = ( float ) value;
+                        fVowelR = static_cast<float>( value );
                         break;
 
                     case kVowelSyncId:
-                        fVowelSync = ( float ) value;
+                        fVowelSync = static_cast<float>( value );
                         break;
 
                     case kLFOVowelLId:
-                        fLFOVowelL = ( float ) value;
+                        fLFOVowelL = static_cast<float>( value );
                         break;
 
                     case kLFOVowelRId:
-                        fLFOVowelR = ( float ) value;
+                        fLFOVowelR = static_cast<float>( value );
                         break;
 
                     case kLFOVowelLDepthId:
-                        fLFOVowelLDepth = ( float ) value;
+                        fLFOVowelLDepth = static_cast<float>( value );
                         break;
 
                     case kLFOVowelRDepthId:
-                        fLFOVowelRDepth = ( float ) value;
+                        fLFOVowelRDepth = static_cast<float>( value );
                         break;
 
                     case kDistortionTypeId:
-                        fDistortionType = ( float ) value;
+                        fDistortionType = static_cast<float>( value );
                         break;
 
                     case kDriveId:
-                        fDrive = ( float ) value;
+                        fDrive = static_cast<float>( value );
                         break;
 
                     case kDistortionChainId:
-                        fDistortionChain = ( float ) value;
+                        fDistortionChain = static_cast<float>( value );
+                        break;
+
+                    case kBypassId:
+                        _bypass = static_cast<float>( value ) >= 0.5f;
+                        break;
+                        
+                    case kDryWetMixId:
+                        fDryWetMix = static_cast<float>( value );
+                        break;
+
+                    case kThresholdId:
+                        fThreshold = static_cast<float>( value );
                         break;
                 }
                 syncModel();
             }
         }
+    }
+
+    if ( data.processContext != nullptr )
+    {
+        bool wasPlaying = isPlaying;
+
+        // when host starts sequencer, ensure the LFO's are aligned / reset
+
+        isPlaying = data.processContext->state & ProcessContext::kPlaying;
+
+        if ( !wasPlaying && isPlaying ) {
+            pluginProcess->formantFilterL.lfo.reset();
+            pluginProcess->formantFilterR.lfo.reset();
+        }
+
+        // in case you want to do tempo synchronization with the host
+        /*
+        pluginProcess->setTempo(
+            data.processContext->tempo, data.processContext->timeSigNumerator, data.processContext->timeSigDenominator
+        );
+        */
     }
 
     //---2) Read input events-------------
@@ -211,24 +248,37 @@ tresult PLUGIN_API Transformant::process( ProcessData& data )
     bool isSilentInput  = data.inputs[ 0 ].silenceFlags != 0;
     bool isSilentOutput = false;
 
-    if ( isDoublePrecision ) {
-        // 64-bit samples, e.g. Reaper64
-        pluginProcess->process<double>(
-            ( double** ) in, ( double** ) out, numInChannels, numOutChannels,
-            data.numSamples, sampleFramesSize
-        );
-        if ( isSilentInput ) {
-            isSilentOutput = pluginProcess->isBufferSilent(( double** ) out, numOutChannels, data.numSamples );
+    if ( _bypass )
+    {
+        // bypass mode, ensure output equals input
+
+        for ( int32 i = 0; i < numInChannels; i++ ) {
+            if ( in[ i ] != out[ i ]) {
+                memcpy( out[ i ], in[ i ], sampleFramesSize );
+            }
         }
+        isSilentOutput = isSilentInput;
     }
     else {
-        // 32-bit samples, e.g. Ableton Live, Bitwig Studio... (oddly enough also when 64-bit?)
-        pluginProcess->process<float>(
-            ( float** ) in, ( float** ) out, numInChannels, numOutChannels,
-            data.numSamples, sampleFramesSize
-        );
-        if ( isSilentInput ) {
-            isSilentOutput = pluginProcess->isBufferSilent(( float** ) out, numOutChannels, data.numSamples );
+        if ( isDoublePrecision ) {
+            // 64-bit samples, e.g. Reaper64
+            pluginProcess->process<double>(
+                ( double** ) in, ( double** ) out, numInChannels, numOutChannels,
+                data.numSamples, sampleFramesSize
+            );
+            if ( isSilentInput ) {
+                isSilentOutput = pluginProcess->isBufferSilent(( double** ) out, numOutChannels, data.numSamples );
+            }
+        }
+        else {
+            // 32-bit samples, e.g. Ableton Live, Bitwig Studio... (oddly enough also when 64-bit?)
+            pluginProcess->process<float>(
+                ( float** ) in, ( float** ) out, numInChannels, numOutChannels,
+                data.numSamples, sampleFramesSize
+            );
+            if ( isSilentInput ) {
+                isSilentOutput = pluginProcess->isBufferSilent(( float** ) out, numOutChannels, data.numSamples );
+            }
         }
     }
 
@@ -268,58 +318,65 @@ tresult PLUGIN_API Transformant::setState( IBStream* state )
 {
     // called when we load a preset, the model has to be reloaded
 
+    IBStreamer streamer( state, kLittleEndian );
+
     float savedVowelL = 0.f;
-    if ( state->read( &savedVowelL, sizeof ( float )) != kResultOk )
+    if ( streamer.readFloat( savedVowelL ) == false )
         return kResultFalse;
 
     float savedVowelR = 0.f;
-    if ( state->read( &savedVowelR, sizeof ( float )) != kResultOk )
+    if ( streamer.readFloat( savedVowelR ) == false )
         return kResultFalse;
 
     float savedVowelSync = 0.f;
-    if ( state->read( &savedVowelSync, sizeof ( float )) != kResultOk )
+    if ( streamer.readFloat( savedVowelSync ) == false )
         return kResultFalse;
 
     float savedLFOVowelL = 0.f;
-    if ( state->read( &savedLFOVowelL, sizeof ( float )) != kResultOk )
+    if ( streamer.readFloat( savedLFOVowelL ) == false )
         return kResultFalse;
 
     float savedLFOVowelR = 0.f;
-    if ( state->read( &savedLFOVowelR, sizeof ( float )) != kResultOk )
+    if ( streamer.readFloat( savedLFOVowelR ) == false )
         return kResultFalse;
 
     float savedLFOVowelLDepth = 0.f;
-    if ( state->read( &savedLFOVowelLDepth, sizeof ( float )) != kResultOk )
+    if ( streamer.readFloat( savedLFOVowelLDepth ) == false )
         return kResultFalse;
 
     float savedLFOVowelRDepth = 0.f;
-    if ( state->read( &savedLFOVowelRDepth, sizeof ( float )) != kResultOk )
+    if ( streamer.readFloat( savedLFOVowelRDepth ) == false )
         return kResultFalse;
 
     float savedDistortionType = 0.f;
-    if ( state->read( &savedDistortionType, sizeof ( float )) != kResultOk )
+    if ( streamer.readFloat( savedDistortionType ) == false )
         return kResultFalse;
 
     float savedDrive = 0.f;
-    if ( state->read( &savedDrive, sizeof ( float )) != kResultOk )
+    if ( streamer.readFloat( savedDrive ) == false )
         return kResultFalse;
 
     float savedDistortionChain = 0.f;
-    if ( state->read( &savedDistortionChain, sizeof ( float )) != kResultOk )
+    if ( streamer.readFloat( savedDistortionChain ) == false )
         return kResultFalse;
 
-#if BYTEORDER == kBigEndian
-    SWAP32( savedVowelL )
-    SWAP32( savedVowelR )
-    SWAP32( savedVowelSync )
-    SWAP32( savedLFOVowelL )
-    SWAP32( savedLFOVowelR )
-    SWAP32( savedLFOVowelLDepth )
-    SWAP32( savedLFOVowelRDepth )
-    SWAP32( savedDistortionType )
-    SWAP32( savedDrive )
-    SWAP32( savedDistortionChain )
-#endif
+    // --- the following are allowed to fail their read
+    // as these properties were only added in version 1.1.0
+    int32 savedBypass = 0;
+    if ( streamer.readInt32( savedBypass ) != false ) {
+        _bypass = savedBypass > 0;
+    }
+
+    float savedDryWetMix = 1.f;
+    if ( streamer.readFloat( savedDryWetMix ) != false ) {
+        fDryWetMix = savedDryWetMix;
+    }
+
+    float savedThreshold = 0.f;
+    if ( streamer.readFloat( savedThreshold ) != false ) {
+        fThreshold = savedThreshold;
+    }
+    // --- E.O. version 1.1.0 properties
 
     fVowelL          = savedVowelL;
     fVowelR          = savedVowelR;
@@ -370,42 +427,23 @@ tresult PLUGIN_API Transformant::setState( IBStream* state )
 //------------------------------------------------------------------------
 tresult PLUGIN_API Transformant::getState( IBStream* state )
 {
-    // here we need to save the model
+    // here we save the model values
 
-    float toSaveVowelL          = fVowelL;
-    float toSaveVowelR          = fVowelR;
-    float toSaveVowelSync       = fVowelSync;
-    float toSaveLFOVowelL       = fLFOVowelL;
-    float toSaveLFOVowelR       = fLFOVowelR;
-    float toSaveLFOVowelLDepth  = fLFOVowelLDepth;
-    float toSaveLFOVowelRDepth  = fLFOVowelRDepth;
-    float toSaveDistortionType  = fDistortionType;
-    float toSaveDrive           = fDrive;
-    float toSaveDistortionChain = fDistortionChain;
+    IBStreamer streamer( state, kLittleEndian );
 
-#if BYTEORDER == kBigEndian
-    SWAP32( toSaveVowelL );
-    SWAP32( toSaveVowelR );
-    SWAP32( toSaveVowelSync );
-    SWAP32( toSaveLFOVowelL );
-    SWAP32( toSaveLFOVowelR );
-    SWAP32( toSaveLFOVowelLDepth );
-    SWAP32( toSaveLFOVowelRDepth );
-    SWAP32( toSaveDistortionType );
-    SWAP32( toSaveDrive );
-    SWAP32( toSaveDriveDepth );
-#endif
-
-    state->write( &toSaveVowelL         , sizeof( float ));
-    state->write( &toSaveVowelR         , sizeof( float ));
-    state->write( &toSaveVowelSync      , sizeof( float ));
-    state->write( &toSaveLFOVowelL      , sizeof( float ));
-    state->write( &toSaveLFOVowelR      , sizeof( float ));
-    state->write( &toSaveLFOVowelLDepth , sizeof( float ));
-    state->write( &toSaveLFOVowelRDepth , sizeof( float ));
-    state->write( &toSaveDistortionType , sizeof( float ));
-    state->write( &toSaveDrive          , sizeof( float ));
-    state->write( &toSaveDistortionChain, sizeof( float ));
+    streamer.writeFloat( fVowelL );
+    streamer.writeFloat( fVowelR );
+    streamer.writeFloat( fVowelSync );
+    streamer.writeFloat( fLFOVowelL );
+    streamer.writeFloat( fLFOVowelR );
+    streamer.writeFloat( fLFOVowelLDepth );
+    streamer.writeFloat( fLFOVowelRDepth );
+    streamer.writeFloat( fDistortionType );
+    streamer.writeFloat( fDrive );
+    streamer.writeFloat( fDistortionChain );
+    streamer.writeInt32( _bypass ? 1 : 0 );
+    streamer.writeFloat( fDryWetMix );
+    streamer.writeFloat( fThreshold );
 
     return kResultOk;
 }
@@ -418,12 +456,7 @@ tresult PLUGIN_API Transformant::setupProcessing( ProcessSetup& newSetup )
     // here we keep a trace of the processing mode (offline,...) for example.
     currentProcessMode = newSetup.processMode;
 
-    // spotted to fire multiple times...
-
-    if ( pluginProcess != nullptr )
-        delete pluginProcess;
-
-    pluginProcess = new PluginProcess( 2, newSetup.sampleRate );
+    pluginProcess->setHostProperties( newSetup.sampleRate, newSetup.maxSamplesPerBlock );
 
     syncModel();
 
@@ -527,22 +560,27 @@ tresult PLUGIN_API Transformant::notify( IMessage* message )
 
 void Transformant::syncModel()
 {
+    pluginProcess->setDryWetMix( fDryWetMix );
     pluginProcess->distortionPostMix     = Calc::toBool( fDistortionChain );
     pluginProcess->distortionTypeCrusher = Calc::toBool( fDistortionType );
-    pluginProcess->bitCrusher->setAmount( fDrive );
-    pluginProcess->waveShaper->setAmount( fDrive );
+    pluginProcess->bitCrusher.setAmount( fDrive );
+    pluginProcess->waveShaper.setAmount( fDrive );
 
-    pluginProcess->formantFilterL->setVowel( fVowelL );
-    pluginProcess->formantFilterL->setLFO( fLFOVowelL, fLFOVowelLDepth );
+    pluginProcess->formantFilterL.setThreshold( fThreshold );
+    pluginProcess->formantFilterR.setThreshold( fThreshold );
+
+    pluginProcess->formantFilterL.setVowel( fVowelL );
+    pluginProcess->formantFilterL.setLFO( fLFOVowelL, fLFOVowelLDepth );
 
     // when vowel sync is on, both channels have the same vowel and LFO settings
 
     if ( Calc::toBool( fVowelSync )) {
-        pluginProcess->formantFilterR->setVowel( fVowelL );
-        pluginProcess->formantFilterR->setLFO( fLFOVowelL, fLFOVowelLDepth );
+        pluginProcess->formantFilterR.setVowel( fVowelL );
+        pluginProcess->formantFilterR.setLFO( fLFOVowelL, fLFOVowelLDepth );
+        pluginProcess->formantFilterR.lfo.setAccumulator( pluginProcess->formantFilterL.lfo.getAccumulator());
     } else {
-        pluginProcess->formantFilterR->setVowel( fVowelR );
-        pluginProcess->formantFilterR->setLFO( fLFOVowelR, fLFOVowelRDepth );
+        pluginProcess->formantFilterR.setVowel( fVowelR );
+        pluginProcess->formantFilterR.setLFO( fLFOVowelR, fLFOVowelRDepth );
     }
 }
 

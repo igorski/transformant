@@ -1,7 +1,7 @@
 /**
  * The MIT License (MIT)
  *
- * Copyright (c) 2020 Igor Zinken - https://www.igorski.nl
+ * Copyright (c) 2020-2026 Igor Zinken - https://www.igorski.nl
  *
  * Permission is hereby granted, free of charge, to any person obtaining a copy of
  * this software and associated documentation files (the "Software"), to deal in
@@ -26,27 +26,52 @@
 
 namespace Igorski {
 
-PluginProcess::PluginProcess( int amountOfChannels, float sampleRate ) {
+PluginProcess::PluginProcess( int amountOfChannels, float sampleRate, int maxBufferSize ) {
     _amountOfChannels = amountOfChannels;
-    _sampleRate       = sampleRate;
+    _makeUpGainProcessors.resize( amountOfChannels );
 
-    bitCrusher     = new BitCrusher( 8, 1.f, .5f );
-    waveShaper     = new WaveShaper( 0.f, 1.f );
-    limiter        = new Limiter( 10.f, 500.f, .95f );
-    formantFilterL = new FormantFilter( 0.f, _sampleRate );
-    formantFilterR = new FormantFilter( 0.f, _sampleRate );
-
-    // will be lazily created in the process function
     _mixBuffer = nullptr;
+    _preBuffer = nullptr;
+
+    setHostProperties( sampleRate, maxBufferSize );
 }
 
 PluginProcess::~PluginProcess() {
     delete _mixBuffer;
-    delete bitCrusher;
-    delete waveShaper;
-    delete limiter;
-    delete formantFilterL;
-    delete formantFilterR;
+    delete[] _preBuffer;
+}
+
+/* public methods */
+
+void PluginProcess::setHostProperties( float sampleRate, int maxBufferSize ) {
+    bool hadSampleRateChange = _sampleRate != sampleRate;
+
+    _sampleRate = sampleRate;
+
+    if ( hadSampleRateChange ) {
+        for ( int c = 0; c < _amountOfChannels; ++c ) {
+            _makeUpGainProcessors.at( c ).prepare( _sampleRate );
+        }
+        formantFilterL.setSampleRate( _sampleRate );
+        formantFilterR.setSampleRate( _sampleRate );
+    }
+
+    if ( _hostBufferSize < maxBufferSize ) {
+        _hostBufferSize = maxBufferSize;
+
+        if ( _mixBuffer != nullptr ) {
+            delete _mixBuffer;
+        }
+        _mixBuffer = new AudioBuffer( _amountOfChannels, _hostBufferSize );
+
+        delete[] _preBuffer;
+        _preBuffer = new float[ _hostBufferSize ];
+    }
+}
+
+void PluginProcess::setDryWetMix( float value )
+{
+    _dryWetMix = value;
 }
 
 }

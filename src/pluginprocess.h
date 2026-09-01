@@ -1,7 +1,7 @@
 /**
  * The MIT License (MIT)
  *
- * Copyright (c) 2020 Igor Zinken - https://www.igorski.nl
+ * Copyright (c) 2020-2026 Igor Zinken - https://www.igorski.nl
  *
  * Permission is hereby granted, free of charge, to any person obtaining a copy of
  * this software and associated documentation files (the "Software"), to deal in
@@ -23,13 +23,14 @@
 #ifndef __PLUGIN_PROCESS__H_INCLUDED__
 #define __PLUGIN_PROCESS__H_INCLUDED__
 
-#include "global.h"
 #include "audiobuffer.h"
+#include "automakeupgain.h"
 #include "bitcrusher.h"
-#include "waveshaper.h"
 #include "formantfilter.h"
+#include "global.h"
 #include "limiter.h"
 #include "snd.h"
+#include "waveshaper.h"
 #include <vector>
 
 using namespace Steinberg;
@@ -38,8 +39,11 @@ namespace Igorski {
 class PluginProcess {
 
     public:
-        PluginProcess( int amountOfChannels, float sampleRate );
+        PluginProcess( int amountOfChannels, float sampleRate, int maxBufferSize );
         ~PluginProcess();
+
+        void setHostProperties( float sampleRate, int maxBufferSize );
+        void setDryWetMix( float value );
 
         // apply effect to incoming sampleBuffer contents
 
@@ -52,7 +56,7 @@ class PluginProcess {
         // that if the first channel is empty, all are.
 
         inline bool isBufferSilent( float** buffer, int numChannels, int bufferSize ) {
-            float* channelBuffer = buffer[ 0 ];
+            auto channelBuffer = buffer[ 0 ];
             for ( int32 i = 0; i < bufferSize; ++i ) {
                 if ( channelBuffer[ i ] != 0.f ) {
                     return false;
@@ -62,7 +66,7 @@ class PluginProcess {
         };
 
         inline bool isBufferSilent( double** buffer, int numChannels, int bufferSize ) {
-            double* channelBuffer = buffer[ 0 ];
+            auto channelBuffer = buffer[ 0 ];
             for ( int32 i = 0; i < bufferSize; ++i ) {
                 if ( channelBuffer[ i ] != 0.0 ) {
                     return false;
@@ -71,11 +75,11 @@ class PluginProcess {
             return true;
         };
 
-        BitCrusher* bitCrusher;
-        WaveShaper* waveShaper;
-        Limiter* limiter;
-        FormantFilter* formantFilterL;
-        FormantFilter* formantFilterR;
+        BitCrusher bitCrusher;
+        WaveShaper waveShaper;
+        Limiter limiter;
+        FormantFilter formantFilterL;
+        FormantFilter formantFilterR;
 
         // whether effects are applied onto the input delay signal or onto
         // the delayed signal itself (false = on input, true = on delay)
@@ -84,14 +88,18 @@ class PluginProcess {
         bool distortionTypeCrusher = false;
 
         inline bool hasLFO() {
-            return formantFilterL->hasLFO || formantFilterR->hasLFO;
+            return formantFilterL.hasLFO || formantFilterR.hasLFO;
         }
 
     private:
-        AudioBuffer* _mixBuffer;  // buffer used for the sample process mixing
-
-        int   _amountOfChannels;
+        std::vector<AutoMakeUpGain> _makeUpGainProcessors;
+        AudioBuffer* _mixBuffer = nullptr; // buffer used during the effects processing
+        float* _preBuffer = nullptr; // used during make-up gain processing (is reused per channel)
+        
+        int _amountOfChannels = 0;
+        int _hostBufferSize = 0;
         float _sampleRate;
+        float _dryWetMix = 1.f;
 
         // ensures the pre- and post mix buffers match the appropriate amount of channels
         // and buffer size. this also clones the contents of given in buffer into the pre-mix buffer

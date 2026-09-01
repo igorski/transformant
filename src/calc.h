@@ -43,7 +43,7 @@ namespace Calc {
      */
     inline int secondsToBuffer( float seconds, float sampleRate )
     {
-        return ( int )( seconds * sampleRate );
+        return static_cast<int>( seconds * sampleRate );
     }
 
     /**
@@ -53,6 +53,12 @@ namespace Calc {
     inline int millisecondsToBuffer( float milliseconds, float sampleRate )
     {
         return secondsToBuffer( milliseconds / 1000.f, sampleRate );
+    }
+
+    inline float millisecondsToCoeff( float milliseconds, float sampleRate )
+    {
+        float timeInSeconds = milliseconds / 1000.f;
+        return std::exp( -1.0f / ( timeInSeconds * sampleRate ));
     }
 
     // convenience method to ensure given value is within the 0.f - +1.f range
@@ -77,10 +83,17 @@ namespace Calc {
     {
         float resto = fmod( value, valueToRoundTo );
 
-        if ( resto <= ( valueToRoundTo / 2 ))
+        if ( resto <= ( valueToRoundTo / 2.f )) {
             return value - resto;
-
+        }
         return value + valueToRoundTo - resto;
+    }
+
+    // inverts a 0 - 1 normalized min-to-max value to have 0 be the max and 1 the min
+
+    inline float inverseNormalize( float value )
+    {
+        return ( 1.f - value ) / 1.f;
     }
 
     // convenience method to scale given value and its expected maxValue against
@@ -89,7 +102,15 @@ namespace Calc {
     inline float scale( float value, float maxValue, float maxCompareValue )
     {
         float ratio = maxCompareValue / maxValue;
-        return ( float ) ( std::min( maxValue, value ) * ratio );
+        return std::min( maxValue, value ) * ratio;
+    }
+
+    inline float constrain( float lowerLimit, float upperLimit, float valueToConstrain )
+    {
+        if ( valueToConstrain < lowerLimit ) {
+            return lowerLimit;
+        }
+        return upperLimit < valueToConstrain ? upperLimit : valueToConstrain;
     }
 
     // cast a floating point value to a boolean true/false

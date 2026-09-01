@@ -169,7 +169,7 @@ void FormantFilter::process( float* inBuffer, int bufferSize )
 
         // without synthesis the output gets audibly thinner at higher _vowel values
 
-        bool attenuateOutput = !APPLY_SYNTHESIS_SIGNAL && smoothedVowel > 0.25f;
+        bool amplifyOutput = !APPLY_SYNTHESIS_SIGNAL && smoothedVowel > 0.25f;
 
         // calculate the coefficients
 
@@ -186,11 +186,11 @@ void FormantFilter::process( float* inBuffer, int bufferSize )
             float formant = APPLY_SYNTHESIS_SIGNAL ? getFormant( _phase, FORMANT_WIDTH_SCALE[ j ] * ufp ) : 1.f;
             float carrier = getCarrier( f->value * ufp, _phase );
 
-            if ( !attenuateOutput ) {
+            if ( !amplifyOutput ) {
                 // the fp/fn coefficients stand for a -3dB/oct spectral envelope
                 out += a->value * ( fp / f->value ) * in * formant * carrier;
             } else {
-                float fpReference = 192.0f; // or 100.f or any fixed frequency of you rliking
+                float fpReference = 192.0f; // or 100.f or any fixed frequency of your liking
                 out += a->value * ( fpReference / f->value ) * in * formant * carrier;
             }
         }
